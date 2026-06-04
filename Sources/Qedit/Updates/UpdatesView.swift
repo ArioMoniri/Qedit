@@ -1,8 +1,10 @@
 import SwiftUI
+import AppKit
 
 struct UpdatesView: View {
     @StateObject private var updater = UpdaterController.shared
     @State private var lastChecked: Date?
+    @State private var copiedHomebrew = false
 
     var body: some View {
         ScrollView {
@@ -34,6 +36,38 @@ struct UpdatesView: View {
                         Text("Updates are downloaded, verified against Qedit’s EdDSA key, then "
                              + "installed and relaunched. Every build is Developer-ID signed and notarized.")
                             .font(.caption).foregroundStyle(.secondary)
+                    }
+                }
+
+                Card(title: "Get the latest build", systemImage: "tray.and.arrow.down") {
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Prefer to grab it yourself? These always point at the newest release.")
+                            .font(.callout).foregroundStyle(.secondary)
+                        HStack(spacing: 10) {
+                            Button {
+                                NSWorkspace.shared.open(UpdateChecker.latestDMGURL)
+                            } label: {
+                                Label("Download .dmg", systemImage: "arrow.down.circle.fill").padding(.horizontal, 6)
+                            }
+                            .buttonStyle(.borderedProminent).buttonBorderShape(.capsule).controlSize(.large)
+
+                            Button {
+                                NSWorkspace.shared.open(UpdateChecker.latestReleaseURL)
+                            } label: {
+                                Label("Release notes", systemImage: "doc.text").padding(.horizontal, 4)
+                            }
+                            .buttonStyle(.bordered).buttonBorderShape(.capsule).controlSize(.large)
+
+                            Button {
+                                NSPasteboard.general.clearContents()
+                                NSPasteboard.general.setString(UpdateChecker.homebrewCommand, forType: .string)
+                                copiedHomebrew = true
+                            } label: {
+                                Label(copiedHomebrew ? "Copied!" : "Copy Homebrew", systemImage: copiedHomebrew ? "checkmark" : "shippingbox")
+                                    .padding(.horizontal, 4)
+                            }
+                            .buttonStyle(.bordered).buttonBorderShape(.capsule).controlSize(.large)
+                        }
                     }
                 }
 

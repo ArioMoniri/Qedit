@@ -3,6 +3,9 @@
 All notable changes to Qedit. This file feeds both the GitHub release notes and the
 in-app Sparkle updater. 🪄
 
+## v0.1.3
+- ⬇️ In-app **download buttons** on the Updates page — grab the latest `.dmg`, open the release notes, or copy the Homebrew command. They always point at the newest release.
+
 ## v0.1.2
 - 🧩 **Enable / disable Quick Look extensions** right from the app — per-extension toggles plus Enable All / Disable All.
 - ⚡️ One-tap **“Enable Qedit Preview”** in Setup and a banner in Extensions when it’s off.

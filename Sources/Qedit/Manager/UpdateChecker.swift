@@ -23,6 +23,11 @@ enum UpdateError: LocalizedError {
 enum UpdateChecker {
     static let repo = "ArioMoniri/Qedit"
 
+    /// Stable URLs that always resolve to the newest published release (GitHub 302-redirects).
+    static let latestReleaseURL = URL(string: "https://github.com/\(repo)/releases/latest")!
+    static let latestDMGURL = URL(string: "https://github.com/\(repo)/releases/latest/download/Qedit.dmg")!
+    static let homebrewCommand = "brew tap ariomoniri/qedit https://github.com/\(repo) && brew install --cask qedit"
+
     static func currentVersion() -> String {
         Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0"
     }
