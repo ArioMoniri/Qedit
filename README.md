@@ -9,6 +9,7 @@
 ![Swift](https://img.shields.io/badge/Swift-5-f05138?logo=swift&logoColor=white)
 ![Made with](https://img.shields.io/badge/SwiftUI%20·%20PDFKit-2563eb)
 [![Download](https://img.shields.io/github/v/release/ArioMoniri/Qedit?label=download&color=34d27b)](https://github.com/ArioMoniri/Qedit/releases/latest)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
 </div>
 
@@ -51,7 +52,14 @@ First run: move **Qedit.app** to `/Applications`, then **Setup** tab → enable 
 
 ## 📦 Install
 
-Grab the signed, notarized **`.dmg`** from [Releases](https://github.com/ArioMoniri/Qedit/releases/latest), drag Qedit to Applications, done.
+**Direct:** grab the signed, notarized **`.dmg`** from [Releases](https://github.com/ArioMoniri/Qedit/releases/latest), drag Qedit to Applications, done.
+
+**Homebrew:**
+
+```bash
+brew tap ariomoniri/qedit https://github.com/ArioMoniri/Qedit
+brew install --cask qedit
+```
 
 ## 🚀 Releasing (maintainers)
 
@@ -70,6 +78,6 @@ git tag v0.1.0 && git push origin v0.1.0   # 🪄 that's the whole release
 
 ## 📄 License
 
-TBD.
+[MIT](LICENSE) © 2026 Ariorad Moniri.
 
 <div align="center"><sub>Built with Swift, SwiftUI, AppKit & PDFKit on macOS. 🛠</sub></div>
