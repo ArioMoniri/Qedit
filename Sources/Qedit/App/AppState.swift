@@ -1,5 +1,25 @@
 import Foundation
 import Combine
+import AppKit
+
+enum AppAppearance: String, CaseIterable, Identifiable {
+    case system, light, dark
+    var id: String { rawValue }
+    var label: String {
+        switch self {
+        case .system: return "System"
+        case .light: return "Light"
+        case .dark: return "Dark"
+        }
+    }
+    var nsAppearance: NSAppearance? {
+        switch self {
+        case .system: return nil
+        case .light: return NSAppearance(named: .aqua)
+        case .dark: return NSAppearance(named: .darkAqua)
+        }
+    }
+}
 
 /// App-wide state: recent files and editor preferences. A shared singleton so the
 /// menu commands (which run outside the SwiftUI view environment) can reach it too.
@@ -11,9 +31,16 @@ final class AppState: ObservableObject {
     @Published var makeBackupBeforeFirstWrite: Bool {
         didSet { UserDefaults.standard.set(makeBackupBeforeFirstWrite, forKey: Self.backupKey) }
     }
+    @Published var appearance: AppAppearance {
+        didSet {
+            UserDefaults.standard.set(appearance.rawValue, forKey: Self.appearanceKey)
+            applyAppearance()
+        }
+    }
 
     private static let recentsKey = "qe.recentFiles"
     private static let backupKey = "qe.makeBackupBeforeFirstWrite"
+    private static let appearanceKey = "qe.appearance"
     private let maxRecents = 12
 
     init() {
@@ -22,7 +49,14 @@ final class AppState: ObservableObject {
         } else {
             self.makeBackupBeforeFirstWrite = UserDefaults.standard.bool(forKey: Self.backupKey)
         }
+        self.appearance = UserDefaults.standard.string(forKey: Self.appearanceKey)
+            .flatMap(AppAppearance.init(rawValue:)) ?? .system
         loadRecents()
+    }
+
+    /// Apply the chosen appearance to the running app (call once NSApp exists).
+    func applyAppearance() {
+        NSApp?.appearance = appearance.nsAppearance
     }
 
     func noteOpened(_ url: URL) {

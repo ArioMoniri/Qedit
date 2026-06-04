@@ -10,8 +10,7 @@ options:
 settings:
   base:
     DEVELOPMENT_TEAM: FF68N39FU5
-    # Local/offline builds use ad-hoc ("Sign to Run Locally"). Release/notarization
-    # overrides CODE_SIGN_IDENTITY to "Developer ID Application" at archive time.
+    # Debug builds use ad-hoc ("Sign to Run Locally") so offline CLI builds work.
     CODE_SIGN_STYLE: Manual
     CODE_SIGN_IDENTITY: "-"
     CODE_SIGNING_REQUIRED: "NO"
@@ -25,6 +24,13 @@ settings:
     CLANG_ENABLE_MODULES: "YES"
     SWIFT_EMIT_LOC_STRINGS: "YES"
     GCC_WARN_UNUSED_VARIABLE: "YES"
+  configs:
+    # Release builds are Developer-ID signed with Hardened Runtime for notarization.
+    Release:
+      CODE_SIGN_IDENTITY: "Developer ID Application"
+      CODE_SIGNING_REQUIRED: "YES"
+      ENABLE_HARDENED_RUNTIME: "YES"
+      OTHER_CODE_SIGN_FLAGS: "--timestamp"
 
 targets:
   # ── Host application: editor (Module B), manager (Module C), onboarding, hotkey ──

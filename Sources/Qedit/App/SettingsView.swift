@@ -7,6 +7,15 @@ struct SettingsView: View {
     var body: some View {
         TabView {
             Form {
+                Section("Appearance") {
+                    Picker("Theme", selection: $appState.appearance) {
+                        ForEach(AppAppearance.allCases) { Text($0.label).tag($0) }
+                    }
+                    .pickerStyle(.segmented)
+                    Text("Previews and the code preview follow the system light/dark automatically; "
+                         + "this overrides the editor and app windows.")
+                        .font(.caption).foregroundStyle(.secondary)
+                }
                 Section("Editing safety") {
                     Toggle("Make a timestamped backup before the first save", isOn: $appState.makeBackupBeforeFirstWrite)
                     Text("Editing real files is destructive. When on, Qedit copies the original to a "
@@ -20,7 +29,7 @@ struct SettingsView: View {
             }
             .formStyle(.grouped)
             .tabItem { Label("General", systemImage: "gearshape") }
-            .frame(width: 480, height: 280)
+            .frame(width: 480, height: 380)
 
             Form {
                 Section("Global hotkey") {

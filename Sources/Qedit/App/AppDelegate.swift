@@ -2,8 +2,12 @@ import AppKit
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
-        // Register the configurable global hotkey (default ⌥⌘E → open Finder selection).
-        MainActor.assumeIsolated { HotKeyManager.shared.start() }
+        MainActor.assumeIsolated {
+            // Register the configurable global hotkey (default ⌥⌘E → open Finder selection).
+            HotKeyManager.shared.start()
+            // Apply the saved appearance override (System / Light / Dark).
+            AppState.shared.applyAppearance()
+        }
     }
 
     /// Opt in to secure state restoration (silences the macOS warning and is good practice).

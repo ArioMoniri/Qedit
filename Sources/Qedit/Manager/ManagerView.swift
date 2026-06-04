@@ -6,10 +6,16 @@ struct ManagerView: View {
     @State private var inspected: UTIInfo?
     @State private var isDropTargeted = false
 
+    @State private var appUpdate: ReleaseInfo?
+    @State private var appUpdateMessage: String?
+    @State private var brewMessage: String?
+    @State private var checkingUpdates = false
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
                 header
+                updatesCard
                 diagnosticsCard
                 inspectorCard
                 extensionsCard
@@ -38,6 +44,54 @@ struct ManagerView: View {
                 Label("Refresh", systemImage: "arrow.clockwise")
             }
             .disabled(model.isScanning)
+        }
+    }
+
+    // MARK: - Updates
+
+    private var updatesCard: some View {
+        Card(title: "Updates", systemImage: "arrow.down.circle") {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack {
+                    Button { Task { await checkAppUpdate() } } label: {
+                        Label("Check for Qedit Updates", systemImage: "sparkles")
+                    }
+                    .disabled(checkingUpdates)
+                    if UpdateChecker.brewAvailable() {
+                        Button { brewMessage = UpdateChecker.brewOutdatedCasks().map(brewSummary) } label: {
+                            Label("Check Homebrew Casks", systemImage: "shippingbox")
+                        }
+                    }
+                    if checkingUpdates { ProgressView().controlSize(.small) }
+                }
+                Text("Qedit checks its own GitHub Releases. For extensions installed via Homebrew, "
+                     + "it surfaces `brew outdated --cask` — it can’t update third-party apps it "
+                     + "didn’t install.")
+                    .font(.caption).foregroundStyle(.secondary)
+
+                Text("Current version: \(UpdateChecker.currentVersion())")
+                    .font(.caption).foregroundStyle(.secondary)
+
+                if let update = appUpdate {
+                    HStack(spacing: 8) {
+                        Image(systemName: update.isNewer ? "arrow.up.circle.fill" : "checkmark.circle.fill")
+                            .foregroundStyle(update.isNewer ? Color.accentColor : .green)
+                        Text(update.isNewer ? "Update available: \(update.name)" : "You’re up to date (\(update.tag)).")
+                            .font(.callout)
+                        if update.isNewer { Link("Download", destination: update.url).font(.callout) }
+                    }
+                } else if let message = appUpdateMessage {
+                    Text(message).font(.callout).foregroundStyle(.secondary)
+                }
+
+                if let brew = brewMessage {
+                    Text(brew)
+                        .font(.system(.caption, design: .monospaced))
+                        .padding(8).frame(maxWidth: .infinity, alignment: .leading)
+                        .background(.quaternary.opacity(0.4), in: RoundedRectangle(cornerRadius: 6))
+                        .textSelection(.enabled)
+                }
+            }
         }
     }
 
@@ -151,6 +205,24 @@ struct ManagerView: View {
     }
 
     // MARK: - Actions
+
+    private func checkAppUpdate() async {
+        checkingUpdates = true
+        appUpdateMessage = nil
+        defer { checkingUpdates = false }
+        do {
+            appUpdate = try await UpdateChecker.latestRelease()
+        } catch {
+            appUpdate = nil
+            appUpdateMessage = error.localizedDescription
+        }
+    }
+
+    private func brewSummary(_ output: String) -> String {
+        output.isEmpty
+            ? "All Homebrew casks are up to date."
+            : "Outdated casks (run `brew upgrade --cask <name>`):\n\(output)"
+    }
 
     private func chooseFileToInspect() {
         if let url = FileOpener.runOpenPanel() {

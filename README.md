@@ -7,12 +7,14 @@ ships a manager for installed Quick Look extensions.
 A `.pdf` stays a `.pdf` (edited via PDFKit). A `.md` stays a `.md`. No conversion, no
 `.ePDF` tricks, no fighting Apple's built-in previews.
 
-> Status: **Milestones 1–3 complete** — Xcode project (host app + Quick Look preview
-> extension + Quick Action), rich previews for non-system types, an in-place text editor,
-> a full **PDFKit editor** (find, annotate, page ops, save-in-place), the Finder Quick
-> Action, a configurable **global hotkey** (⌥⌘E), and the **Extension Manager** (enumerate
-> Quick Look extensions, `qlmanage -r`, UTI inspector, Settings deep-link). Notarized
-> release follows in milestone 4 (see [Roadmap](#roadmap)).
+> Status: **All four milestones complete.** Xcode project (host app + Quick Look preview
+> extension + Quick Action); rich previews for non-system types; in-place text editor; a
+> full **PDFKit editor** (find, annotate, page ops, save-in-place); the Finder Quick Action
+> + configurable **global hotkey** (⌥⌘E); the **Extension Manager** (enumerate extensions,
+> `qlmanage -r`, UTI inspector, Settings deep-link); in-app **update checks** (GitHub +
+> brew); **theming**; and **Developer ID release tooling** (signed DMG + notarization
+> scripts). The notarized release itself is a one-command step once Apple notary
+> credentials are configured — see [docs/RELEASE.md](docs/RELEASE.md).
 
 ## Why it's built this way (real macOS limits)
 
@@ -86,8 +88,17 @@ The `.xcodeproj` is generated and **not** committed — edit `project.yml`, then
 
 ## Distribution
 
-Developer ID + notarization, shipped as a DMG on GitHub Releases (+ optional Homebrew
-cask). Wired up in milestone 4.
+Developer ID + notarization, shipped as a DMG on GitHub Releases (+ optional Homebrew cask):
+
+```bash
+./scripts/build_release.sh        # archive → Developer-ID-signed .app → signed .dmg
+./scripts/notarize.sh dist/Qedit.dmg   # notarytool submit --wait + staple
+gh release create vX.Y.Z dist/Qedit.dmg --repo ArioMoniri/Qedit
+```
+
+Release builds (the `Release` configuration in `project.yml`) use Hardened Runtime +
+`--timestamp`. Full runbook and one-time credential setup in
+[docs/RELEASE.md](docs/RELEASE.md).
 
 ## Roadmap
 
@@ -98,7 +109,9 @@ cask). Wired up in milestone 4.
   Action + configurable global hotkey (⌥⌘E).
 - [x] **M3** — Extension manager: list extensions + UTIs, `qlmanage -r`, UTI inspector,
   Settings deep-link.
-- [ ] **M4** — Updates (brew + GitHub Releases), theming, signing + notarization, release.
+- [x] **M4** — In-app updates (GitHub Releases + `brew outdated --cask`), theming
+  (System/Light/Dark), Developer ID Release config + signed-DMG/notarization scripts.
+  _(Running notarization needs your Apple notary credentials — see docs/RELEASE.md.)_
 
 ## License
 
