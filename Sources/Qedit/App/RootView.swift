@@ -18,7 +18,6 @@ enum SidebarItem: String, CaseIterable, Identifiable {
 struct RootView: View {
     @EnvironmentObject private var appState: AppState
     @Environment(\.openWindow) private var openWindow
-    @ObservedObject private var openRequest = OpenEditorRequest.shared
     @State private var selection: SidebarItem? = .home
 
     var body: some View {
@@ -35,9 +34,11 @@ struct RootView: View {
             }
         }
         .frame(minWidth: 840, minHeight: 560)
-        .onReceive(openRequest.$pending.compactMap { $0 }) { url in
-            openWindow(id: "editor", value: url)
-            openRequest.pending = nil
+        .onAppear {
+            // Give the launcher (URL handler + global hotkey) a way to open editor windows.
+            EditorLauncher.shared.openEditorWindow = { url in
+                openWindow(id: "editor", value: url)
+            }
         }
     }
 }

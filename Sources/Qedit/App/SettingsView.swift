@@ -2,6 +2,7 @@ import SwiftUI
 
 struct SettingsView: View {
     @EnvironmentObject private var appState: AppState
+    @StateObject private var hotKey = HotKeyStore.shared
 
     var body: some View {
         TabView {
@@ -19,7 +20,28 @@ struct SettingsView: View {
             }
             .formStyle(.grouped)
             .tabItem { Label("General", systemImage: "gearshape") }
-            .frame(width: 460, height: 280)
+            .frame(width: 480, height: 280)
+
+            Form {
+                Section("Global hotkey") {
+                    Toggle("Open the Finder selection with a hotkey", isOn: $hotKey.enabled)
+                    HStack {
+                        Text("Shortcut")
+                        Spacer()
+                        HotKeyRecorder(config: $hotKey.config)
+                            .frame(width: 150, height: 24)
+                            .disabled(!hotKey.enabled)
+                        Button("Reset") { hotKey.config = .default }
+                            .controlSize(.small)
+                    }
+                    Text("Select a file in Finder and press the shortcut to open it in Qedit. "
+                         + "The first use prompts macOS for permission to control Finder.")
+                        .font(.caption).foregroundStyle(.secondary)
+                }
+            }
+            .formStyle(.grouped)
+            .tabItem { Label("Hotkey", systemImage: "command") }
+            .frame(width: 480, height: 240)
         }
     }
 }

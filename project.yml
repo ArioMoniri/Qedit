@@ -52,6 +52,8 @@ targets:
         embed: true
       - target: QuickActionExtension
         embed: true
+      - sdk: PDFKit.framework
+      - sdk: Carbon.framework
 
   # ── Module A: Quick Look preview extension (read step, non-system UTIs only) ──
   QuickLookExtension:

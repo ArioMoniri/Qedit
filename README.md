@@ -7,10 +7,11 @@ ships a manager for installed Quick Look extensions.
 A `.pdf` stays a `.pdf` (edited via PDFKit). A `.md` stays a `.md`. No conversion, no
 `.ePDF` tricks, no fighting Apple's built-in previews.
 
-> Status: **Milestone 1 complete** — Xcode project (host app + Quick Look preview
-> extension + Quick Action), with rich previews rendering for non-system types and a
-> working in-place text editor. PDF editor, extension manager, and notarized release
-> follow in milestones 2–4 (see [Roadmap](#roadmap)).
+> Status: **Milestones 1–2 complete** — Xcode project (host app + Quick Look preview
+> extension + Quick Action), rich previews for non-system types, an in-place text editor,
+> a full **PDFKit editor** (find, annotate, page ops, save-in-place), the Finder Quick
+> Action, and a configurable **global hotkey** (⌥⌘E). Extension manager and notarized
+> release follow in milestones 3–4 (see [Roadmap](#roadmap)).
 
 ## Why it's built this way (real macOS limits)
 
@@ -42,10 +43,13 @@ These are hard constraints, not preferences:
   self-contained HTML — all JS/CSS is **bundled** (offline + sandbox safe) and the file
   text is base64-embedded so arbitrary content can't break the page. Scroll position is
   restored per file; light/dark themes via `prefers-color-scheme`.
-- **Module B** (`Sources/Qedit/Editor`): opens a file from Finder (Quick Action or
-  `qedit://open?path=…`) into an `NSTextView`-backed editor with the native find bar,
-  saving **in place** in the file's original encoding, with an optional timestamped
-  backup before the first write.
+- **Module B** (`Sources/Qedit/Editor`): opens a file from Finder (Quick Action or the
+  global hotkey, via `qedit://open?path=…`). Text/source/Markdown/config open in an
+  `NSTextView`-backed editor (native find bar, original-encoding save). **PDFs** open in
+  a PDFKit editor with find + jump-to-result, highlight/note/text-box/signature
+  annotations, page ops (rotate/delete/insert/reorder/extract) and copy-as-plain-text.
+  Both save **in place** in the original format, with an optional timestamped backup
+  before the first write.
 - **Module C** (`Sources/Qedit/Manager`): the extension manager + diagnostics — landing
   in milestone 3.
 
@@ -86,8 +90,9 @@ cask). Wired up in milestone 4.
 
 - [x] **M1** — Xcode project (host + QL preview + Quick Action); rich Markdown/code/log/config
   previews; in-place text editor with find bar + backup.
-- [ ] **M2** — PDFKit editor: find/search, annotate, page ops, save-in-place; wire the
-  Quick Action + global hotkey.
+- [x] **M2** — PDFKit editor: find/search, highlight/note/text/signature annotations, page
+  ops (rotate/delete/insert/reorder/extract), copy-as-text, save-in-place; Finder Quick
+  Action + configurable global hotkey (⌥⌘E).
 - [ ] **M3** — Extension manager: list extensions + UTIs, `qlmanage -r`, UTI inspector,
   Settings deep-link.
 - [ ] **M4** — Updates (brew + GitHub Releases), theming, signing + notarization, release.

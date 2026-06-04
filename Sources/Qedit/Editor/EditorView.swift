@@ -1,19 +1,31 @@
 import SwiftUI
 import AppKit
+import UniformTypeIdentifiers
 
-/// Wrapper resolving the window's optional URL value into a concrete editor.
+/// Wrapper resolving the window's optional URL value into the right editor: PDFs go to the
+/// PDFKit editor (Module B core), everything text-like to the text editor.
 struct EditorWindowView: View {
     let url: URL?
 
     var body: some View {
         Group {
             if let url {
-                EditorView(url: url)
+                if Self.isPDF(url) {
+                    PDFEditorView(url: url)
+                } else {
+                    EditorView(url: url)
+                }
             } else {
                 ContentUnavailableView("No file", systemImage: "doc",
                                        description: Text("Open a file from the dashboard or Finder."))
             }
         }
+    }
+
+    static func isPDF(_ url: URL) -> Bool {
+        if url.pathExtension.lowercased() == "pdf" { return true }
+        if let type = UTType(filenameExtension: url.pathExtension) { return type.conforms(to: .pdf) }
+        return false
     }
 }
 
@@ -55,14 +67,11 @@ struct EditorView: View {
 
     private var binaryNotice: some View {
         VStack(spacing: 16) {
-            Image(systemName: doc.url.pathExtension.lowercased() == "pdf" ? "doc.richtext" : "doc.zipper")
+            Image(systemName: "doc.zipper")
                 .font(.system(size: 48)).foregroundStyle(.secondary)
-            Text(doc.url.pathExtension.lowercased() == "pdf"
-                 ? "PDF editing arrives in milestone 2"
-                 : "This file isn’t plain text")
-                .font(.headline)
-            Text("Qedit never changes a file’s format. The dedicated PDFKit editor (find, annotate, "
-                 + "page ops, save-in-place) is coming next.")
+            Text("This file isn’t plain text").font(.headline)
+            Text("Qedit never changes a file’s format, and it only edits text and PDF files. "
+                 + "Open this one in its default app instead.")
                 .font(.callout).foregroundStyle(.secondary)
                 .multilineTextAlignment(.center).frame(maxWidth: 420)
             Button("Reveal in Finder") {

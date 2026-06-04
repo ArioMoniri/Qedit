@@ -27,22 +27,11 @@ struct QeditApp: App {
         }
     }
 
-    /// Handle `qedit://open?path=...` coming from the Quick Action / global hotkey.
+    /// Handle `qedit://open?path=...` coming from the Quick Action.
     private func handleOpenURL(_ url: URL) {
         guard let path = AppInfo.path(fromOpenURL: url) else { return }
-        let fileURL = URL(fileURLWithPath: path)
-        appState.noteOpened(fileURL)
-        OpenEditorRequest.shared.send(fileURL)
+        EditorLauncher.shared.open(URL(fileURLWithPath: path))
     }
-}
-
-/// Bridges the App-level `onOpenURL` to a SwiftUI `openWindow` action, which is only
-/// available inside the view environment. `RootView` subscribes and opens the window.
-@MainActor
-final class OpenEditorRequest: ObservableObject {
-    static let shared = OpenEditorRequest()
-    @Published var pending: URL?
-    func send(_ url: URL) { pending = url }
 }
 
 struct AppMenuCommands: Commands {

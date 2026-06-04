@@ -76,7 +76,7 @@ final class EditorDocument: ObservableObject, Identifiable {
         guard isTextEditable else { throw EditorError.notTextEditable }
 
         if makeBackup && !didBackupThisSession {
-            try createBackup()
+            try FileBackup.make(for: url)
             didBackupThisSession = true
         }
 
@@ -87,25 +87,6 @@ final class EditorDocument: ObservableObject, Identifiable {
         isDirty = false
         lastSaved = Date()
     }
-
-    private func createBackup() throws {
-        guard FileManager.default.fileExists(atPath: url.path) else { return }
-        let stamp = Self.backupFormatter.string(from: Date())
-        let base = url.deletingPathExtension().lastPathComponent
-        let ext = url.pathExtension
-        let backupName = ext.isEmpty ? "\(base).\(stamp).bak" : "\(base).\(stamp).\(ext).bak"
-        let backupURL = url.deletingLastPathComponent().appendingPathComponent(backupName)
-        if !FileManager.default.fileExists(atPath: backupURL.path) {
-            try FileManager.default.copyItem(at: url, to: backupURL)
-        }
-    }
-
-    private static let backupFormatter: DateFormatter = {
-        let f = DateFormatter()
-        f.dateFormat = "yyyyMMdd-HHmmss"
-        f.locale = Locale(identifier: "en_US_POSIX")
-        return f
-    }()
 }
 
 enum EditorError: LocalizedError {
