@@ -11,7 +11,10 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
 APP_NAME="Qedit"
-TEAM_ID="FF68N39FU5"
+# Identity + team come from env in CI (APPLE_SIGNING_IDENTITY / APPLE_TEAM_ID),
+# falling back to the local defaults for hands-on builds.
+SIGN_IDENTITY="${APPLE_SIGNING_IDENTITY:-Developer ID Application}"
+TEAM_ID="${APPLE_TEAM_ID:-FF68N39FU5}"
 DIST="$ROOT/dist"
 ARCHIVE="$DIST/$APP_NAME.xcarchive"
 EXPORT="$DIST/export"
@@ -31,7 +34,11 @@ fi
 echo "==> Archiving (Release, Developer ID, Hardened Runtime)"
 xcodebuild -project "$APP_NAME.xcodeproj" -scheme "$APP_NAME" \
   -configuration Release -destination 'generic/platform=macOS' \
-  -archivePath "$ARCHIVE" archive
+  -archivePath "$ARCHIVE" \
+  DEVELOPMENT_TEAM="$TEAM_ID" \
+  CODE_SIGN_IDENTITY="$SIGN_IDENTITY" \
+  CODE_SIGN_STYLE=Manual \
+  archive
 
 echo "==> Exporting signed app"
 xcodebuild -exportArchive -archivePath "$ARCHIVE" \
@@ -48,7 +55,7 @@ rm -rf "$STAGING"; mkdir -p "$STAGING"
 cp -R "$APP" "$STAGING/"
 ln -s /Applications "$STAGING/Applications"
 hdiutil create -volname "$APP_NAME" -srcfolder "$STAGING" -ov -format UDZO "$DMG"
-codesign --sign "Developer ID Application" --timestamp "$DMG"
+codesign --sign "$SIGN_IDENTITY" --timestamp "$DMG"
 
 echo "==> Done: $DMG"
 echo "    Next: scripts/notarize.sh \"$DMG\""

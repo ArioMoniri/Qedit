@@ -22,6 +22,9 @@ struct OnboardingView: View {
                         } label: {
                             Label("Reveal Qedit in Finder", systemImage: "magnifyingglass")
                         }
+                        .buttonStyle(.bordered)
+                        .buttonBorderShape(.roundedRectangle)
+                        .controlSize(.large)
                     }
                 }
 
@@ -36,6 +39,9 @@ struct OnboardingView: View {
                         } label: {
                             Label("Open Login Items & Extensions", systemImage: "gearshape")
                         }
+                        .buttonStyle(.borderedProminent)
+                        .buttonBorderShape(.roundedRectangle)
+                        .controlSize(.large)
                     }
                 }
 

@@ -43,6 +43,8 @@ struct ManagerView: View {
             Button { Task { await model.scan() } } label: {
                 Label("Refresh", systemImage: "arrow.clockwise")
             }
+            .buttonStyle(.bordered)
+            .buttonBorderShape(.capsule)
             .disabled(model.isScanning)
         }
     }
@@ -56,11 +58,15 @@ struct ManagerView: View {
                     Button { Task { await checkAppUpdate() } } label: {
                         Label("Check for Qedit Updates", systemImage: "sparkles")
                     }
+                    .buttonStyle(.borderedProminent)
+                    .buttonBorderShape(.capsule)
                     .disabled(checkingUpdates)
                     if UpdateChecker.brewAvailable() {
                         Button { brewMessage = UpdateChecker.brewOutdatedCasks().map(brewSummary) } label: {
                             Label("Check Homebrew Casks", systemImage: "shippingbox")
                         }
+                        .buttonStyle(.bordered)
+                        .buttonBorderShape(.capsule)
                     }
                     if checkingUpdates { ProgressView().controlSize(.small) }
                 }
@@ -104,10 +110,14 @@ struct ManagerView: View {
                     Button { Task { await model.resetQuickLookCache() } } label: {
                         Label("Reset Quick Look Cache", systemImage: "arrow.clockwise.circle")
                     }
+                    .buttonStyle(.bordered)
+                    .buttonBorderShape(.capsule)
                     .disabled(model.isScanning)
                     Button { SystemSettings.openExtensions() } label: {
                         Label("Open Login Items & Extensions", systemImage: "gearshape")
                     }
+                    .buttonStyle(.bordered)
+                    .buttonBorderShape(.capsule)
                 }
                 Text("“Reset” runs `qlmanage -r` and `qlmanage -r cache` to reload generators and "
                      + "clear stale thumbnails — handy after enabling an extension.")

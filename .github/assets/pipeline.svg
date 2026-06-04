@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 120" width="820" height="120" role="img" aria-label="Qedit pipeline: preview, then edit, then save in place">
+  <defs>
+    <linearGradient id="paccent" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#5b9bff"/>
+      <stop offset="1" stop-color="#2563eb"/>
+    </linearGradient>
+    <clipPath id="pcard"><rect width="820" height="120" rx="18"/></clipPath>
+  </defs>
+
+  <g clip-path="url(#pcard)">
+    <rect width="820" height="120" fill="#0c1428"/>
+
+    <!-- connectors -->
+    <line x1="190" y1="52" x2="340" y2="52" stroke="#26365f" stroke-width="3"/>
+    <line x1="480" y1="52" x2="630" y2="52" stroke="#26365f" stroke-width="3"/>
+    <!-- flowing dots -->
+    <circle r="4" fill="#5b9bff">
+      <animate attributeName="cx" values="190;340" dur="1.4s" begin="0s;3s" repeatCount="indefinite"/>
+      <animate attributeName="cy" values="52;52" dur="1.4s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.1;0.9;1" dur="1.4s" begin="0s;3s" repeatCount="indefinite"/>
+    </circle>
+    <circle r="4" fill="#5b9bff">
+      <animate attributeName="cx" values="480;630" dur="1.4s" begin="1.5s;4.5s" repeatCount="indefinite"/>
+      <animate attributeName="cy" values="52;52" dur="1.4s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.1;0.9;1" dur="1.4s" begin="1.5s;4.5s" repeatCount="indefinite"/>
+    </circle>
+
+    <!-- Node 1: Preview (eye) -->
+    <g transform="translate(140,52)">
+      <circle r="26" fill="#11203f" stroke="url(#paccent)" stroke-width="3"/>
+      <path d="M -13 0 Q 0 -11 13 0 Q 0 11 -13 0 Z" fill="none" stroke="#9fc1ff" stroke-width="2.4"/>
+      <circle r="4.2" fill="#9fc1ff"/>
+    </g>
+    <text x="140" y="98" text-anchor="middle" font-family="-apple-system, SF Pro Text, Segoe UI, sans-serif" font-size="15" font-weight="600" fill="#cdddff">Preview</text>
+
+    <!-- Node 2: Edit (pencil) -->
+    <g transform="translate(410,52)">
+      <circle r="26" fill="#11203f" stroke="url(#paccent)" stroke-width="3"/>
+      <g transform="rotate(45)">
+        <rect x="-3.2" y="-13" width="6.4" height="20" rx="2" fill="#9fc1ff"/>
+        <path d="M -3.2 7 L 3.2 7 L 0 13 Z" fill="#cdddff"/>
+        <rect x="-3.2" y="-13" width="6.4" height="4" fill="#5b9bff"/>
+      </g>
+    </g>
+    <text x="410" y="98" text-anchor="middle" font-family="-apple-system, SF Pro Text, Segoe UI, sans-serif" font-size="15" font-weight="600" fill="#cdddff">Edit</text>
+
+    <!-- Node 3: Save in place (check) -->
+    <g transform="translate(680,52)">
+      <circle r="26" fill="#11203f" stroke="url(#paccent)" stroke-width="3"/>
+      <path d="M -11 1 L -3 9 L 12 -8" fill="none" stroke="#34d27b" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round">
+        <animate attributeName="stroke-dasharray" values="0 40;40 40" dur="0.6s" begin="2.4s;5.4s" fill="freeze"/>
+      </path>
+    </g>
+    <text x="680" y="98" text-anchor="middle" font-family="-apple-system, SF Pro Text, Segoe UI, sans-serif" font-size="15" font-weight="600" fill="#cdddff">Save in place</text>
+  </g>
+</svg>

@@ -1,118 +1,75 @@
-# Qedit — non-destructive find / edit for any file (macOS)
+<div align="center">
 
-Qedit adds Peek-style **find, edit, navigate, annotate** to files macOS otherwise renders
-flat — including PDFs — **without ever changing or renaming the file's format**. It also
-ships a manager for installed Quick Look extensions.
+<img src=".github/assets/hero.svg" alt="Qedit — find & edit any file without changing its format" width="820">
 
-A `.pdf` stays a `.pdf` (edited via PDFKit). A `.md` stays a `.md`. No conversion, no
-`.ePDF` tricks, no fighting Apple's built-in previews.
+<br/>
 
-> Status: **All four milestones complete.** Xcode project (host app + Quick Look preview
-> extension + Quick Action); rich previews for non-system types; in-place text editor; a
-> full **PDFKit editor** (find, annotate, page ops, save-in-place); the Finder Quick Action
-> + configurable **global hotkey** (⌥⌘E); the **Extension Manager** (enumerate extensions,
-> `qlmanage -r`, UTI inspector, Settings deep-link); in-app **update checks** (GitHub +
-> brew); **theming**; and **Developer ID release tooling** (signed DMG + notarization
-> scripts). The notarized release itself is a one-command step once Apple notary
-> credentials are configured — see [docs/RELEASE.md](docs/RELEASE.md).
+[![Release](https://github.com/ArioMoniri/Qedit/actions/workflows/release.yml/badge.svg)](https://github.com/ArioMoniri/Qedit/actions/workflows/release.yml)
+![Platform](https://img.shields.io/badge/macOS-14%2B-111?logo=apple)
+![Swift](https://img.shields.io/badge/Swift-5-f05138?logo=swift&logoColor=white)
+![Made with](https://img.shields.io/badge/SwiftUI%20·%20PDFKit-2563eb)
+[![Download](https://img.shields.io/github/v/release/ArioMoniri/Qedit?label=download&color=34d27b)](https://github.com/ArioMoniri/Qedit/releases/latest)
 
-## Why it's built this way (real macOS limits)
+</div>
 
-These are hard constraints, not preferences:
+> 🔎 **Qedit** gives macOS the thing it's missing: open *any* file — **including PDFs** — find, edit, annotate, then **save it back in place**. A `.pdf` stays a `.pdf`. A `.md` stays a `.md`. No conversion, no `.ePDF` tricks, ever.
 
-1. **Never change a file's format.** All edits write back in place, in the original
-   format.
-2. **Don't register the preview extension for system-owned UTIs** (`com.adobe.pdf`,
-   `public.jpeg`, `public.png`, `public.tiff`, …). macOS gives its built-in handlers
-   priority and App Store validation rejects system UTIs in `QLSupportedContentTypes`.
-   So Qedit's preview only covers types Apple renders poorly (Markdown, source code,
-   logs, config) and **never replaces Apple's spacebar PDF preview**.
-3. **The Quick Look preview is sandboxed, read-only, non-interactive.** No save buttons
-   in the preview. All writing happens in the editor (Module B), which gets write access
-   via the Quick Action and (later) security-scoped bookmarks.
-4. **A manager can't toggle another app's Quick Look extension.** Qedit deep-links you to
-   System Settings → Login Items & Extensions and guides you. It never claims auto-enable.
+<div align="center">
+<img src=".github/assets/pipeline.svg" alt="Preview → Edit → Save in place" width="720">
+</div>
 
-## Architecture — one host `.app`, three targets
+## ✨ What you get
 
-| Target | Kind | Role |
-|---|---|---|
-| `Qedit` | Application (SwiftUI/AppKit) | Module B editor, Module C manager, onboarding, hotkey |
-| `QeditQuickLook` | Quick Look preview app-extension | **Module A** — rich read-only previews for non-system UTIs |
-| `QeditQuickAction` | Action / Services app-extension | **Module B entry** — hands the Finder selection to the editor |
+- 👀 **Rich Quick Look previews** for the stuff macOS shows as flat text — Markdown, source code, logs, JSON/YAML/XML — with syntax highlighting, dark mode, and remembered scroll position.
+- 📄 **A real PDF editor** — find with jump-to-result, highlight, sticky notes, text boxes, ✍️ signatures, and page ops (rotate / delete / insert / reorder / extract). Saves straight back to the same `.pdf`.
+- ✏️ **A text/code editor** with the native find bar, your file's original encoding, and an optional timestamped backup before the first write.
+- ⌨️ **One keystroke from Finder** — pick a file, hit **⌥⌘E** (rebindable), and it opens in the editor. Or right-click → Quick Actions → *Open in Qedit*.
+- 🧩 **A Quick Look extension manager** — see every installed preview extension and the file types it claims, reset the Quick Look cache, drop a file to learn its UTI + which extension previews it, and jump to the right System Settings pane.
+- 🌗 Light / Dark / System theme, recent files, in-app update checks (GitHub + Homebrew).
 
-- **Module A** (`Sources/QuickLookExtension`): a `QLPreviewingController` hosting a
-  `WKWebView`. Markdown (marked), source/config (highlight.js), and logs render as
-  self-contained HTML — all JS/CSS is **bundled** (offline + sandbox safe) and the file
-  text is base64-embedded so arbitrary content can't break the page. Scroll position is
-  restored per file; light/dark themes via `prefers-color-scheme`.
-- **Module B** (`Sources/Qedit/Editor`): opens a file from Finder (Quick Action or the
-  global hotkey, via `qedit://open?path=…`). Text/source/Markdown/config open in an
-  `NSTextView`-backed editor (native find bar, original-encoding save). **PDFs** open in
-  a PDFKit editor with find + jump-to-result, highlight/note/text-box/signature
-  annotations, page ops (rotate/delete/insert/reorder/extract) and copy-as-plain-text.
-  Both save **in place** in the original format, with an optional timestamped backup
-  before the first write.
-- **Module C** (`Sources/Qedit/Manager`): enumerates installed Quick Look preview
-  extensions (`pluginkit -mAvvv`), reads each one's `QLSupportedContentTypes`, resets the
-  Quick Look cache (`qlmanage -r`), inspects any file's UTI + which extension claims it,
-  and deep-links to the System Settings approval pane (it can't toggle extensions itself).
+## 🧩 How it works
 
-The host app is intentionally **not sandboxed** (Developer ID distribution) so the manager
-can shell out to `pluginkit` / `qlmanage` / `brew` and the hotkey can read the Finder
-selection. Both app-extensions **are** sandboxed (required), read-only.
+**Preview (read)** → **Edit (write)**. The Quick Look extension renders non‑system types beautifully; the editor opens the *same* file on demand and writes back in place. Two steps, one keystroke apart.
 
-## Build
+## 🚫 What it won't do (on purpose — these are real macOS limits)
 
-Requires Xcode 26+, macOS 14+ SDK, and [XcodeGen](https://github.com/yonsm/XcodeGen).
+- ❌ Change or rename your file's format. Edits always write back in the original format.
+- ❌ Hijack Apple's built-in PDF/image previews. Qedit only previews types macOS renders poorly, and never registers system UTIs.
+- ❌ Pretend it can flip another app's extension on for you — macOS requires *you* to approve extensions. Qedit just deep-links you there and explains it.
+
+## 🛠 Build from source
+
+Needs Xcode 16+ and [XcodeGen](https://github.com/yonsm/XcodeGen).
 
 ```bash
-brew install xcodegen        # one-time
-xcodegen generate            # project.yml → Qedit.xcodeproj (git-ignored)
-open Qedit.xcodeproj         # or build from the CLI:
-
-xcodebuild -project Qedit.xcodeproj -scheme Qedit -configuration Debug \
-  -destination 'platform=macOS,arch=arm64' -derivedDataPath build build
+brew install xcodegen
+xcodegen generate        # project.yml → Qedit.xcodeproj (git-ignored)
+open Qedit.xcodeproj      # ⌘R to run
 ```
 
-The `.xcodeproj` is generated and **not** committed — edit `project.yml`, then
-`xcodegen generate`.
+First run: move **Qedit.app** to `/Applications`, then **Setup** tab → enable *Qedit Preview* in System Settings → Login Items & Extensions → Quick Look. Press **Space** on a `.md`/`.swift`/`.log` and you'll see it. 🎉
 
-### Try the preview (after building)
+## 📦 Install
 
-1. Move `Qedit.app` to `/Applications` and launch it once so macOS registers the extensions.
-2. System Settings → General → Login Items & Extensions → Quick Look → enable **Qedit Preview**.
-3. Select a `.md`, `.swift`, `.log`, or `.json` file in Finder and press **Space**.
+Grab the signed, notarized **`.dmg`** from [Releases](https://github.com/ArioMoniri/Qedit/releases/latest), drag Qedit to Applications, done.
 
-(The in-app **Setup** tab walks through this.)
+## 🚀 Releasing (maintainers)
 
-## Distribution
-
-Developer ID + notarization, shipped as a DMG on GitHub Releases (+ optional Homebrew cask):
+Pushing a `vX.Y.Z` tag runs [`.github/workflows/release.yml`](.github/workflows/release.yml): it builds, **Developer-ID signs**, **notarizes**, and publishes the DMG — all from the configured `APPLE_*` Actions secrets. Details in [docs/RELEASE.md](docs/RELEASE.md).
 
 ```bash
-./scripts/build_release.sh        # archive → Developer-ID-signed .app → signed .dmg
-./scripts/notarize.sh dist/Qedit.dmg   # notarytool submit --wait + staple
-gh release create vX.Y.Z dist/Qedit.dmg --repo ArioMoniri/Qedit
+git tag v0.1.0 && git push origin v0.1.0   # 🪄 that's the whole release
 ```
 
-Release builds (the `Release` configuration in `project.yml`) use Hardened Runtime +
-`--timestamp`. Full runbook and one-time credential setup in
-[docs/RELEASE.md](docs/RELEASE.md).
+## 🗺 Roadmap
 
-## Roadmap
+- [x] **M1** — Quick Look previews (Markdown / code / logs / config) + in-place text editor
+- [x] **M2** — PDFKit editor (find · annotate · sign · page ops) + Quick Action + ⌥⌘E hotkey
+- [x] **M3** — Quick Look extension manager (`pluginkit` · `qlmanage -r` · UTI inspector)
+- [x] **M4** — Updates · theming · Developer-ID signing + notarized release
 
-- [x] **M1** — Xcode project (host + QL preview + Quick Action); rich Markdown/code/log/config
-  previews; in-place text editor with find bar + backup.
-- [x] **M2** — PDFKit editor: find/search, highlight/note/text/signature annotations, page
-  ops (rotate/delete/insert/reorder/extract), copy-as-text, save-in-place; Finder Quick
-  Action + configurable global hotkey (⌥⌘E).
-- [x] **M3** — Extension manager: list extensions + UTIs, `qlmanage -r`, UTI inspector,
-  Settings deep-link.
-- [x] **M4** — In-app updates (GitHub Releases + `brew outdated --cask`), theming
-  (System/Light/Dark), Developer ID Release config + signed-DMG/notarization scripts.
-  _(Running notarization needs your Apple notary credentials — see docs/RELEASE.md.)_
-
-## License
+## 📄 License
 
 TBD.
+
+<div align="center"><sub>Built with Swift, SwiftUI, AppKit & PDFKit on macOS. 🛠</sub></div>

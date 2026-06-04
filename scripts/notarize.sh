@@ -20,8 +20,15 @@ if [[ ! -e "$TARGET" ]]; then
   exit 1
 fi
 
-echo "==> Submitting $TARGET to Apple notary service (profile: $PROFILE)"
-xcrun notarytool submit "$TARGET" --keychain-profile "$PROFILE" --wait
+# CI passes credentials directly via env; local runs use a stored keychain profile.
+if [[ -n "${APPLE_ID:-}" && -n "${APPLE_PASSWORD:-}" && -n "${APPLE_TEAM_ID:-}" ]]; then
+  echo "==> Submitting $TARGET to Apple notary service (Apple ID)"
+  xcrun notarytool submit "$TARGET" \
+    --apple-id "$APPLE_ID" --password "$APPLE_PASSWORD" --team-id "$APPLE_TEAM_ID" --wait
+else
+  echo "==> Submitting $TARGET to Apple notary service (profile: $PROFILE)"
+  xcrun notarytool submit "$TARGET" --keychain-profile "$PROFILE" --wait
+fi
 
 echo "==> Stapling ticket"
 xcrun stapler staple "$TARGET"

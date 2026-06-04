@@ -54,7 +54,10 @@ struct HomeView: View {
                     if let url = FileOpener.runOpenPanel() { open(url) }
                 } label: {
                     Label("Open File…", systemImage: "folder")
+                        .padding(.horizontal, 6)
                 }
+                .buttonStyle(.borderedProminent)
+                .buttonBorderShape(.capsule)
                 .controlSize(.large)
                 .keyboardShortcut("o", modifiers: .command)
             }
