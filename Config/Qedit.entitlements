@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!--
+	  Host app is intentionally NOT sandboxed (Developer ID distribution) so Module C
+	  can shell out to pluginkit / qlmanage / brew and the global hotkey can read the
+	  Finder selection. The two app-extension targets ARE sandboxed (see their own
+	  entitlements). Apple-events entitlement is needed (under Hardened Runtime) to
+	  query Finder for the current selection.
+	-->
+	<key>com.apple.security.automation.apple-events</key>
+	<true/>
+</dict>
+</plist>

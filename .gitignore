@@ -1,0 +1,35 @@
+# Xcode / build artifacts
+build/
+DerivedData/
+*.xcodeproj/xcuserdata/
+*.xcodeproj/project.xcworkspace/xcuserdata/
+*.xcworkspace/xcuserdata/
+*.xcuserstate
+*.xcscmblueprint
+
+# XcodeGen generates the project — keep it out of git, regenerate with `xcodegen generate`
+Qedit.xcodeproj/
+
+# Swift Package Manager
+.build/
+.swiftpm/
+
+# macOS
+.DS_Store
+*.swp
+
+# Release / distribution output
+dist/
+*.dmg
+*.zip
+*.pkg
+
+# Secrets / signing
+*.p12
+*.cer
+*.provisionprofile
+ExportOptions.local.plist
+.env
+
+# Tooling noise
+.claude-flow/
