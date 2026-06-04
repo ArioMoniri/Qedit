@@ -37,10 +37,16 @@ final class AppState: ObservableObject {
             applyAppearance()
         }
     }
+    /// When true, closing the last window drops the Dock icon and keeps Qedit running as a
+    /// menu-bar background agent (hotkey + Quick Action stay live). When false, it quits.
+    @Published var keepRunningInBackground: Bool {
+        didSet { UserDefaults.standard.set(keepRunningInBackground, forKey: Self.backgroundKey) }
+    }
 
     private static let recentsKey = "qe.recentFiles"
     private static let backupKey = "qe.makeBackupBeforeFirstWrite"
     private static let appearanceKey = "qe.appearance"
+    private static let backgroundKey = "qe.keepRunningInBackground"
     private let maxRecents = 12
 
     init() {
@@ -51,6 +57,7 @@ final class AppState: ObservableObject {
         }
         self.appearance = UserDefaults.standard.string(forKey: Self.appearanceKey)
             .flatMap(AppAppearance.init(rawValue:)) ?? .system
+        self.keepRunningInBackground = UserDefaults.standard.object(forKey: Self.backgroundKey) as? Bool ?? true
         loadRecents()
     }
 

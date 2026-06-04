@@ -16,6 +16,13 @@ struct SettingsView: View {
                          + "this overrides the editor and app windows.")
                         .font(.caption).foregroundStyle(.secondary)
                 }
+                Section("When the window closes") {
+                    Toggle("Keep Qedit running in the menu bar", isOn: $appState.keepRunningInBackground)
+                    Text("On: closing the window drops the Dock icon and keeps Qedit running in the "
+                         + "background (the global hotkey and Quick Action stay live); use the menu-bar "
+                         + "icon to reopen or quit. Off: closing the last window quits Qedit.")
+                        .font(.caption).foregroundStyle(.secondary)
+                }
                 Section("Editing safety") {
                     Toggle("Make a timestamped backup before the first save", isOn: $appState.makeBackupBeforeFirstWrite)
                     Text("Editing real files is destructive. When on, Qedit copies the original to a "

@@ -15,6 +15,8 @@ final class EditorLauncher: ObservableObject {
 
     func open(_ url: URL) {
         AppState.shared.noteOpened(url)
+        // Coming from the hotkey/Quick Action: restore the regular app (Dock icon) and front it.
+        NSApp.setActivationPolicy(.regular)
         NSApp.activate(ignoringOtherApps: true)
         if let openEditorWindow {
             openEditorWindow(url)
