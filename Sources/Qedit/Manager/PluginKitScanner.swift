@@ -100,6 +100,14 @@ enum PluginKitScanner {
         return QLExtensionInfo(identifier: identifier, version: version, status: status)
     }
 
+    /// Enable (`use`) or disable (`ignore`) an extension via pluginkit. Returns true on success.
+    /// macOS may still require a one-time approval in System Settings for first activation.
+    static func setEnabled(_ enabled: Bool, identifier: String) -> Bool {
+        guard Shell.exists(pluginkitPath) else { return false }
+        let action = enabled ? "use" : "ignore"
+        return Shell.run(pluginkitPath, ["-e", action, "-i", identifier]).succeeded
+    }
+
     static func supportedUTIs(appexPath: String) -> [String] {
         let plistURL = URL(fileURLWithPath: appexPath).appendingPathComponent("Contents/Info.plist")
         guard let dict = NSDictionary(contentsOf: plistURL) as? [String: Any],
@@ -129,5 +137,21 @@ final class ExtensionManagerModel: ObservableObject {
         let result = await Task.detached { Diagnostics.resetQuickLookCache() }.value
         lastDiagnostic = result
         isScanning = false
+    }
+
+    func setEnabled(_ enabled: Bool, for ext: QLExtensionInfo) async {
+        let id = ext.identifier
+        isScanning = true
+        _ = await Task.detached { PluginKitScanner.setEnabled(enabled, identifier: id) }.value
+        await scan()
+    }
+
+    func setAllEnabled(_ enabled: Bool) async {
+        let ids = extensions.map(\.identifier)
+        isScanning = true
+        await Task.detached {
+            for id in ids { _ = PluginKitScanner.setEnabled(enabled, identifier: id) }
+        }.value
+        await scan()
     }
 }

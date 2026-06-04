@@ -87,6 +87,16 @@ jobs:
           rm -f ed_priv
           echo "Update signature: $SIG"
 
+          # Pull this version's notes from CHANGELOG.md (markdown for the release, HTML for Sparkle).
+          awk -v tag="$TAG" '
+            $0 ~ "^## " tag "([^0-9]|$)" {flag=1; next}
+            /^## / {flag=0}
+            flag {print}
+          ' CHANGELOG.md | sed '/^[[:space:]]*$/d' > notes.md || true
+          [ -s notes.md ] || printf -- "- Qedit %s\n" "$VERSION" > notes.md
+          NOTES_HTML=$(sed -n 's/^- \(.*\)/<li>\1<\/li>/p' notes.md \
+            | sed 's/\*\*\([^*]*\)\*\*/<strong>\1<\/strong>/g' | tr -d '\n')
+
           DMG_URL="https://github.com/${GITHUB_REPOSITORY}/releases/download/${TAG}/Qedit.dmg"
           PUBDATE=$(LC_ALL=C date -u "+%a, %d %b %Y %H:%M:%S +0000")
           cat > dist/appcast.xml <<XML
@@ -97,6 +107,7 @@ jobs:
               <item>
                 <title>Version ${VERSION}</title>
                 <link>https://github.com/${GITHUB_REPOSITORY}/releases/tag/${TAG}</link>
+                <description><![CDATA[<h2>Qedit ${VERSION}</h2><ul>${NOTES_HTML}</ul>]]></description>
                 <sparkle:version>${VERSION}</sparkle:version>
                 <sparkle:shortVersionString>${VERSION}</sparkle:shortVersionString>
                 <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
@@ -116,17 +127,10 @@ jobs:
           set -euo pipefail
           if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             gh release upload "$TAG" dist/Qedit.dmg dist/appcast.xml --clobber --repo "$GITHUB_REPOSITORY"
+            gh release edit "$TAG" --notes-file notes.md --repo "$GITHUB_REPOSITORY"
           else
             gh release create "$TAG" dist/Qedit.dmg dist/appcast.xml \
               --repo "$GITHUB_REPOSITORY" \
               --title "Qedit $TAG" \
-              --generate-notes
+              --notes-file notes.md
           fi
-
-      - name: Upload build artifact
-        if: always()
-        uses: actions/upload-artifact@v5
-        with:
-          name: Qedit-dmg
-          path: dist/Qedit.dmg
-          if-no-files-found: ignore

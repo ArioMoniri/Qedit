@@ -1,76 +1,96 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 240" width="820" height="240" role="img" aria-label="Qedit — find and edit any file without changing its format">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 250" width="820" height="250" role="img" aria-label="Qedit — find and edit any file, including PDFs, without changing its format">
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#0c1428"/>
-      <stop offset="1" stop-color="#0a1020"/>
+      <stop offset="0" stop-color="#0d1730"/>
+      <stop offset="0.55" stop-color="#0b1426"/>
+      <stop offset="1" stop-color="#090f1e"/>
     </linearGradient>
     <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#5b9bff"/>
+      <stop offset="0" stop-color="#6aa6ff"/>
       <stop offset="1" stop-color="#2563eb"/>
     </linearGradient>
-    <clipPath id="card"><rect width="820" height="240" rx="22"/></clipPath>
+    <linearGradient id="paper" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#eef2fb"/>
+    </linearGradient>
+    <clipPath id="card"><rect width="820" height="250" rx="22"/></clipPath>
   </defs>
 
   <g clip-path="url(#card)">
-    <rect width="820" height="240" fill="url(#bg)"/>
-    <circle cx="700" cy="20" r="180" fill="#16245096" />
-    <circle cx="120" cy="220" r="150" fill="#13204a80" />
+    <rect width="820" height="250" fill="url(#bg)"/>
+    <circle cx="735" cy="0" r="200" fill="#1a2c57" opacity="0.4"/>
+    <circle cx="60" cy="250" r="150" fill="#14224a" opacity="0.5"/>
 
-    <!-- Wordmark -->
-    <text x="48" y="104" font-family="-apple-system, SF Pro Display, Segoe UI, Helvetica, Arial, sans-serif" font-size="58" font-weight="800" fill="#ffffff">Qedit</text>
-    <rect x="50" y="120" width="0" height="6" rx="3" fill="url(#accent)">
-      <animate attributeName="width" values="0;150;150" keyTimes="0;0.5;1" dur="2.6s" begin="0s" fill="freeze" repeatCount="1"/>
+    <!-- Wordmark + tagline -->
+    <text x="48" y="100" font-family="-apple-system, SF Pro Display, Segoe UI, Helvetica, Arial, sans-serif" font-size="56" font-weight="800" fill="#ffffff" letter-spacing="-1">Qedit</text>
+    <rect x="50" y="115" width="0" height="6" rx="3" fill="url(#accent)">
+      <animate attributeName="width" values="0;150;150" keyTimes="0;0.45;1" dur="2.8s" begin="0s" fill="freeze"/>
     </rect>
-
-    <text x="50" y="158" font-family="-apple-system, SF Pro Text, Segoe UI, Helvetica, Arial, sans-serif" font-size="18" fill="#aebfe0">Find &amp; edit any file — PDFs included —</text>
-    <text x="50" y="184" font-family="-apple-system, SF Pro Text, Segoe UI, Helvetica, Arial, sans-serif" font-size="18" fill="#aebfe0">without ever changing its format.</text>
-
-    <!-- macOS chip -->
-    <g transform="translate(50,202)">
-      <rect width="150" height="26" rx="13" fill="#1c2c55"/>
-      <text x="16" y="18" font-family="-apple-system, SF Pro Text, Segoe UI, sans-serif" font-size="13" fill="#9fb6ea">macOS · SwiftUI · PDFKit</text>
+    <text x="50" y="151" font-family="-apple-system, SF Pro Text, Segoe UI, Helvetica, Arial, sans-serif" font-size="17.5" fill="#aebfe0">Find, edit &amp; annotate <tspan font-weight="700" fill="#dfe9ff">any</tspan> file — PDFs included —</text>
+    <text x="50" y="175" font-family="-apple-system, SF Pro Text, Segoe UI, Helvetica, Arial, sans-serif" font-size="17.5" fill="#aebfe0">then save it <tspan font-weight="700" fill="#dfe9ff">in place</tspan>, never converted.</text>
+    <g transform="translate(50,196)" font-family="-apple-system, SF Pro Text, Segoe UI, sans-serif">
+      <rect width="188" height="26" rx="13" fill="#16264c"/>
+      <circle cx="16" cy="13" r="4" fill="#34d27b"/>
+      <text x="28" y="17" font-size="12.5" fill="#9fb6ea">macOS · SwiftUI · PDFKit</text>
     </g>
 
-    <!-- Scene: a document being scanned -->
-    <g transform="translate(548,44)">
-      <rect x="0" y="0" width="176" height="152" rx="14" fill="#f4f7ff"/>
-      <rect x="0" y="0" width="176" height="152" rx="14" fill="none" stroke="#dbe4f7" stroke-width="1"/>
+    <!-- App window preview -->
+    <g transform="translate(466,42)">
+      <rect x="0" y="0" width="248" height="160" rx="13" fill="url(#paper)" stroke="#dde5f4" stroke-width="1"/>
+      <path d="M0 13 a13 13 0 0 1 13 -13 h222 a13 13 0 0 1 13 13 v19 h-248 z" fill="#e9eef8"/>
+      <circle cx="17" cy="16" r="4.5" fill="#ff5f57"/>
+      <circle cx="33" cy="16" r="4.5" fill="#febc2e"/>
+      <circle cx="49" cy="16" r="4.5" fill="#28c840"/>
+      <text x="124" y="20" text-anchor="middle" font-family="-apple-system, SF Pro Text, sans-serif" font-size="10.5" fill="#8a98b5">report.pdf</text>
 
-      <!-- text lines -->
-      <rect x="22" y="26" width="120" height="9" rx="4.5" fill="#c5d1ea"/>
-      <rect x="22" y="50" width="132" height="9" rx="4.5" fill="#c5d1ea"/>
-      <rect x="22" y="74" width="96"  height="9" rx="4.5" fill="#c5d1ea"/>
-      <rect x="22" y="98" width="118" height="9" rx="4.5" fill="#c5d1ea"/>
-      <rect x="22" y="122" width="74" height="9" rx="4.5" fill="#c5d1ea"/>
+      <rect x="24" y="50" width="132" height="8.5" rx="4" fill="#cdd8ee"/>
+      <rect x="24" y="71" width="164" height="8.5" rx="4" fill="#cdd8ee"/>
+      <rect x="24" y="92" width="104" height="8.5" rx="4" fill="#cdd8ee"/>
+      <rect x="24" y="113" width="150" height="8.5" rx="4" fill="#cdd8ee"/>
+      <rect x="24" y="134" width="84"  height="8.5" rx="4" fill="#cdd8ee"/>
 
-      <!-- highlight sweeping in as the lens passes -->
-      <rect x="20" y="24" width="124" height="13" rx="5" fill="#ffd23f" opacity="0">
-        <animate attributeName="opacity" values="0;0;0.8;0.8" keyTimes="0;0.12;0.2;1" dur="3s" repeatCount="indefinite"/>
+      <rect x="22" y="48" width="136" height="12.5" rx="5" fill="#ffd23f" opacity="0">
+        <animate attributeName="opacity" values="0;0;.85;.85" keyTimes="0;0.16;0.24;1" dur="3.4s" repeatCount="indefinite"/>
       </rect>
-      <rect x="20" y="48" width="136" height="13" rx="5" fill="#ffd23f" opacity="0">
-        <animate attributeName="opacity" values="0;0;0.8;0.8" keyTimes="0;0.32;0.4;1" dur="3s" repeatCount="indefinite"/>
-      </rect>
-      <rect x="20" y="72" width="100" height="13" rx="5" fill="#ffd23f" opacity="0">
-        <animate attributeName="opacity" values="0;0;0.8;0.8" keyTimes="0;0.52;0.6;1" dur="3s" repeatCount="indefinite"/>
+      <rect x="22" y="90" width="108" height="12.5" rx="5" fill="#ffd23f" opacity="0">
+        <animate attributeName="opacity" values="0;0;.85;.85" keyTimes="0;0.46;0.54;1" dur="3.4s" repeatCount="indefinite"/>
       </rect>
 
-      <!-- magnifier scanning down the page -->
       <g>
         <animateTransform attributeName="transform" type="translate"
-          values="0,0; 0,72; 0,0" keyTimes="0;0.55;1" dur="3s" repeatCount="indefinite" calcMode="spline"
-          keySplines="0.45 0 0.55 1; 0.45 0 0.55 1"/>
-        <circle cx="150" cy="34" r="22" fill="#5b9bff" fill-opacity="0.18" stroke="url(#accent)" stroke-width="6"/>
-        <line x1="166" y1="50" x2="182" y2="66" stroke="url(#accent)" stroke-width="7" stroke-linecap="round"/>
+          values="0,0; 0,84; 0,0" keyTimes="0;0.52;1" dur="3.4s" repeatCount="indefinite"
+          calcMode="spline" keySplines="0.42 0 0.58 1; 0.42 0 0.58 1"/>
+        <circle cx="196" cy="42" r="19" fill="#6aa6ff" fill-opacity="0.16" stroke="url(#accent)" stroke-width="5"/>
+        <line x1="210" y1="56" x2="223" y2="69" stroke="url(#accent)" stroke-width="6" stroke-linecap="round"/>
       </g>
     </g>
 
-    <!-- "saved in place" pulse -->
-    <g transform="translate(548,206)">
-      <rect width="176" height="24" rx="12" fill="#10331f">
-        <animate attributeName="fill" values="#10331f;#155233;#10331f" dur="3s" repeatCount="indefinite"/>
+    <!-- saved-in-place pill -->
+    <g transform="translate(466,212)" font-family="-apple-system, SF Pro Text, sans-serif">
+      <rect width="248" height="24" rx="12" fill="#10331f">
+        <animate attributeName="fill" values="#10331f;#16523a;#10331f" dur="3.4s" repeatCount="indefinite"/>
       </rect>
       <circle cx="16" cy="12" r="4" fill="#34d27b"/>
-      <text x="28" y="16" font-family="-apple-system, SF Pro Text, Segoe UI, sans-serif" font-size="12" fill="#8ff0bb">saved in place · stays a .pdf</text>
+      <text x="28" y="16" font-size="11.5" fill="#8ff0bb">saved in place · still a .pdf</text>
+    </g>
+
+    <!-- floating file-type chips -->
+    <g font-family="-apple-system, SF Pro Text, sans-serif" font-size="11" font-weight="700">
+      <g transform="translate(424,62)">
+        <animateTransform attributeName="transform" type="translate" values="424,62; 424,54; 424,62" dur="4s" repeatCount="indefinite" calcMode="spline" keySplines="0.45 0 0.55 1;0.45 0 0.55 1"/>
+        <rect width="50" height="24" rx="7" fill="#1d2f59" stroke="#33508f" stroke-width="1"/>
+        <text x="25" y="16" text-anchor="middle" fill="#9fc1ff">.pdf</text>
+      </g>
+      <g transform="translate(430,150)">
+        <animateTransform attributeName="transform" type="translate" values="430,150; 430,142; 430,150" dur="4.6s" begin="0.6s" repeatCount="indefinite" calcMode="spline" keySplines="0.45 0 0.55 1;0.45 0 0.55 1"/>
+        <rect width="46" height="24" rx="7" fill="#15324a" stroke="#296a8c" stroke-width="1"/>
+        <text x="23" y="16" text-anchor="middle" fill="#7fdfff">.md</text>
+      </g>
+      <g transform="translate(732,104)">
+        <animateTransform attributeName="transform" type="translate" values="732,104; 732,114; 732,104" dur="5s" begin="0.3s" repeatCount="indefinite" calcMode="spline" keySplines="0.45 0 0.55 1;0.45 0 0.55 1"/>
+        <rect width="54" height="24" rx="7" fill="#3a2a16" stroke="#7a5a2c" stroke-width="1"/>
+        <text x="27" y="16" text-anchor="middle" fill="#ffce8a">.swift</text>
+      </g>
     </g>
   </g>
 </svg>

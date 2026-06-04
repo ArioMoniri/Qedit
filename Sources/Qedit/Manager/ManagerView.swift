@@ -11,10 +11,16 @@ struct ManagerView: View {
     @State private var brewMessage: String?
     @State private var checkingUpdates = false
 
+    /// Qedit's own preview extension, if pluginkit sees it.
+    private var ownExtension: QLExtensionInfo? {
+        model.extensions.first { $0.isOwnedByQedit }
+    }
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
                 header
+                if let own = ownExtension, own.status != .enabled { enableQeditBanner(own) }
                 updatesCard
                 diagnosticsCard
                 inspectorCard
@@ -35,11 +41,21 @@ struct ManagerView: View {
             VStack(alignment: .leading, spacing: 6) {
                 Text("Quick Look Extensions").font(.title2).bold()
                 Text("Installed Quick Look **preview** extensions and the file types they claim. "
-                     + "macOS won’t let any app enable another app’s extension — use the buttons below "
-                     + "to open the approval pane yourself.")
+                     + "Toggle one on/off below — if macOS still ignores it, approve it once in "
+                     + "System Settings.")
                     .foregroundStyle(.secondary)
             }
             Spacer()
+            Menu {
+                Button { Task { await model.setAllEnabled(true) } } label: { Label("Enable All", systemImage: "checkmark.circle") }
+                Button(role: .destructive) { Task { await model.setAllEnabled(false) } } label: { Label("Disable All", systemImage: "xmark.circle") }
+            } label: {
+                Label("Bulk", systemImage: "switch.2")
+            }
+            .menuStyle(.borderlessButton)
+            .fixedSize()
+            .disabled(model.isScanning || model.extensions.isEmpty)
+
             Button { Task { await model.scan() } } label: {
                 Label("Refresh", systemImage: "arrow.clockwise")
             }
@@ -47,6 +63,29 @@ struct ManagerView: View {
             .buttonBorderShape(.capsule)
             .disabled(model.isScanning)
         }
+    }
+
+    private func enableQeditBanner(_ ext: QLExtensionInfo) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: "eye.trianglebadge.exclamationmark").font(.title2).foregroundStyle(.tint)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Qedit Preview isn’t active yet").bold()
+                Text("Turn it on to preview Markdown, code, logs and config with Space in Finder.")
+                    .font(.callout).foregroundStyle(.secondary)
+            }
+            Spacer()
+            Button { Task { await model.setEnabled(true, for: ext) } } label: {
+                Label("Enable", systemImage: "power").padding(.horizontal, 6)
+            }
+            .buttonStyle(.borderedProminent)
+            .buttonBorderShape(.capsule)
+            Button("Settings…") { SystemSettings.openExtensions() }
+                .buttonStyle(.bordered).buttonBorderShape(.capsule)
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(.tint.opacity(0.12), in: RoundedRectangle(cornerRadius: 12))
+        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(.tint.opacity(0.3)))
     }
 
     // MARK: - Updates
@@ -206,7 +245,9 @@ struct ManagerView: View {
             } else {
                 VStack(spacing: 0) {
                     ForEach(model.extensions) { ext in
-                        ExtensionRow(ext: ext)
+                        ExtensionRow(ext: ext) { enabled in
+                            Task { await model.setEnabled(enabled, for: ext) }
+                        }
                         if ext.id != model.extensions.last?.id { Divider() }
                     }
                 }
@@ -254,6 +295,7 @@ struct ManagerView: View {
 
 private struct ExtensionRow: View {
     let ext: QLExtensionInfo
+    let onSetEnabled: (Bool) -> Void
 
     var body: some View {
         DisclosureGroup {
@@ -298,6 +340,13 @@ private struct ExtensionRow: View {
                 if !ext.supportedUTIs.isEmpty {
                     Text("\(ext.supportedUTIs.count) type\(ext.supportedUTIs.count == 1 ? "" : "s")")
                         .font(.caption).foregroundStyle(.secondary)
+                }
+                if ext.status == .enabled {
+                    Button("Disable") { onSetEnabled(false) }
+                        .controlSize(.small).buttonStyle(.bordered).buttonBorderShape(.capsule)
+                } else {
+                    Button("Enable") { onSetEnabled(true) }
+                        .controlSize(.small).buttonStyle(.borderedProminent).buttonBorderShape(.capsule)
                 }
             }
             .padding(.vertical, 6)

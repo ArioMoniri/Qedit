@@ -30,18 +30,30 @@ struct OnboardingView: View {
 
                 Card(title: "2 · Enable the Quick Look preview extension", systemImage: "eye") {
                     VStack(alignment: .leading, spacing: 10) {
-                        Text("Open System Settings → General → Login Items & Extensions → Quick Look, "
-                             + "and turn on “Qedit Preview”. On macOS Sequoia and later this approval "
-                             + "step is mandatory.")
+                        Text("Click Enable below. If macOS still doesn’t show the preview, open "
+                             + "System Settings → General → Login Items & Extensions → Quick Look and "
+                             + "switch on “Qedit Preview” (the one-time approval some macOS versions require).")
                             .foregroundStyle(.secondary).font(.callout)
-                        Button {
-                            SystemSettings.openExtensions()
-                        } label: {
-                            Label("Open Login Items & Extensions", systemImage: "gearshape")
+                        HStack {
+                            Button {
+                                Task.detached {
+                                    _ = PluginKitScanner.setEnabled(true, identifier: AppInfo.quickLookBundleIdentifier)
+                                }
+                            } label: {
+                                Label("Enable Qedit Preview", systemImage: "power")
+                            }
+                            .buttonStyle(.borderedProminent)
+                            .buttonBorderShape(.roundedRectangle)
+                            .controlSize(.large)
+                            Button {
+                                SystemSettings.openExtensions()
+                            } label: {
+                                Label("Open Settings", systemImage: "gearshape")
+                            }
+                            .buttonStyle(.bordered)
+                            .buttonBorderShape(.roundedRectangle)
+                            .controlSize(.large)
                         }
-                        .buttonStyle(.borderedProminent)
-                        .buttonBorderShape(.roundedRectangle)
-                        .controlSize(.large)
                     }
                 }
 

@@ -10,6 +10,8 @@ final class EditorLauncher: ObservableObject {
 
     /// Set by `RootView.onAppear`. Captures `@Environment(\.openWindow)`.
     var openEditorWindow: ((URL) -> Void)?
+    /// Reopen the dashboard window (used when the Dock icon is clicked with no windows open).
+    var openMainWindow: (() -> Void)?
 
     func open(_ url: URL) {
         AppState.shared.noteOpened(url)

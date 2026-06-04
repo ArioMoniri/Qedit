@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="210" height="56" viewBox="0 0 210 56" role="img" aria-label="Install with Homebrew">
+  <defs>
+    <linearGradient id="bbtn" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2b2b2e"/>
+      <stop offset="1" stop-color="#0c0c0e"/>
+    </linearGradient>
+  </defs>
+  <rect x="0.5" y="0.5" width="209" height="55" rx="12" fill="url(#bbtn)" stroke="#000" stroke-opacity="0.6"/>
+  <rect x="1" y="1" width="208" height="27" rx="11" fill="#ffffff" opacity="0.05"/>
+  <!-- beer mug -->
+  <g transform="translate(18,15)">
+    <rect x="0" y="6" width="17" height="20" rx="3" fill="#fbb040"/>
+    <rect x="0" y="6" width="17" height="6" rx="3" fill="#ffffff"/>
+    <circle cx="5" cy="6" r="3.4" fill="#ffffff"/>
+    <circle cx="11" cy="5" r="3.8" fill="#ffffff"/>
+    <circle cx="15" cy="7" r="3" fill="#ffffff"/>
+    <path d="M17 10 h4 a4 4 0 0 1 4 4 v4 a4 4 0 0 1 -4 4 h-4" fill="none" stroke="#fbb040" stroke-width="3"/>
+  </g>
+  <text x="56" y="23" font-family="-apple-system, SF Pro Text, Segoe UI, Helvetica, Arial, sans-serif" font-size="10" letter-spacing="1.4" fill="#c7c7cc">INSTALL WITH</text>
+  <text x="55" y="44" font-family="-apple-system, SF Pro Display, Segoe UI, Helvetica, Arial, sans-serif" font-size="21" font-weight="700" fill="#ffffff">Homebrew</text>
+</svg>
