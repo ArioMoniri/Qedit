@@ -29,33 +29,87 @@
 
 | | Feature |
 |---|---|
-| 👀 | **Rich Quick Look previews** — Markdown, source code, logs, JSON/YAML/XML rendered with syntax highlighting, dark mode & remembered scroll position |
-| 📄 | **A real PDF editor** — find + jump-to-result, highlight, sticky notes, text boxes, ✍️ signatures, and page ops (rotate / delete / insert / reorder / extract) |
-| ✏️ | **A text & code editor** — native find bar, your file's original encoding, optional timestamped backup before the first write |
+| 👀 | **Rich Quick Look previews** — Markdown, source code, logs, JSON/YAML/XML with syntax highlighting, dark mode & remembered scroll position |
+| 📄 | **A real PDF editor** — find + jump-to-result, highlight, sticky notes, text boxes, ✍️ signatures, page ops (rotate / delete / insert / reorder / extract) |
+| ✏️ | **A text & code editor** — native find bar, original encoding preserved, optional timestamped backup before the first write |
 | ⌨️ | **One keystroke from Finder** — select a file, hit **⌥⌘E** (rebindable), or right-click → *Open in Qedit* |
-| 🧩 | **Extension manager** — list every Quick Look extension + the types it claims, **enable/disable them**, reset the QL cache, and inspect any file's UTI |
+| 🧩 | **Extension manager** — list every Quick Look extension + the types it claims, **enable/disable** them, reset the QL cache, inspect any file's UTI |
 | 🔄 | **Auto-updates** — [Sparkle](https://sparkle-project.org), EdDSA-verified, installed in the background, with an in-app **Updates** page |
 
-## 🧩 How it works
+<sub>👉 Expand any section below for the details.</sub>
 
-Two steps, one keystroke apart:
+<details>
+<summary><b>📄 PDF editor — find, annotate, reorganize, save in place</b></summary>
 
-1. **Preview (read)** — press <kbd>Space</kbd> in Finder. Qedit's Quick Look extension renders the types macOS shows as flat text. System types keep Apple's preview.
-2. **Edit (write)** — the Quick Action or the global hotkey opens that *same* file in the editor. Change it, <kbd>⌘S</kbd>, done — original format preserved.
+<br/>
+
+- **Find** across the whole document with live match count and **jump-to-result** (highlighted).
+- **Annotate**: text highlights, sticky **notes**, free-text **boxes**, and freehand **✍️ signatures** (draw once in a sheet, click to place anywhere). Pick any annotation color.
+- **Pages**: rotate, delete, insert blank, insert pages from another PDF, **reorder**, and **extract** a page to a new file.
+- **Copy as plain text** — selection or the whole document.
+- **Save in place** writes back to the same `.pdf` via PDFKit. An optional timestamped `.bak` is made before the first write.
+- A thumbnail sidebar for quick navigation.
+
+</details>
+
+<details>
+<summary><b>👀 Quick Look previews — for the types macOS shows as flat text</b></summary>
+
+<br/>
+
+Press <kbd>Space</kbd> in Finder and Qedit renders:
+
+- **Markdown** (`.md`, `.markdown`, `.textbundle`) — full GitHub-flavored rendering.
+- **Source code** — 30+ languages, highlighted with highlight.js.
+- **Logs** (`.log`) — monospace with level coloring (error / warn / info).
+- **Config** — JSON, YAML, XML, plist.
+
+All assets are **bundled** (works offline, sandbox-safe), the file text is base64-embedded so nothing can break the page, light/dark follows the system, and your scroll position is remembered per file. Qedit **never** registers system types like PDF/JPEG/PNG — Apple's own previews stay in charge there.
+
+</details>
+
+<details>
+<summary><b>⌨️ Hotkey &amp; Quick Action — editing is one keystroke from previewing</b></summary>
+
+<br/>
+
+- **Global hotkey** (default **⌥⌘E**, fully rebindable in Settings): select a file in Finder, press it, and that file opens in the editor.
+- **Finder Quick Action / Service**: right-click a file → Quick Actions → **Open in Qedit**.
+- Both route through the `qedit://` URL scheme to the (unsandboxed) host app, so editing real files just works.
+
+The first hotkey use asks macOS for permission to read the Finder selection — that's the standard Automation prompt.
+
+</details>
+
+<details>
+<summary><b>🧩 Extension manager — see, toggle &amp; diagnose Quick Look extensions</b></summary>
+
+<br/>
+
+- **Lists every installed Quick Look preview extension** (via `pluginkit`) with its bundle id, enabled state, and the UTIs it claims.
+- **Enable / disable** any extension — per-row, or **Enable All / Disable All**. (Some first-time activations still need a one-time approval in System Settings; Qedit links you there.)
+- **Reset the Quick Look cache** (`qlmanage -r`).
+- **UTI inspector**: drop any file to see its resolved type, MIME, conformances, and exactly which extension would preview it.
+- Surfaces **`brew outdated --cask`** for extensions you installed via Homebrew — it never updates apps it didn't install.
+
+</details>
+
+<details>
+<summary><b>🔄 Auto-updates — Sparkle, signed and verified</b></summary>
+
+<br/>
+
+Qedit ships with [Sparkle](https://sparkle-project.org). It checks a signed `appcast.xml`, verifies each update against an **EdDSA** public key baked into the app, then downloads, installs, and relaunches — all in the background. The **Updates** page lets you toggle automatic checks, check now, or grab the latest build manually. Every release is Developer-ID signed **and** notarized.
+
+</details>
 
 ## 🚫 What it won't do (on purpose — these are real macOS limits)
 
 - **Never** changes or renames your file's format. Edits write back in the original format.
-- **Never** hijacks Apple's built-in PDF/image previews — Qedit only previews types macOS renders poorly, and never registers system UTIs.
-- **Never** silently overrides system security — extensions you toggle may still need a one-time approval in System Settings (Qedit takes you straight there).
+- **Never** hijacks Apple's built-in PDF/image previews — Qedit only previews types macOS renders poorly.
+- **Never** silently overrides system security — a macOS approval may still be required; Qedit guides you, it doesn't pretend.
 
 ## 📦 Install
-
-<div align="center">
-<a href="https://github.com/ArioMoniri/Qedit/releases/latest/download/Qedit.dmg"><img src=".github/assets/download-mac.svg" alt="Download for macOS" height="50"></a>
-</div>
-
-**Direct** — download the signed, notarized [**`Qedit.dmg`**](https://github.com/ArioMoniri/Qedit/releases/latest), drag it to Applications.
 
 **Homebrew**
 
@@ -64,7 +118,9 @@ brew tap ariomoniri/qedit https://github.com/ArioMoniri/Qedit
 brew install --cask qedit
 ```
 
-Then open the app once, go to **Setup**, and tap **Enable Qedit Preview**. Press <kbd>Space</kbd> on a `.md`/`.swift`/`.log` to see it. 🎉
+**Direct** — grab the signed, notarized [**`Qedit.dmg`**](https://github.com/ArioMoniri/Qedit/releases/latest) and drag it to Applications.
+
+Then open Qedit once, go to **Setup**, and tap **Enable Qedit Preview**. Press <kbd>Space</kbd> on a `.md`/`.swift`/`.log` to see it. 🎉
 
 ## 🛠 Build from source
 
@@ -77,27 +133,71 @@ open Qedit.xcodeproj      # ⌘R to run
 ```
 
 <details>
-<summary><b>Project layout</b></summary>
+<summary><b>🏗 Architecture &amp; project layout</b></summary>
+
+<br/>
 
 ```
 Sources/
-  Qedit/              host app — editor (Module B), manager (Module C), updates, onboarding
-  QuickLookExtension/ Module A — the Quick Look preview (sandboxed, read-only)
+  Qedit/                host app — editor (B), manager (C), updates, onboarding, hotkey
+  QuickLookExtension/   Module A — the Quick Look preview (sandboxed, read-only)
   QuickActionExtension/ Finder Quick Action → hands the file to the editor
-  Shared/             code compiled into all three targets
-scripts/              build_release.sh + notarize.sh
-.github/              release workflow + README assets
+  Shared/               code compiled into all three targets
+scripts/                build_release.sh + notarize.sh
+.github/                release workflow + README assets
 ```
-The host app is **unsandboxed** (Developer ID) so the manager can shell out to `pluginkit`/`qlmanage`/`brew` and the hotkey can read the Finder selection. Both extensions **are** sandboxed.
+
+One host `.app`, three targets:
+
+| Target | Kind | Role |
+|---|---|---|
+| `Qedit` | App (SwiftUI/AppKit) | Editor, manager, updates, onboarding, hotkey |
+| `QeditQuickLook` | QL preview app-extension | **Module A** — rich previews for non-system UTIs |
+| `QeditQuickAction` | Action/Service app-extension | Hands the Finder selection to the editor |
+
+The host app is **unsandboxed** (Developer ID) so the manager can shell out to `pluginkit`/`qlmanage`/`brew` and the hotkey can read the Finder selection. Both extensions **are** sandboxed and read-only. Project files are generated by XcodeGen from `project.yml` (the `.xcodeproj` is git-ignored).
+
 </details>
 
-## 🚀 Releasing
+<details>
+<summary><b>🚀 Releasing (maintainers)</b></summary>
 
-Pushing a `vX.Y.Z` tag runs [`.github/workflows/release.yml`](.github/workflows/release.yml): build → **Developer-ID sign** → **notarize** → EdDSA-sign the Sparkle appcast → publish the DMG, all from the `APPLE_*` secrets. Release notes come from [`CHANGELOG.md`](CHANGELOG.md).
+<br/>
+
+Pushing a `vX.Y.Z` tag runs [`.github/workflows/release.yml`](.github/workflows/release.yml): build → **Developer-ID sign** → **notarize** → EdDSA-sign the Sparkle appcast → publish the DMG + appcast as release assets, with notes pulled from `CHANGELOG.md`. Everything comes from the `APPLE_*` and `SPARKLE_ED_PRIVATE_KEY` Actions secrets.
 
 ```bash
 git tag v0.2.0 && git push origin v0.2.0   # 🪄 that's the whole release
 ```
+
+</details>
+
+## ❓ FAQ
+
+<details>
+<summary><b>Will Qedit ever change or convert my files?</b></summary>
+No. Edits always write back to the original file in its original format. A `.pdf` stays a `.pdf`. The only extra file it may create is an optional timestamped `.bak` before the first save.
+</details>
+
+<details>
+<summary><b>Does it replace Apple's spacebar PDF/image preview?</b></summary>
+No — and it can't. macOS reserves those previews for its own handlers, and Qedit deliberately never registers system UTIs. Qedit only previews types macOS renders as flat text.
+</details>
+
+<details>
+<summary><b>Is it safe? Signed?</b></summary>
+Yes. Every release is signed with a Developer ID certificate and notarized by Apple, so Gatekeeper accepts it cleanly. Updates are additionally verified against an EdDSA key.
+</details>
+
+<details>
+<summary><b>My preview isn't showing — what do I do?</b></summary>
+Open Qedit → <b>Extensions</b> and make sure <b>Qedit Preview</b> is enabled (or hit <b>Enable Qedit Preview</b> in Setup). If macOS still ignores it, approve it in System Settings → General → Login Items &amp; Extensions → Quick Look, then use <b>Reset Quick Look Cache</b>. Logging out and back in helps macOS pick it up.
+</details>
+
+<details>
+<summary><b>The hotkey doesn't open anything.</b></summary>
+The first use needs permission to control Finder (System Settings → Privacy &amp; Security → Automation). Make sure a file is actually selected in the front Finder window, and that the shortcut is enabled in Settings → Hotkey.
+</details>
 
 ## 🗺 Roadmap
 
