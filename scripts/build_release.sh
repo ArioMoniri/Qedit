@@ -11,9 +11,9 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
 APP_NAME="Qedit"
-# Identity + team come from env in CI (APPLE_SIGNING_IDENTITY / APPLE_TEAM_ID),
-# falling back to the local defaults for hands-on builds.
-SIGN_IDENTITY="${APPLE_SIGNING_IDENTITY:-Developer ID Application}"
+# Use the generic "Developer ID Application" identity: there is exactly one such cert in
+# the keychain, so codesign resolves it unambiguously — no fragile exact-name matching.
+SIGN_IDENTITY="Developer ID Application"
 TEAM_ID="${APPLE_TEAM_ID:-FF68N39FU5}"
 DIST="$ROOT/dist"
 ARCHIVE="$DIST/$APP_NAME.xcarchive"
