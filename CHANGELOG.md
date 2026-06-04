@@ -3,6 +3,12 @@
 All notable changes to Qedit. This file feeds both the GitHub release notes and the
 in-app Sparkle updater. 🪄
 
+## v0.1.7
+- 🔐 **Permissions panel** in Setup — one-tap buttons to grant **Finder control** (so the ⌥⌘E hotkey actually works), enable the preview + “Open With Qedit”, and jump to the exact System Settings panes (Automation, Accessibility, Full Disk Access), each with a live status.
+- 🪵 **Debug log** (Extensions → Troubleshoot) — see exactly what every button runs (`pluginkit`, `qlmanage`, `lsregister`…) and its output, so “Enable” is never a black box. Copy it with one click.
+- 🧷 **“Open With → Qedit” registers automatically** on launch — macOS often skips re-indexing document types after a Sparkle update, which is why it sometimes didn’t appear.
+- 📃 Descriptions now list **all** supported formats (Markdown, 30+ source languages, logs, JSON/YAML/XML/TOML/INI/plist, plain text, and PDF) — not just “.md or .pdf”.
+
 ## v0.1.6
 - 📝 **Open With → Qedit** — Qedit now registers as an editor, so right-click → **Open With → Qedit** (or set it as default) opens any text / Markdown / code / PDF straight in the editor — **no spacebar needed**. ⌘F finds, and saving writes back in place.
 - 🔎 **⌘F now works in the text editor** (it didn’t before) — the native find/replace bar.

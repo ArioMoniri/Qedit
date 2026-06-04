@@ -28,19 +28,32 @@ enum Diagnostics {
     static let qlmanagePath = "/usr/bin/qlmanage"
     static let killallPath = "/usr/bin/killall"
     static let pbsPath = "/System/Library/CoreServices/pbs"
+    static let lsregisterPath =
+        "/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister"
     static let qeditQuickLookID = "com.ariomoniri.Qedit.QuickLook"
     static let qeditQuickActionID = "com.ariomoniri.Qedit.QuickAction"
 
-    /// Enable BOTH Qedit extensions (preview + Quick Action), refresh the Services cache,
-    /// and reload Quick Look + Finder so everything takes effect immediately.
+    /// Re-register Qedit with LaunchServices so it appears in "Open With" (macOS often
+    /// doesn't re-index document types after a Sparkle update until this runs).
+    static func registerWithLaunchServices() {
+        guard Shell.exists(lsregisterPath) else { return }
+        _ = Shell.run(lsregisterPath, ["-f", Bundle.main.bundleURL.path])
+    }
+
+    /// Enable BOTH Qedit extensions (preview + Quick Action), register for Open With,
+    /// refresh the Services cache, and reload Quick Look + Finder so everything takes effect.
     static func enableAllQeditExtensions() -> String {
+        DebugLog.shared.log("— Enable Qedit: starting —")
+        registerWithLaunchServices()
         _ = PluginKitScanner.setEnabled(true, identifier: qeditQuickLookID)
         _ = PluginKitScanner.setEnabled(true, identifier: qeditQuickActionID)
         if Shell.exists(pbsPath) {
             _ = Shell.run(pbsPath, ["-flush"])
             _ = Shell.run(pbsPath, ["-update"])
         }
-        return refreshFinderAndQuickLook()
+        let result = refreshFinderAndQuickLook()
+        DebugLog.shared.log("— Enable Qedit: done —")
+        return result
     }
 
     /// Path of *this* running app's bundled QL extension (the registration we want to keep).

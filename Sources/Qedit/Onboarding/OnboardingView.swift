@@ -6,10 +6,12 @@ struct OnboardingView: View {
             VStack(alignment: .leading, spacing: 24) {
                 VStack(alignment: .leading, spacing: 6) {
                     Text("Set up Qedit").font(.title2).bold()
-                    Text("Two one-time steps. macOS requires you to approve extensions yourself — "
-                         + "no app can enable another app’s Quick Look extension for you.")
+                    Text("Grant the permissions below, then you’re ready. Qedit previews and edits "
+                         + SupportedFormats.short + ".")
                         .foregroundStyle(.secondary)
                 }
+
+                PermissionsCard()
 
                 Card(title: "1 · Keep Qedit in Applications", systemImage: "app.badge") {
                     VStack(alignment: .leading, spacing: 10) {
@@ -57,14 +59,18 @@ struct OnboardingView: View {
 
                 Card(title: "3 · Preview, then edit", systemImage: "checkmark.seal") {
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("**Preview (read):** select a Markdown or source file in Finder and press "
-                             + "Space — you’ll see Qedit’s highlighted preview. Previews are read-only "
-                             + "(a macOS rule), so they have no edit or find.")
+                        Text("**Preview (read):** select a file in Finder and press Space for Qedit’s "
+                             + "highlighted preview. Previews are read-only (a macOS rule) — no edit or "
+                             + "find in the preview itself.")
                             .foregroundStyle(.secondary).font(.callout)
-                        Text("**Edit & find (no Space needed):** right-click the file → **Open With → "
-                             + "Qedit**, or select it and press the global hotkey **⌥⌘E**. That opens the "
-                             + "editor, where ⌘F finds and you can change & save in place.")
+                        Text("**Edit & find (no Space needed):** right-click → **Open With → Qedit**, or "
+                             + "select the file and press **⌥⌘E**. That opens the editor, where **⌘F** "
+                             + "finds and you can change & save in place.")
                             .foregroundStyle(.secondary).font(.callout)
+                        Text("**Previews:** " + SupportedFormats.preview)
+                            .font(.caption).foregroundStyle(.tertiary)
+                        Text("**Editor:** " + SupportedFormats.edit)
+                            .font(.caption).foregroundStyle(.tertiary)
                     }
                 }
             }

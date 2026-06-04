@@ -3,8 +3,10 @@ import UniformTypeIdentifiers
 
 struct ManagerView: View {
     @StateObject private var model = ExtensionManagerModel()
+    @ObservedObject private var debugLog = DebugLog.shared
     @State private var inspected: UTIInfo?
     @State private var isDropTargeted = false
+    @State private var showDebugLog = false
 
     @State private var appUpdate: ReleaseInfo?
     @State private var appUpdateMessage: String?
@@ -135,6 +137,33 @@ struct ManagerView: View {
                     .font(.caption).foregroundStyle(.secondary)
                 if let msg = model.lastDiagnostic {
                     Text(msg).font(.caption2).foregroundStyle(.secondary)
+                }
+
+                DisclosureGroup(isExpanded: $showDebugLog) {
+                    VStack(alignment: .leading, spacing: 6) {
+                        ScrollView {
+                            Text(debugLog.lines.isEmpty ? "No activity yet. Use a button above." : debugLog.text)
+                                .font(.system(size: 11, design: .monospaced))
+                                .textSelection(.enabled)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                        .frame(height: 160)
+                        .padding(8)
+                        .background(.black.opacity(0.25), in: RoundedRectangle(cornerRadius: 6))
+                        HStack {
+                            Button("Copy") {
+                                NSPasteboard.general.clearContents()
+                                NSPasteboard.general.setString(debugLog.text, forType: .string)
+                            }
+                            Button("Clear") { debugLog.clear() }
+                            Spacer()
+                        }
+                        .controlSize(.small).buttonStyle(.bordered).buttonBorderShape(.capsule)
+                    }
+                    .padding(.top, 6)
+                } label: {
+                    Label("Debug log (\(debugLog.lines.count))", systemImage: "terminal")
+                        .font(.callout)
                 }
             }
         }

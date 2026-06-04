@@ -46,10 +46,13 @@ struct HomeView: View {
     private var openCard: some View {
         Card(title: "Open a file to edit", systemImage: "square.and.pencil") {
             VStack(alignment: .leading, spacing: 12) {
-                Text("Pick any PDF, text, source, Markdown, log or config file. "
-                     + "PDFs open in the find/annotate/page editor; everything else in the text editor.")
+                Text("Or right-click any file in Finder → **Open With → Qedit** (no spacebar needed). "
+                     + "PDFs open in the find/annotate/page editor; everything else in the text editor "
+                     + "with ⌘F find.")
                     .foregroundStyle(.secondary)
                     .font(.callout)
+                Text("Supported: " + SupportedFormats.short + ".")
+                    .font(.caption).foregroundStyle(.tertiary)
                 Button {
                     if let url = FileOpener.runOpenPanel() { open(url) }
                 } label: {

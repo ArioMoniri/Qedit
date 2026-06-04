@@ -30,16 +30,23 @@ enum Shell {
             errData = errPipe.fileHandleForReading.readDataToEndOfFile()
         }
 
+        let command = "\((launchPath as NSString).lastPathComponent) \(arguments.joined(separator: " "))"
         do { try process.run() }
         catch {
+            DebugLog.shared.log("$ \(command)\n  ✗ failed to launch: \(error.localizedDescription)")
             return Result(status: -1, stdout: "", stderr: error.localizedDescription)
         }
         process.waitUntilExit()
         group.wait()
 
-        return Result(status: process.terminationStatus,
-                      stdout: String(decoding: outData, as: UTF8.self),
-                      stderr: String(decoding: errData, as: UTF8.self))
+        let result = Result(status: process.terminationStatus,
+                            stdout: String(decoding: outData, as: UTF8.self),
+                            stderr: String(decoding: errData, as: UTF8.self))
+        let output = [result.stdout, result.stderr]
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }.joined(separator: "\n")
+        DebugLog.shared.log("$ \(command)  → exit \(result.status)" + (output.isEmpty ? "" : "\n  \(output)"))
+        return result
     }
 
     /// Whether an executable exists at a path (used to probe for brew, etc.).

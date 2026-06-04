@@ -31,3 +31,20 @@ enum AppInfo {
         return components?.queryItems?.first(where: { $0.name == "path" })?.value
     }
 }
+
+/// One place to describe what Qedit supports, so every screen says the same thing.
+enum SupportedFormats {
+    /// Types the Quick Look preview renders richly (non-system UTIs).
+    static let preview = "Markdown (.md, .markdown, .textbundle), source code in 30+ languages "
+        + "(Swift, Python, JavaScript/TypeScript, Go, Rust, C/C++, Objective-C, Java, Kotlin, "
+        + "Ruby, PHP, shell, SQL, R, Swift, …), logs (.log), and config (JSON, YAML, XML, TOML, "
+        + "INI, .properties, .plist)."
+
+    /// Types the editor can open and save back in place.
+    static let edit = "PDF — find, highlight, notes, text boxes, signature, and page ops — plus "
+        + "every text, source-code, Markdown, log and config type Qedit previews. PDFs save via "
+        + "PDFKit; text saves in its original encoding; nothing ever changes format."
+
+    /// Short inline list.
+    static let short = "PDF, Markdown, source code, logs, JSON / YAML / XML / TOML, and plain text"
+}
