@@ -156,6 +156,28 @@ final class ExtensionManagerModel: ObservableObject {
         qeditStatus = await Task.detached { Diagnostics.qeditPreviewStatus() }.value
     }
 
+    /// Other ENABLED extensions that also claim Qedit's file types. macOS uses one extension
+    /// per type, so these may be chosen instead of Qedit (e.g. QLMarkdown, Syntax Highlight).
+    var competingExtensions: [QLExtensionInfo] {
+        guard let own = extensions.first(where: { $0.isOwnedByQedit }) else { return [] }
+        let ours = Set(own.supportedUTIs)
+        return extensions.filter { ext in
+            !ext.isOwnedByQedit && ext.status == .enabled && !Set(ext.supportedUTIs).isDisjoint(with: ours)
+        }
+    }
+
+    /// Disable every competing extension so macOS falls back to Qedit's preview.
+    func disableCompetitors() async {
+        let ids = competingExtensions.map(\.identifier)
+        guard !ids.isEmpty else { return }
+        isScanning = true
+        await Task.detached {
+            for id in ids { _ = PluginKitScanner.setEnabled(false, identifier: id) }
+            _ = Diagnostics.refreshFinderAndQuickLook()
+        }.value
+        await scan()
+    }
+
     func resetQuickLookCache() async {
         isScanning = true
         let result = await Task.detached { Diagnostics.resetQuickLookCache() }.value

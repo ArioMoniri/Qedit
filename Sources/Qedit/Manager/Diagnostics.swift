@@ -40,6 +40,31 @@ enum Diagnostics {
         _ = Shell.run(lsregisterPath, ["-f", Bundle.main.bundleURL.path])
     }
 
+    /// The `.app` bundle that contains a given `.appex` path.
+    static func containingApp(ofAppex appexPath: String) -> String {
+        var url = URL(fileURLWithPath: appexPath)
+        for _ in 0..<3 { url.deleteLastPathComponent() }   // X.appex → PlugIns → Contents → App
+        return url.standardizedFileURL.path
+    }
+
+    /// Remove registrations of Qedit's extensions that belong to OTHER copies of Qedit
+    /// (old dev builds, a second copy in Downloads, etc.) — keeps the environment clean so
+    /// duplicate registrations never silently break the preview. Returns how many it removed.
+    @discardableResult
+    static func cleanupStaleQeditRegistrations() -> Int {
+        let runningApp = Bundle.main.bundleURL.standardizedFileURL.path
+        var removed = 0
+        for id in [qeditQuickLookID, qeditQuickActionID] {
+            for reg in PluginKitScanner.registrations(of: id) {
+                guard let path = reg.path, containingApp(ofAppex: path) != runningApp else { continue }
+                DebugLog.shared.log("Safety: removing stale Qedit registration → \(path)")
+                if PluginKitScanner.removeRegistration(appexPath: path) { removed += 1 }
+            }
+        }
+        if removed > 0 { _ = refreshFinderAndQuickLook() }
+        return removed
+    }
+
     /// Enable BOTH Qedit extensions (preview + Quick Action), register for Open With,
     /// refresh the Services cache, and reload Quick Look + Finder so everything takes effect.
     static func enableAllQeditExtensions() -> String {

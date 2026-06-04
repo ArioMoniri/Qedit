@@ -119,6 +119,7 @@ struct PreviewRenderer {
         </head>
         <body data-kind="\(kind.displayName)">
         \(findBarHTML)
+        <div class="qe-brand" title="Rendered by Qedit">&#9906; Qedit · \(kind.displayName)</div>
         \(banner)
         \(body)
         <script>\(hljsJS)</script>
@@ -377,6 +378,12 @@ struct PreviewRenderer {
         .qe-log .w { color: #c69026; }
         .qe-log .i { color: #4c8eda; }
         .qe-log .d { opacity: .6; }
+        .qe-brand { position: fixed; left: 10px; bottom: 8px; z-index: 40;
+          font: 11px -apple-system, sans-serif; font-weight: 600; letter-spacing: .2px;
+          padding: 3px 9px; border-radius: 999px; color: #fff; opacity: .85;
+          background: linear-gradient(135deg, #5b9bff, #2563eb);
+          box-shadow: 0 1px 6px rgba(37,99,235,.35); pointer-events: none; }
+        @media (prefers-color-scheme: dark) { .qe-brand { opacity: .8; } }
         """
     }
 }

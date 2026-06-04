@@ -9,9 +9,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             AppState.shared.applyAppearance()     // System / Light / Dark
             _ = UpdaterController.shared          // start Sparkle
             setupStatusItem()
-            // Make sure macOS knows Qedit can open these files, so "Open With → Qedit" shows
-            // up after a fresh install or a Sparkle update.
-            Task.detached(priority: .background) { Diagnostics.registerWithLaunchServices() }
+            // Keep the environment safe: drop any stale Qedit extension registrations left by
+            // other/old copies, then make sure macOS lists Qedit in "Open With".
+            Task.detached(priority: .background) {
+                Diagnostics.cleanupStaleQeditRegistrations()
+                Diagnostics.registerWithLaunchServices()
+            }
             NotificationCenter.default.addObserver(
                 self, selector: #selector(windowsChanged(_:)),
                 name: NSWindow.willCloseNotification, object: nil)

@@ -3,6 +3,12 @@
 All notable changes to Qedit. This file feeds both the GitHub release notes and the
 in-app Sparkle updater. 🪄
 
+## v0.1.8
+- ⚔️ **Conflict detection** — if another Quick Look extension (e.g. QLMarkdown, Syntax Highlight) also handles your Markdown/code, the Extensions tab flags it and offers **“Use Qedit for these types”** (one click disables the competitors so macOS shows *Qedit’s* preview). macOS only allows one previewer per file type — this is why “Space” sometimes showed a different preview.
+- 🏷️ **Qedit badge** on every preview (“⌕ Qedit · Markdown”) so you can instantly tell Qedit rendered it, not another extension.
+- 🧹 **Self-healing registrations** — on launch Qedit removes stale registrations left by old or duplicate copies of itself, so a duplicate can never silently break the preview again.
+- 💻 Confirmed **code-file** previews (Swift, Python, JS/TS, Go, Rust, C/C++, Java, Ruby, PHP, shell, SQL… via `public.source-code`).
+
 ## v0.1.7
 - 🔐 **Permissions panel** in Setup — one-tap buttons to grant **Finder control** (so the ⌥⌘E hotkey actually works), enable the preview + “Open With Qedit”, and jump to the exact System Settings panes (Automation, Accessibility, Full Disk Access), each with a live status.
 - 🪵 **Debug log** (Extensions → Troubleshoot) — see exactly what every button runs (`pluginkit`, `qlmanage`, `lsregister`…) and its output, so “Enable” is never a black box. Copy it with one click.

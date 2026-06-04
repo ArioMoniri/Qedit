@@ -23,6 +23,7 @@ struct ManagerView: View {
             VStack(alignment: .leading, spacing: 20) {
                 header
                 if let own = ownExtension, own.status != .enabled { enableQeditBanner(own) }
+                if !model.competingExtensions.isEmpty { conflictsCard }
                 troubleshootCard
                 updatesCard
                 diagnosticsCard
@@ -89,6 +90,60 @@ struct ManagerView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(.tint.opacity(0.12), in: RoundedRectangle(cornerRadius: 12))
         .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(.tint.opacity(0.3)))
+    }
+
+    // MARK: - Conflicts
+
+    private var conflictsCard: some View {
+        Card(title: "Another extension is previewing your files", systemImage: "exclamationmark.2") {
+            VStack(alignment: .leading, spacing: 12) {
+                Text("macOS uses **one** Quick Look extension per file type. These enabled "
+                     + "extensions also claim types Qedit handles, so Space may show *their* preview "
+                     + "instead of Qedit’s. Disable the ones you don’t want to win:")
+                    .font(.callout).foregroundStyle(.secondary)
+
+                ForEach(model.competingExtensions) { ext in
+                    HStack(spacing: 10) {
+                        Image(systemName: "puzzlepiece.extension.fill").foregroundStyle(.orange)
+                        VStack(alignment: .leading, spacing: 1) {
+                            Text(ext.displayName ?? ext.identifier).bold()
+                            Text(sharedTypeSummary(ext)).font(.caption2).foregroundStyle(.tertiary)
+                        }
+                        Spacer()
+                        Button("Disable") { Task { await model.setEnabled(false, for: ext) } }
+                            .controlSize(.small).buttonStyle(.bordered).buttonBorderShape(.capsule)
+                    }
+                    .padding(.vertical, 2)
+                }
+
+                HStack {
+                    Button { Task { await model.disableCompetitors() } } label: {
+                        Label("Use Qedit for these types", systemImage: "checkmark.seal")
+                    }
+                    .buttonStyle(.borderedProminent).buttonBorderShape(.capsule)
+                    Spacer()
+                }
+                Text("This only disables their Quick Look preview — you can re-enable them anytime "
+                     + "from the list below or in System Settings.")
+                    .font(.caption2).foregroundStyle(.secondary)
+            }
+        }
+        .disabled(model.isScanning)
+    }
+
+    private func sharedTypeSummary(_ ext: QLExtensionInfo) -> String {
+        guard let own = ownExtension else { return "" }
+        let shared = Set(ext.supportedUTIs).intersection(Set(own.supportedUTIs))
+        let names = shared.map { uti -> String in
+            if uti.contains("markdown") { return "Markdown" }
+            if uti.contains("source-code") || uti.contains("script") || uti.contains("source") { return "code" }
+            if uti.contains("json") { return "JSON" }
+            if uti.contains("yaml") { return "YAML" }
+            if uti.contains("xml") || uti.contains("plist") { return "XML" }
+            if uti.contains("log") { return "logs" }
+            return uti
+        }
+        return "Also handles: " + Array(Set(names)).sorted().joined(separator: ", ")
     }
 
     // MARK: - Troubleshoot
