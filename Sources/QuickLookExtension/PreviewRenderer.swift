@@ -112,11 +112,13 @@ struct PreviewRenderer {
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <style>
         \(baseCSS)
+        \(findBarCSS)
         @media (prefers-color-scheme: light) { \(lightCSS) }
         @media (prefers-color-scheme: dark)  { \(darkCSS) }
         </style>
         </head>
         <body data-kind="\(kind.displayName)">
+        \(findBarHTML)
         \(banner)
         \(body)
         <script>\(hljsJS)</script>
@@ -137,8 +139,130 @@ struct PreviewRenderer {
           \(scrollRestoreJS)
         })();
         </script>
+        <script>\(findBarJS)</script>
         </body>
         </html>
+        """
+    }
+
+    private var findBarHTML: String {
+        """
+        <div id="qf-bar" class="qf-bar" hidden>
+          <input id="qf-input" type="search" placeholder="Find" autocomplete="off" spellcheck="false">
+          <span id="qf-count" class="qf-count"></span>
+          <button id="qf-prev" title="Previous (⇧⏎)">&#8593;</button>
+          <button id="qf-next" title="Next (⏎)">&#8595;</button>
+          <button id="qf-close" title="Close (Esc)">&#10005;</button>
+        </div>
+        """
+    }
+
+    private var findBarCSS: String {
+        """
+        .qf-bar { position: fixed; top: 8px; right: 8px; z-index: 50; display: flex; gap: 4px;
+          align-items: center; padding: 5px 7px; border-radius: 10px;
+          background: rgba(244,244,247,0.94); box-shadow: 0 3px 14px rgba(0,0,0,0.25);
+          -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+          font: 12px -apple-system, sans-serif; color: #111; }
+        .qf-bar[hidden] { display: none; }
+        .qf-bar input { border: 1px solid #0002; border-radius: 6px; padding: 3px 7px;
+          font: 12px -apple-system; width: 160px; background: #fff; color: #111; outline: none; }
+        .qf-bar button { border: none; background: #0001; border-radius: 6px; width: 22px; height: 22px;
+          cursor: pointer; color: #111; font-size: 12px; line-height: 1; }
+        .qf-bar button:hover { background: #0002; }
+        .qf-count { font-variant-numeric: tabular-nums; opacity: .65; min-width: 40px; text-align: center; }
+        mark.qf { background: #ffd23f99; color: inherit; border-radius: 2px; }
+        mark.qf-current { background: #ff9f0a; color: #000; }
+        @media (prefers-color-scheme: dark) {
+          .qf-bar { background: rgba(44,44,48,0.94); color: #eee; }
+          .qf-bar input { background: #1118; color: #eee; border-color: #fff2; }
+          .qf-bar button { background: #fff1; color: #eee; }
+          .qf-bar button:hover { background: #fff3; }
+        }
+        """
+    }
+
+    private var findBarJS: String {
+        """
+        (function () {
+          var bar, input, countEl, marks = [], cur = -1;
+          function ensure() {
+            bar = document.getElementById('qf-bar');
+            input = document.getElementById('qf-input');
+            countEl = document.getElementById('qf-count');
+            if (!bar || bar.__wired) return;
+            bar.__wired = true;
+            input.addEventListener('input', function () { doSearch(input.value); });
+            input.addEventListener('keydown', function (e) {
+              if (e.key === 'Enter') { e.preventDefault(); e.shiftKey ? step(-1) : step(1); }
+              else if (e.key === 'Escape') { e.preventDefault(); hide(); }
+            });
+            document.getElementById('qf-next').addEventListener('click', function () { step(1); });
+            document.getElementById('qf-prev').addEventListener('click', function () { step(-1); });
+            document.getElementById('qf-close').addEventListener('click', hide);
+          }
+          function clearMarks() {
+            document.querySelectorAll('mark.qf').forEach(function (m) {
+              m.parentNode.replaceChild(document.createTextNode(m.textContent), m);
+            });
+            document.body.normalize();
+            marks = []; cur = -1;
+          }
+          function doSearch(q) {
+            clearMarks();
+            if (!q) { updateCount(); return; }
+            var ql = q.toLowerCase();
+            var walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
+              acceptNode: function (n) {
+                if (!n.nodeValue || !n.parentElement) return NodeFilter.FILTER_REJECT;
+                if (n.parentElement.closest('#qf-bar')) return NodeFilter.FILTER_REJECT;
+                var tag = n.parentElement.tagName;
+                if (tag === 'SCRIPT' || tag === 'STYLE' || tag === 'MARK') return NodeFilter.FILTER_REJECT;
+                return n.nodeValue.toLowerCase().indexOf(ql) !== -1 ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+              }
+            });
+            var nodes = []; while (walker.nextNode()) nodes.push(walker.currentNode);
+            nodes.forEach(function (node) {
+              var text = node.nodeValue, lower = text.toLowerCase();
+              var frag = document.createDocumentFragment(), i = 0, idx;
+              while ((idx = lower.indexOf(ql, i)) !== -1) {
+                if (idx > i) frag.appendChild(document.createTextNode(text.slice(i, idx)));
+                var m = document.createElement('mark'); m.className = 'qf';
+                m.textContent = text.slice(idx, idx + q.length);
+                frag.appendChild(m); marks.push(m); i = idx + q.length;
+              }
+              if (i < text.length) frag.appendChild(document.createTextNode(text.slice(i)));
+              node.parentNode.replaceChild(frag, node);
+            });
+            cur = marks.length ? 0 : -1; highlightCurrent(); updateCount();
+          }
+          function highlightCurrent() {
+            marks.forEach(function (m) { m.classList.remove('qf-current'); });
+            if (cur >= 0 && marks[cur]) {
+              marks[cur].classList.add('qf-current');
+              marks[cur].scrollIntoView({ block: 'center' });
+            }
+          }
+          function step(d) {
+            if (!marks.length) return;
+            cur = (cur + d + marks.length) % marks.length; highlightCurrent(); updateCount();
+          }
+          function updateCount() {
+            countEl.textContent = marks.length ? (cur + 1) + '/' + marks.length : (input.value ? '0/0' : '');
+          }
+          function hide() { if (bar) { bar.hidden = true; clearMarks(); updateCount(); } }
+          window.__qfShow = function () {
+            ensure();
+            if (!bar) return;
+            bar.hidden = false; input.focus(); input.select();
+            if (input.value) doSearch(input.value);
+          };
+          document.addEventListener('keydown', function (e) {
+            if ((e.metaKey || e.ctrlKey) && (e.key === 'f' || e.key === 'F')) {
+              e.preventDefault(); window.__qfShow();
+            }
+          });
+        })();
         """
     }
 

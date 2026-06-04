@@ -21,6 +21,7 @@ struct ManagerView: View {
             VStack(alignment: .leading, spacing: 20) {
                 header
                 if let own = ownExtension, own.status != .enabled { enableQeditBanner(own) }
+                troubleshootCard
                 updatesCard
                 diagnosticsCard
                 inspectorCard
@@ -88,6 +89,59 @@ struct ManagerView: View {
         .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(.tint.opacity(0.3)))
     }
 
+    // MARK: - Troubleshoot
+
+    private var troubleshootCard: some View {
+        Card(title: "Troubleshoot “Qedit Preview”", systemImage: "wrench.and.screwdriver") {
+            VStack(alignment: .leading, spacing: 12) {
+                if let status = model.qeditStatus {
+                    Label(statusHeadline(status),
+                          systemImage: status.isHealthy ? "checkmark.seal.fill" : "exclamationmark.triangle.fill")
+                        .font(.callout).bold()
+                        .foregroundStyle(status.isHealthy ? Color.green : Color.orange)
+                    Text(status.report)
+                        .font(.system(.caption, design: .monospaced))
+                        .textSelection(.enabled)
+                        .padding(10).frame(maxWidth: .infinity, alignment: .leading)
+                        .background(.quaternary.opacity(0.4), in: RoundedRectangle(cornerRadius: 8))
+                } else {
+                    HStack { ProgressView().controlSize(.small); Text("Checking…").foregroundStyle(.secondary) }
+                }
+                HStack {
+                    if model.qeditStatus?.hasDuplicates == true {
+                        Button(role: .destructive) { Task { await model.removeDuplicateRegistrations() } } label: {
+                            Label("Remove Duplicate(s)", systemImage: "trash")
+                        }
+                        .buttonStyle(.borderedProminent).buttonBorderShape(.capsule)
+                    }
+                    Button { Task { await model.refreshFinderAndQuickLook() } } label: {
+                        Label("Refresh Finder & Quick Look", systemImage: "arrow.clockwise.circle")
+                    }
+                    .buttonStyle(.bordered).buttonBorderShape(.capsule)
+                    Button { Task { await model.reloadDiagnostics() } } label: {
+                        Label("Re-check", systemImage: "stethoscope")
+                    }
+                    .buttonStyle(.bordered).buttonBorderShape(.capsule)
+                }
+                .disabled(model.isScanning)
+                Text("Previews can fail when the same extension is registered twice (e.g. a build "
+                     + "folder *and* /Applications), or right after enabling — before Finder reloads. "
+                     + "The buttons above fix both.")
+                    .font(.caption).foregroundStyle(.secondary)
+                if let msg = model.lastDiagnostic {
+                    Text(msg).font(.caption2).foregroundStyle(.secondary)
+                }
+            }
+        }
+    }
+
+    private func statusHeadline(_ status: QeditPreviewStatus) -> String {
+        if status.registrations.isEmpty { return "Not registered — keep Qedit in /Applications and launch it once" }
+        if status.hasDuplicates { return "Duplicate registrations — previews can’t resolve" }
+        if !status.isEnabledSomewhere { return "Registered, but not enabled" }
+        return "Healthy"
+    }
+
     // MARK: - Updates
 
     private var updatesCard: some View {
@@ -143,32 +197,16 @@ struct ManagerView: View {
     // MARK: - Diagnostics
 
     private var diagnosticsCard: some View {
-        Card(title: "Diagnostics", systemImage: "stethoscope") {
-            VStack(alignment: .leading, spacing: 12) {
-                HStack {
-                    Button { Task { await model.resetQuickLookCache() } } label: {
-                        Label("Reset Quick Look Cache", systemImage: "arrow.clockwise.circle")
-                    }
-                    .buttonStyle(.bordered)
-                    .buttonBorderShape(.capsule)
-                    .disabled(model.isScanning)
-                    Button { SystemSettings.openExtensions() } label: {
-                        Label("Open Login Items & Extensions", systemImage: "gearshape")
-                    }
-                    .buttonStyle(.bordered)
-                    .buttonBorderShape(.capsule)
+        Card(title: "System Settings", systemImage: "gearshape") {
+            VStack(alignment: .leading, spacing: 10) {
+                Button { SystemSettings.openExtensions() } label: {
+                    Label("Open Login Items & Extensions", systemImage: "gearshape")
                 }
-                Text("“Reset” runs `qlmanage -r` and `qlmanage -r cache` to reload generators and "
-                     + "clear stale thumbnails — handy after enabling an extension.")
+                .buttonStyle(.bordered)
+                .buttonBorderShape(.capsule)
+                Text("Some first-time activations need a one-time approval here: System Settings → "
+                     + "General → Login Items & Extensions → Quick Look. No app can flip that switch for you.")
                     .font(.caption).foregroundStyle(.secondary)
-                if let diagnostic = model.lastDiagnostic {
-                    Text(diagnostic)
-                        .font(.system(.caption, design: .monospaced))
-                        .padding(8)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(.quaternary.opacity(0.4), in: RoundedRectangle(cornerRadius: 6))
-                        .textSelection(.enabled)
-                }
             }
         }
     }

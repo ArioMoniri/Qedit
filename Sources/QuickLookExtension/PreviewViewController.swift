@@ -23,7 +23,7 @@ final class PreviewViewController: NSViewController, QLPreviewingController {
         controller.add(WeakScriptMessageHandler(self), name: "qedit")
         config.userContentController = controller
 
-        let web = WKWebView(frame: .zero, configuration: config)
+        let web = FindableWebView(frame: .zero, configuration: config)
         web.navigationDelegate = self
         web.setValue(false, forKey: "drawsBackground") // transparent → matches QL panel
         webView = web
@@ -114,5 +114,20 @@ private final class WeakScriptMessageHandler: NSObject, WKScriptMessageHandler {
     init(_ delegate: WKScriptMessageHandler) { self.delegate = delegate }
     func userContentController(_ c: WKUserContentController, didReceive m: WKScriptMessage) {
         delegate?.userContentController(c, didReceive: m)
+    }
+}
+
+/// WKWebView that maps ⌘F to the in-page find bar, so you can search inside a Quick Look
+/// preview (previews are read-only by macOS design — this adds find, not editing).
+final class FindableWebView: WKWebView {
+    override var acceptsFirstResponder: Bool { true }
+
+    override func performKeyEquivalent(with event: NSEvent) -> Bool {
+        if event.modifierFlags.contains(.command),
+           event.charactersIgnoringModifiers?.lowercased() == "f" {
+            evaluateJavaScript("window.__qfShow && window.__qfShow();", completionHandler: nil)
+            return true
+        }
+        return super.performKeyEquivalent(with: event)
     }
 }

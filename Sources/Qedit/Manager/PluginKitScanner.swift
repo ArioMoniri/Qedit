@@ -108,6 +108,24 @@ enum PluginKitScanner {
         return Shell.run(pluginkitPath, ["-e", action, "-i", identifier]).succeeded
     }
 
+    /// All registrations for a single bundle id (there can be more than one — that's the bug).
+    static func registrations(of identifier: String) -> [QLExtensionInfo] {
+        guard Shell.exists(pluginkitPath) else { return [] }
+        var found = parse(Shell.run(pluginkitPath, ["-mAvvv", "-i", identifier]).stdout)
+        for index in found.indices {
+            if let path = found[index].path {
+                found[index].supportedUTIs = supportedUTIs(appexPath: path)
+            }
+        }
+        return found
+    }
+
+    /// Unregister a plugin at a specific path (used to clear stale duplicate registrations).
+    static func removeRegistration(appexPath: String) -> Bool {
+        guard Shell.exists(pluginkitPath) else { return false }
+        return Shell.run(pluginkitPath, ["-r", appexPath]).succeeded
+    }
+
     static func supportedUTIs(appexPath: String) -> [String] {
         let plistURL = URL(fileURLWithPath: appexPath).appendingPathComponent("Contents/Info.plist")
         guard let dict = NSDictionary(contentsOf: plistURL) as? [String: Any],
@@ -124,25 +142,57 @@ final class ExtensionManagerModel: ObservableObject {
     @Published var extensions: [QLExtensionInfo] = []
     @Published var isScanning = false
     @Published var lastDiagnostic: String?
+    @Published var qeditStatus: QeditPreviewStatus?
 
     func scan() async {
         isScanning = true
         let found = await Task.detached { PluginKitScanner.scanQuickLookPreviewExtensions() }.value
         extensions = found
+        qeditStatus = await Task.detached { Diagnostics.qeditPreviewStatus() }.value
         isScanning = false
+    }
+
+    func reloadDiagnostics() async {
+        qeditStatus = await Task.detached { Diagnostics.qeditPreviewStatus() }.value
     }
 
     func resetQuickLookCache() async {
         isScanning = true
         let result = await Task.detached { Diagnostics.resetQuickLookCache() }.value
         lastDiagnostic = result
+        await reloadDiagnostics()
         isScanning = false
+    }
+
+    /// Reload Quick Look + relaunch Finder so a just-changed extension state takes effect.
+    func refreshFinderAndQuickLook() async {
+        isScanning = true
+        let result = await Task.detached { Diagnostics.refreshFinderAndQuickLook() }.value
+        lastDiagnostic = result
+        await scan()
+    }
+
+    /// Remove duplicate registrations of Qedit's extension (keeps the running app's copy).
+    func removeDuplicateRegistrations() async {
+        guard let dupes = qeditStatus?.duplicatePaths, !dupes.isEmpty else { return }
+        isScanning = true
+        let result = await Task.detached { () -> String in
+            for path in dupes { _ = PluginKitScanner.removeRegistration(appexPath: path) }
+            return Diagnostics.refreshFinderAndQuickLook()
+        }.value
+        lastDiagnostic = "Removed \(dupes.count) duplicate registration(s). " + result
+        await scan()
     }
 
     func setEnabled(_ enabled: Bool, for ext: QLExtensionInfo) async {
         let id = ext.identifier
         isScanning = true
-        _ = await Task.detached { PluginKitScanner.setEnabled(enabled, identifier: id) }.value
+        // Flip the flag, then reload Quick Look so it actually takes effect.
+        _ = await Task.detached { () -> Bool in
+            let ok = PluginKitScanner.setEnabled(enabled, identifier: id)
+            _ = Diagnostics.resetQuickLookCache()
+            return ok
+        }.value
         await scan()
     }
 
@@ -151,6 +201,7 @@ final class ExtensionManagerModel: ObservableObject {
         isScanning = true
         await Task.detached {
             for id in ids { _ = PluginKitScanner.setEnabled(enabled, identifier: id) }
+            _ = Diagnostics.resetQuickLookCache()
         }.value
         await scan()
     }
