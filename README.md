@@ -7,11 +7,12 @@ ships a manager for installed Quick Look extensions.
 A `.pdf` stays a `.pdf` (edited via PDFKit). A `.md` stays a `.md`. No conversion, no
 `.ePDF` tricks, no fighting Apple's built-in previews.
 
-> Status: **Milestones 1–2 complete** — Xcode project (host app + Quick Look preview
+> Status: **Milestones 1–3 complete** — Xcode project (host app + Quick Look preview
 > extension + Quick Action), rich previews for non-system types, an in-place text editor,
 > a full **PDFKit editor** (find, annotate, page ops, save-in-place), the Finder Quick
-> Action, and a configurable **global hotkey** (⌥⌘E). Extension manager and notarized
-> release follow in milestones 3–4 (see [Roadmap](#roadmap)).
+> Action, a configurable **global hotkey** (⌥⌘E), and the **Extension Manager** (enumerate
+> Quick Look extensions, `qlmanage -r`, UTI inspector, Settings deep-link). Notarized
+> release follows in milestone 4 (see [Roadmap](#roadmap)).
 
 ## Why it's built this way (real macOS limits)
 
@@ -50,8 +51,10 @@ These are hard constraints, not preferences:
   annotations, page ops (rotate/delete/insert/reorder/extract) and copy-as-plain-text.
   Both save **in place** in the original format, with an optional timestamped backup
   before the first write.
-- **Module C** (`Sources/Qedit/Manager`): the extension manager + diagnostics — landing
-  in milestone 3.
+- **Module C** (`Sources/Qedit/Manager`): enumerates installed Quick Look preview
+  extensions (`pluginkit -mAvvv`), reads each one's `QLSupportedContentTypes`, resets the
+  Quick Look cache (`qlmanage -r`), inspects any file's UTI + which extension claims it,
+  and deep-links to the System Settings approval pane (it can't toggle extensions itself).
 
 The host app is intentionally **not sandboxed** (Developer ID distribution) so the manager
 can shell out to `pluginkit` / `qlmanage` / `brew` and the hotkey can read the Finder
@@ -93,7 +96,7 @@ cask). Wired up in milestone 4.
 - [x] **M2** — PDFKit editor: find/search, highlight/note/text/signature annotations, page
   ops (rotate/delete/insert/reorder/extract), copy-as-text, save-in-place; Finder Quick
   Action + configurable global hotkey (⌥⌘E).
-- [ ] **M3** — Extension manager: list extensions + UTIs, `qlmanage -r`, UTI inspector,
+- [x] **M3** — Extension manager: list extensions + UTIs, `qlmanage -r`, UTI inspector,
   Settings deep-link.
 - [ ] **M4** — Updates (brew + GitHub Releases), theming, signing + notarization, release.
 

@@ -32,7 +32,7 @@ struct OnboardingView: View {
                              + "step is mandatory.")
                             .foregroundStyle(.secondary).font(.callout)
                         Button {
-                            openExtensionsSettings()
+                            SystemSettings.openExtensions()
                         } label: {
                             Label("Open Login Items & Extensions", systemImage: "gearshape")
                         }
@@ -51,16 +51,5 @@ struct OnboardingView: View {
             .frame(maxWidth: .infinity, alignment: .center)
         }
         .navigationTitle("Setup")
-    }
-
-    private func openExtensionsSettings() {
-        // Login Items & Extensions pane (macOS 13+). Falls back to opening System Settings.
-        let candidates = [
-            "x-apple.systempreferences:com.apple.ExtensionsPreferences",
-            "x-apple.systempreferences:com.apple.LoginItems-Settings.extension"
-        ]
-        for string in candidates {
-            if let url = URL(string: string), NSWorkspace.shared.open(url) { return }
-        }
     }
 }

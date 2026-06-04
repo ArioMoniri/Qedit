@@ -29,7 +29,7 @@ struct RootView: View {
         } detail: {
             switch selection ?? .home {
             case .home: HomeView()
-            case .extensions: ManagerPlaceholderView()
+            case .extensions: ManagerView()
             case .setup: OnboardingView()
             }
         }
