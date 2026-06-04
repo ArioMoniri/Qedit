@@ -26,7 +26,7 @@
 - ✏️ **A text/code editor** with the native find bar, your file's original encoding, and an optional timestamped backup before the first write.
 - ⌨️ **One keystroke from Finder** — pick a file, hit **⌥⌘E** (rebindable), and it opens in the editor. Or right-click → Quick Actions → *Open in Qedit*.
 - 🧩 **A Quick Look extension manager** — see every installed preview extension and the file types it claims, reset the Quick Look cache, drop a file to learn its UTI + which extension previews it, and jump to the right System Settings pane.
-- 🌗 Light / Dark / System theme, recent files, in-app update checks (GitHub + Homebrew).
+- 🔄 **Auto-updates** via [Sparkle](https://sparkle-project.org) — checked, EdDSA-verified, installed in the background, with an in-app **Updates** page. 🌗 Light / Dark / System theme, recent files.
 
 ## 🧩 How it works
 

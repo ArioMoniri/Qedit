@@ -26,6 +26,15 @@
 	<string>Qedit — non-destructive find/edit for any file. © 2026 Ariorad Moniri.</string>
 	<key>NSAppleEventsUsageDescription</key>
 	<string>Qedit asks Finder which file is selected so it can open it for editing with the global hotkey.</string>
+	<!-- Sparkle auto-updater: signed appcast feed + EdDSA public key. -->
+	<key>SUFeedURL</key>
+	<string>https://github.com/ArioMoniri/Qedit/releases/latest/download/appcast.xml</string>
+	<key>SUPublicEDKey</key>
+	<string>WJW6oDc04x7UBySwM3UPsuzgcyJafp+682VWdVNSt/g=</string>
+	<key>SUEnableAutomaticChecks</key>
+	<true/>
+	<key>SUScheduledCheckInterval</key>
+	<integer>86400</integer>
 	<!-- Custom URL scheme used by the Quick Action / Service to hand a file to the editor. -->
 	<key>CFBundleURLTypes</key>
 	<array>

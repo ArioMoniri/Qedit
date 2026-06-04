@@ -7,6 +7,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             HotKeyManager.shared.start()
             // Apply the saved appearance override (System / Light / Dark).
             AppState.shared.applyAppearance()
+            // Start Sparkle so scheduled background update checks run.
+            _ = UpdaterController.shared
         }
     }
 

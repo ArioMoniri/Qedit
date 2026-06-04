@@ -3,6 +3,7 @@ import SwiftUI
 enum SidebarItem: String, CaseIterable, Identifiable {
     case home = "Home"
     case extensions = "Extensions"
+    case updates = "Updates"
     case setup = "Setup"
 
     var id: String { rawValue }
@@ -10,6 +11,7 @@ enum SidebarItem: String, CaseIterable, Identifiable {
         switch self {
         case .home: return "house"
         case .extensions: return "puzzlepiece.extension"
+        case .updates: return "arrow.down.circle"
         case .setup: return "checklist"
         }
     }
@@ -30,6 +32,7 @@ struct RootView: View {
             switch selection ?? .home {
             case .home: HomeView()
             case .extensions: ManagerView()
+            case .updates: UpdatesView()
             case .setup: OnboardingView()
             }
         }

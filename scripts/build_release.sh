@@ -15,6 +15,9 @@ APP_NAME="Qedit"
 # the keychain, so codesign resolves it unambiguously — no fragile exact-name matching.
 SIGN_IDENTITY="Developer ID Application"
 TEAM_ID="${APPLE_TEAM_ID:-FF68N39FU5}"
+# Version drives both CFBundleShortVersionString and CFBundleVersion so Sparkle's
+# update comparison is consistent across releases (CI passes VERSION from the tag).
+VERSION="${VERSION:-0.1.0}"
 DIST="$ROOT/dist"
 ARCHIVE="$DIST/$APP_NAME.xcarchive"
 EXPORT="$DIST/export"
@@ -38,6 +41,8 @@ xcodebuild -project "$APP_NAME.xcodeproj" -scheme "$APP_NAME" \
   DEVELOPMENT_TEAM="$TEAM_ID" \
   CODE_SIGN_IDENTITY="$SIGN_IDENTITY" \
   CODE_SIGN_STYLE=Manual \
+  MARKETING_VERSION="$VERSION" \
+  CURRENT_PROJECT_VERSION="$VERSION" \
   archive
 
 echo "==> Exporting signed app"

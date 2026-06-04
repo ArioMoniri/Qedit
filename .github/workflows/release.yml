@@ -58,7 +58,10 @@ jobs:
         env:
           APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-        run: ./scripts/build_release.sh
+          TAG: ${{ github.event.inputs.tag || github.ref_name }}
+        run: |
+          set -euo pipefail
+          VERSION="${TAG#v}" ./scripts/build_release.sh
 
       - name: Notarize and staple
         env:
@@ -67,6 +70,44 @@ jobs:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: ./scripts/notarize.sh dist/Qedit.dmg
 
+      - name: Sign update and generate Sparkle appcast
+        env:
+          SPARKLE_ED_PRIVATE_KEY: ${{ secrets.SPARKLE_ED_PRIVATE_KEY }}
+          TAG: ${{ github.event.inputs.tag || github.ref_name }}
+        run: |
+          set -euo pipefail
+          VERSION="${TAG#v}"
+          SPARKLE_VER=2.9.2
+          curl -fsSL -o sparkle.tar.xz \
+            "https://github.com/sparkle-project/Sparkle/releases/download/${SPARKLE_VER}/Sparkle-${SPARKLE_VER}.tar.xz"
+          mkdir -p sparkle && tar -xf sparkle.tar.xz -C sparkle
+
+          printf '%s' "$SPARKLE_ED_PRIVATE_KEY" > ed_priv
+          SIG=$(./sparkle/bin/sign_update dist/Qedit.dmg --ed-key-file ed_priv)
+          rm -f ed_priv
+          echo "Update signature: $SIG"
+
+          DMG_URL="https://github.com/${GITHUB_REPOSITORY}/releases/download/${TAG}/Qedit.dmg"
+          PUBDATE=$(LC_ALL=C date -u "+%a, %d %b %Y %H:%M:%S +0000")
+          cat > dist/appcast.xml <<XML
+          <?xml version="1.0" standalone="yes"?>
+          <rss xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" version="2.0">
+            <channel>
+              <title>Qedit</title>
+              <item>
+                <title>Version ${VERSION}</title>
+                <link>https://github.com/${GITHUB_REPOSITORY}/releases/tag/${TAG}</link>
+                <sparkle:version>${VERSION}</sparkle:version>
+                <sparkle:shortVersionString>${VERSION}</sparkle:shortVersionString>
+                <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+                <pubDate>${PUBDATE}</pubDate>
+                <enclosure url="${DMG_URL}" type="application/octet-stream" ${SIG} />
+              </item>
+            </channel>
+          </rss>
+          XML
+          echo "--- appcast.xml ---"; cat dist/appcast.xml
+
       - name: Publish GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -74,9 +115,9 @@ jobs:
         run: |
           set -euo pipefail
           if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            gh release upload "$TAG" dist/Qedit.dmg --clobber --repo "$GITHUB_REPOSITORY"
+            gh release upload "$TAG" dist/Qedit.dmg dist/appcast.xml --clobber --repo "$GITHUB_REPOSITORY"
           else
-            gh release create "$TAG" dist/Qedit.dmg \
+            gh release create "$TAG" dist/Qedit.dmg dist/appcast.xml \
               --repo "$GITHUB_REPOSITORY" \
               --title "Qedit $TAG" \
               --generate-notes

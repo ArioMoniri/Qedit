@@ -38,6 +38,9 @@ struct AppMenuCommands: Commands {
     @Environment(\.openWindow) private var openWindow
 
     var body: some Commands {
+        CommandGroup(after: .appInfo) {
+            Button("Check for Updates…") { UpdaterController.shared.checkForUpdates() }
+        }
         CommandGroup(replacing: .newItem) {
             Button("Open…") {
                 if let url = FileOpener.runOpenPanel() {
