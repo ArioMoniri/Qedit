@@ -35,6 +35,46 @@
 	<true/>
 	<key>SUScheduledCheckInterval</key>
 	<integer>86400</integer>
+	<!-- Declare Qedit as an editor for these types so it shows up in Finder's
+	     "Open With" menu (edit + find with no spacebar needed). LSHandlerRank = Alternate
+	     so we never steal the default handler. -->
+	<key>CFBundleDocumentTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeName</key>
+			<string>Text &amp; Code</string>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>LSHandlerRank</key>
+			<string>Alternate</string>
+			<key>LSItemContentTypes</key>
+			<array>
+				<string>public.plain-text</string>
+				<string>public.text</string>
+				<string>public.source-code</string>
+				<string>public.script</string>
+				<string>public.shell-script</string>
+				<string>public.python-script</string>
+				<string>net.daringfireball.markdown</string>
+				<string>public.json</string>
+				<string>public.yaml</string>
+				<string>public.xml</string>
+				<string>public.log</string>
+			</array>
+		</dict>
+		<dict>
+			<key>CFBundleTypeName</key>
+			<string>PDF</string>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>LSHandlerRank</key>
+			<string>Alternate</string>
+			<key>LSItemContentTypes</key>
+			<array>
+				<string>com.adobe.pdf</string>
+			</array>
+		</dict>
+	</array>
 	<!-- Custom URL scheme used by the Quick Action / Service to hand a file to the editor. -->
 	<key>CFBundleURLTypes</key>
 	<array>

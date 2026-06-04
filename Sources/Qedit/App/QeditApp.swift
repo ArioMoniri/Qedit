@@ -27,10 +27,14 @@ struct QeditApp: App {
         }
     }
 
-    /// Handle `qedit://open?path=...` coming from the Quick Action.
+    /// Handle file opens ("Open With → Qedit", double-click) and `qedit://open?path=...`
+    /// from the Quick Action / hotkey. SwiftUI delivers BOTH kinds here via onOpenURL.
     private func handleOpenURL(_ url: URL) {
-        guard let path = AppInfo.path(fromOpenURL: url) else { return }
-        EditorLauncher.shared.open(URL(fileURLWithPath: path))
+        if url.isFileURL {
+            EditorLauncher.shared.open(url)
+        } else if let path = AppInfo.path(fromOpenURL: url) {
+            EditorLauncher.shared.open(URL(fileURLWithPath: path))
+        }
     }
 }
 

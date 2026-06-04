@@ -2,7 +2,8 @@ import SwiftUI
 import AppKit
 
 /// An `NSTextView`-backed editor. Using AppKit (rather than SwiftUI `TextEditor`) gives us
-/// the native find/replace bar (⌘F / ⌥⌘F), undo, and monospaced layout for free.
+/// the native find/replace bar, undo, and monospaced layout. `FindableTextView` maps ⌘F to
+/// the find bar locally (no app-wide Find command, so it never clashes with the PDF editor's ⌘F).
 struct CodeTextView: NSViewRepresentable {
     @Binding var text: String
     var isEditable: Bool = true
@@ -10,13 +11,21 @@ struct CodeTextView: NSViewRepresentable {
     func makeCoordinator() -> Coordinator { Coordinator(self) }
 
     func makeNSView(context: Context) -> NSScrollView {
-        let scrollView = NSTextView.scrollableTextView()
-        scrollView.hasVerticalScroller = true
-        scrollView.hasHorizontalScroller = true
-        scrollView.autohidesScrollers = true
+        let scrollView = NSScrollView()
         scrollView.borderType = .noBorder
+        scrollView.hasVerticalScroller = true
+        scrollView.autohidesScrollers = true
 
-        guard let textView = scrollView.documentView as? NSTextView else { return scrollView }
+        let textView = FindableTextView(frame: NSRect(origin: .zero, size: scrollView.contentSize))
+        let big = CGFloat.greatestFiniteMagnitude
+        textView.minSize = NSSize(width: 0, height: 0)
+        textView.maxSize = NSSize(width: big, height: big)
+        textView.isVerticallyResizable = true
+        textView.isHorizontallyResizable = false
+        textView.autoresizingMask = [.width]
+        textView.textContainer?.containerSize = NSSize(width: scrollView.contentSize.width, height: big)
+        textView.textContainer?.widthTracksTextView = true
+
         textView.delegate = context.coordinator
         textView.isEditable = isEditable
         textView.isRichText = false
@@ -31,13 +40,13 @@ struct CodeTextView: NSViewRepresentable {
         textView.isIncrementalSearchingEnabled = true
         textView.textContainerInset = NSSize(width: 8, height: 10)
         textView.string = text
+
+        scrollView.documentView = textView
         return scrollView
     }
 
     func updateNSView(_ scrollView: NSScrollView, context: Context) {
         guard let textView = scrollView.documentView as? NSTextView else { return }
-        // Only replace when the change came from outside (e.g. a reload) to avoid
-        // clobbering the user's caret/selection while typing.
         if textView.string != text {
             textView.string = text
         }
@@ -54,5 +63,20 @@ struct CodeTextView: NSViewRepresentable {
             guard let textView = notification.object as? NSTextView else { return }
             parent.text = textView.string
         }
+    }
+}
+
+/// NSTextView that shows the find bar on ⌘F (the standard binding needs a menu item that
+/// SwiftUI apps don't ship, so we wire it here, scoped to this view).
+final class FindableTextView: NSTextView {
+    override func performKeyEquivalent(with event: NSEvent) -> Bool {
+        let mods = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
+        if mods == .command, event.charactersIgnoringModifiers?.lowercased() == "f" {
+            let item = NSMenuItem()
+            item.tag = NSTextFinder.Action.showFindInterface.rawValue
+            performTextFinderAction(item)
+            return true
+        }
+        return super.performKeyEquivalent(with: event)
     }
 }

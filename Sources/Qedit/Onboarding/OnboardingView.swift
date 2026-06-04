@@ -36,9 +36,7 @@ struct OnboardingView: View {
                             .foregroundStyle(.secondary).font(.callout)
                         HStack {
                             Button {
-                                Task.detached {
-                                    _ = PluginKitScanner.setEnabled(true, identifier: AppInfo.quickLookBundleIdentifier)
-                                }
+                                Task.detached { _ = Diagnostics.enableAllQeditExtensions() }
                             } label: {
                                 Label("Enable Qedit Preview", systemImage: "power")
                             }
@@ -57,11 +55,17 @@ struct OnboardingView: View {
                     }
                 }
 
-                Card(title: "3 · Try it", systemImage: "checkmark.seal") {
-                    Text("Select a Markdown (.md) or source file in Finder and press the space bar. "
-                         + "You should see Qedit’s highlighted preview. Then use the Quick Action "
-                         + "(right-click → Quick Actions → Open in Qedit) to edit it.")
-                        .foregroundStyle(.secondary).font(.callout)
+                Card(title: "3 · Preview, then edit", systemImage: "checkmark.seal") {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("**Preview (read):** select a Markdown or source file in Finder and press "
+                             + "Space — you’ll see Qedit’s highlighted preview. Previews are read-only "
+                             + "(a macOS rule), so they have no edit or find.")
+                            .foregroundStyle(.secondary).font(.callout)
+                        Text("**Edit & find (no Space needed):** right-click the file → **Open With → "
+                             + "Qedit**, or select it and press the global hotkey **⌥⌘E**. That opens the "
+                             + "editor, where ⌘F finds and you can change & save in place.")
+                            .foregroundStyle(.secondary).font(.callout)
+                    }
                 }
             }
             .padding(28)

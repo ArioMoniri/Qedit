@@ -27,7 +27,21 @@ struct QeditPreviewStatus {
 enum Diagnostics {
     static let qlmanagePath = "/usr/bin/qlmanage"
     static let killallPath = "/usr/bin/killall"
+    static let pbsPath = "/System/Library/CoreServices/pbs"
     static let qeditQuickLookID = "com.ariomoniri.Qedit.QuickLook"
+    static let qeditQuickActionID = "com.ariomoniri.Qedit.QuickAction"
+
+    /// Enable BOTH Qedit extensions (preview + Quick Action), refresh the Services cache,
+    /// and reload Quick Look + Finder so everything takes effect immediately.
+    static func enableAllQeditExtensions() -> String {
+        _ = PluginKitScanner.setEnabled(true, identifier: qeditQuickLookID)
+        _ = PluginKitScanner.setEnabled(true, identifier: qeditQuickActionID)
+        if Shell.exists(pbsPath) {
+            _ = Shell.run(pbsPath, ["-flush"])
+            _ = Shell.run(pbsPath, ["-update"])
+        }
+        return refreshFinderAndQuickLook()
+    }
 
     /// Path of *this* running app's bundled QL extension (the registration we want to keep).
     static func runningExtensionPath() -> String? {

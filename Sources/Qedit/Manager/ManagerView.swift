@@ -75,7 +75,7 @@ struct ManagerView: View {
                     .font(.callout).foregroundStyle(.secondary)
             }
             Spacer()
-            Button { Task { await model.setEnabled(true, for: ext) } } label: {
+            Button { Task { await model.enableQeditExtensions() } } label: {
                 Label("Enable", systemImage: "power").padding(.horizontal, 6)
             }
             .buttonStyle(.borderedProminent)
@@ -113,6 +113,10 @@ struct ManagerView: View {
                             Label("Remove Duplicate(s)", systemImage: "trash")
                         }
                         .buttonStyle(.borderedProminent).buttonBorderShape(.capsule)
+                        Button { revealDuplicates() } label: {
+                            Label("Reveal in Finder", systemImage: "folder")
+                        }
+                        .buttonStyle(.bordered).buttonBorderShape(.capsule)
                     }
                     Button { Task { await model.refreshFinderAndQuickLook() } } label: {
                         Label("Refresh Finder & Quick Look", systemImage: "arrow.clockwise.circle")
@@ -124,15 +128,26 @@ struct ManagerView: View {
                     .buttonStyle(.bordered).buttonBorderShape(.capsule)
                 }
                 .disabled(model.isScanning)
-                Text("Previews can fail when the same extension is registered twice (e.g. a build "
-                     + "folder *and* /Applications), or right after enabling — before Finder reloads. "
-                     + "The buttons above fix both.")
+                Text("A preview fails when the SAME extension is registered twice (e.g. a second copy "
+                     + "of Qedit.app in Downloads or a build folder). “Remove Duplicate(s)” clears the "
+                     + "registration — but if that extra copy still exists on disk macOS re-adds it, so "
+                     + "“Reveal in Finder” lets you delete it for good. Then Refresh Finder & Quick Look.")
                     .font(.caption).foregroundStyle(.secondary)
                 if let msg = model.lastDiagnostic {
                     Text(msg).font(.caption2).foregroundStyle(.secondary)
                 }
             }
         }
+    }
+
+    private func revealDuplicates() {
+        guard let dupes = model.qeditStatus?.duplicatePaths, !dupes.isEmpty else { return }
+        let urls = dupes.map { path -> URL in
+            var bundle = URL(fileURLWithPath: path)        // …/Qedit.app/Contents/PlugIns/X.appex
+            for _ in 0..<3 { bundle.deleteLastPathComponent() }  // → …/Qedit.app
+            return bundle.pathExtension == "app" ? bundle : URL(fileURLWithPath: path)
+        }
+        NSWorkspace.shared.activateFileViewerSelecting(urls)
     }
 
     private func statusHeadline(_ status: QeditPreviewStatus) -> String {

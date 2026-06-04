@@ -112,8 +112,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     @objc private func menuSettings() {
         NSApp.setActivationPolicy(.regular)
         NSApp.activate(ignoringOtherApps: true)
-        if !NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil) {
-            NSApp.sendAction(Selector(("showPreferencesWindow:")), to: nil, from: nil)
+        MainActor.assumeIsolated {
+            if let openSettings = EditorLauncher.shared.openSettings {
+                openSettings()
+            } else if !NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil) {
+                NSApp.sendAction(Selector(("showPreferencesWindow:")), to: nil, from: nil)
+            }
         }
     }
 }

@@ -20,6 +20,7 @@ enum SidebarItem: String, CaseIterable, Identifiable {
 struct RootView: View {
     @EnvironmentObject private var appState: AppState
     @Environment(\.openWindow) private var openWindow
+    @Environment(\.openSettings) private var openSettings
     @State private var selection: SidebarItem? = .home
 
     var body: some View {
@@ -44,6 +45,9 @@ struct RootView: View {
             }
             EditorLauncher.shared.openMainWindow = {
                 openWindow(id: "main")
+            }
+            EditorLauncher.shared.openSettings = {
+                openSettings()
             }
         }
     }

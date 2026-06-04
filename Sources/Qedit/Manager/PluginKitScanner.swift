@@ -184,6 +184,14 @@ final class ExtensionManagerModel: ObservableObject {
         await scan()
     }
 
+    /// Enable Qedit's own preview + Quick Action and refresh everything.
+    func enableQeditExtensions() async {
+        isScanning = true
+        let message = await Task.detached { Diagnostics.enableAllQeditExtensions() }.value
+        lastDiagnostic = message
+        await scan()
+    }
+
     func setEnabled(_ enabled: Bool, for ext: QLExtensionInfo) async {
         let id = ext.identifier
         isScanning = true

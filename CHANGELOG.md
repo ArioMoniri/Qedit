@@ -3,6 +3,13 @@
 All notable changes to Qedit. This file feeds both the GitHub release notes and the
 in-app Sparkle updater. 🪄
 
+## v0.1.6
+- 📝 **Open With → Qedit** — Qedit now registers as an editor, so right-click → **Open With → Qedit** (or set it as default) opens any text / Markdown / code / PDF straight in the editor — **no spacebar needed**. ⌘F finds, and saving writes back in place.
+- 🔎 **⌘F now works in the text editor** (it didn’t before) — the native find/replace bar.
+- ⚙️ **Settings opens from the menu-bar icon** (previously did nothing).
+- 🩺 Better duplicate fix: a preview silently fails when a second copy of Qedit.app exists (e.g. in Downloads). “Remove Duplicate(s)” clears the registration, and new **“Reveal in Finder”** shows the extra copy so you can delete it for good. Enabling also turns on the Quick Action and flushes the Services cache.
+- ℹ️ Honest about limits: Quick Look previews are **read-only** and can’t take ⌘F (macOS owns that panel) — find & edit live in the editor.
+
 ## v0.1.5
 - 🪟➡️🫥 **Runs in the background, out of the Dock.** Close the window and Qedit drops its Dock icon and keeps running as a **menu-bar agent** — the global hotkey and Quick Action stay live. A menu-bar icon (Open / Check for Updates / Settings / Quit) is your control; opening a file from the hotkey or Finder brings the Dock icon back. Toggle it in **Settings → When the window closes**.
 
