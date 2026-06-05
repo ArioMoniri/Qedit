@@ -78,6 +78,7 @@ struct PreviewRenderer {
     // MARK: - HTML
 
     private func buildHTML(text: String, kind: PreviewKind, fileURL: URL, truncated: Bool) -> String {
+        let prefs = RenderPrefs.load()
         let hljsJS = asset("highlight.min", "js")
         let lightCSS = asset("github.min", "css")
         let darkCSS = asset("github-dark.min", "css")
@@ -113,8 +114,7 @@ struct PreviewRenderer {
         <style>
         \(baseCSS)
         \(findBarCSS)
-        @media (prefers-color-scheme: light) { \(lightCSS) }
-        @media (prefers-color-scheme: dark)  { \(darkCSS) }
+        \(themeStyle(prefs.theme, light: lightCSS, dark: darkCSS))
         </style>
         </head>
         <body data-kind="\(kind.displayName)">
@@ -129,6 +129,10 @@ struct PreviewRenderer {
         (function () {
           const FILE_KEY = "\(fileKey)";
           const LANG = "\(lang)";
+          const GFM = \(prefs.gfm);
+          const HARD_BREAKS = \(prefs.hardBreaks);
+          const SYNTAX = \(prefs.syntaxHighlighting);
+          const ANCHORS = \(prefs.headingAnchors);
           function b64ToString(b64) {
             const bin = atob(b64);
             const bytes = new Uint8Array(bin.length);
@@ -272,14 +276,30 @@ struct PreviewRenderer {
         case .markdown:
             return """
             try {
-              if (window.marked) { marked.setOptions({ gfm: true, breaks: false }); }
+              if (window.marked) { marked.setOptions({ gfm: GFM, breaks: HARD_BREAKS }); }
               const dirty = window.marked ? marked.parse(SRC) : SRC;
               const clean = window.DOMPurify ? DOMPurify.sanitize(dirty) : dirty;
               const el = document.getElementById("content");
               el.innerHTML = clean;
-              el.querySelectorAll("pre code").forEach(function (c) {
-                try { hljs.highlightElement(c); } catch (e) {}
-              });
+              if (SYNTAX) {
+                el.querySelectorAll("pre code").forEach(function (c) {
+                  try { hljs.highlightElement(c); } catch (e) {}
+                });
+              }
+              if (ANCHORS) {
+                el.querySelectorAll("h1,h2,h3,h4,h5,h6").forEach(function (h) {
+                  if (!h.id) {
+                    h.id = (h.textContent || "").toLowerCase().trim()
+                      .replace(/[^\\w\\s-]/g, "").replace(/\\s+/g, "-");
+                  }
+                  if (h.id) {
+                    var a = document.createElement("a");
+                    a.href = "#" + h.id; a.className = "qe-anchor";
+                    a.setAttribute("aria-hidden", "true"); a.textContent = "#";
+                    h.appendChild(a);
+                  }
+                });
+              }
             } catch (e) {
               document.getElementById("content").textContent = SRC;
             }
@@ -306,15 +326,34 @@ struct PreviewRenderer {
             return """
             const code = document.getElementById("code");
             code.textContent = SRC;
-            try {
-              if (LANG && hljs.getLanguage(LANG)) {
-                code.className = "language-" + LANG;
-                hljs.highlightElement(code);
-              } else {
-                hljs.highlightElement(code);
-              }
-            } catch (e) {}
+            if (SYNTAX) {
+              try {
+                if (LANG && hljs.getLanguage(LANG)) {
+                  code.className = "language-" + LANG;
+                  hljs.highlightElement(code);
+                } else {
+                  hljs.highlightElement(code);
+                }
+              } catch (e) {}
+            }
             """
+        }
+    }
+
+    /// Choose the theme CSS: `auto` keeps the system light/dark media queries; `light`/`dark`
+    /// force one theme (and lock `color-scheme` + a base background so it doesn't flash).
+    private func themeStyle(_ theme: RenderPrefs.Theme, light: String, dark: String) -> String {
+        switch theme {
+        case .auto:
+            return """
+            :root { color-scheme: light dark; }
+            @media (prefers-color-scheme: light) { \(light) }
+            @media (prefers-color-scheme: dark)  { \(dark) }
+            """
+        case .light:
+            return ":root { color-scheme: light; } html, body { background: #ffffff; }\n\(light)"
+        case .dark:
+            return ":root { color-scheme: dark; } html, body { background: #0d1117; color: #e6edf3; }\n\(dark)"
         }
     }
 
@@ -370,6 +409,11 @@ struct PreviewRenderer {
         .markdown-body th, .markdown-body td { border: 1px solid #8884; padding: 6px 10px; }
         .markdown-body img { max-width: 100%; }
         .markdown-body blockquote { margin: 0; padding-left: 1em; border-left: 3px solid #8886; color: #8889; }
+        .markdown-body .qe-anchor { margin-left: .4em; opacity: 0; text-decoration: none;
+          color: #6b9bff; font-weight: 400; }
+        .markdown-body h1:hover .qe-anchor, .markdown-body h2:hover .qe-anchor,
+        .markdown-body h3:hover .qe-anchor, .markdown-body h4:hover .qe-anchor,
+        .markdown-body h5:hover .qe-anchor, .markdown-body h6:hover .qe-anchor { opacity: .7; }
         pre { margin: 0; padding: 16px 20px; overflow: auto; line-height: 1.5;
           font-family: "SF Mono", Menlo, monospace; font-size: 12px; }
         pre code.hljs { padding: 0; background: none; }

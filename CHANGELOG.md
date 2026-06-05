@@ -3,6 +3,11 @@
 All notable changes to Qedit. This file feeds both the GitHub release notes and the
 in-app Sparkle updater. 🪄
 
+## v0.2.0
+- 🎛️ **Markdown preview options.** New **Settings → Preview** tab lets you tune how Qedit renders Markdown — **Theme** (Auto / Light / Dark), **GitHub-flavored Markdown** (tables, task lists, ~~strikethrough~~, autolinks), **hard line breaks**, **syntax highlighting**, and **clickable heading anchors**. The options are shared with the Quick Look extension via a secure App Group, so they apply to the **Space preview** too — not just inside the app.
+- 🔀 **Right where you need it:** the Preview tab links straight to the **Extensions** tab, where turning off a competing previewer (QLMarkdown, Syntax Highlight) so Qedit wins Space is one reversible tap.
+- ♻️ Changing an option refreshes Quick Look automatically so the next Space press shows it.
+
 ## v0.1.10
 - 🪟 **No more double dashboard.** Reopening Qedit from the Dock or menu bar after closing its window opened *two* identical dashboards — now it’s always one.
 - 🧼 **Freshly opened files aren’t marked “Edited.”** Opening a file no longer flips it to a dirty/“Edited” state (which had enabled Save and could trigger a needless backup) — it only marks edited once you actually change something.

@@ -1,8 +1,24 @@
 import SwiftUI
 
+/// Holds the Markdown-preview options and writes them to the shared App Group container
+/// (where the Quick Look extension reads them), refreshing Quick Look so changes show.
+@MainActor
+final class RenderPrefsStore: ObservableObject {
+    @Published var prefs: RenderPrefs { didSet { persist() } }
+
+    init() { prefs = RenderPrefs.load() }
+
+    private func persist() {
+        let saved = prefs.save()
+        // Drop Quick Look's cached previews so the next Space press re-renders with the change.
+        if saved { Task.detached { _ = Diagnostics.resetQuickLookCache() } }
+    }
+}
+
 struct SettingsView: View {
     @EnvironmentObject private var appState: AppState
     @StateObject private var hotKey = HotKeyStore.shared
+    @StateObject private var render = RenderPrefsStore()
 
     var body: some View {
         TabView {
@@ -58,6 +74,43 @@ struct SettingsView: View {
             .formStyle(.grouped)
             .tabItem { Label("Hotkey", systemImage: "command") }
             .frame(width: 480, height: 240)
+
+            Form {
+                Section("Markdown preview") {
+                    Picker("Theme", selection: $render.prefs.theme) {
+                        ForEach(RenderPrefs.Theme.allCases) { Text($0.label).tag($0) }
+                    }
+                    .pickerStyle(.segmented)
+                    Toggle("GitHub-flavored Markdown", isOn: $render.prefs.gfm)
+                    Toggle("Hard line breaks", isOn: $render.prefs.hardBreaks)
+                    Toggle("Syntax highlighting in code", isOn: $render.prefs.syntaxHighlighting)
+                    Toggle("Clickable heading anchors", isOn: $render.prefs.headingAnchors)
+                    Text("GitHub-flavored Markdown adds tables, task lists, ~~strikethrough~~ and "
+                         + "autolinks. These apply to Qedit’s preview.")
+                        .font(.caption).foregroundStyle(.secondary)
+                }
+                Section("Showing on Space in Finder") {
+                    Text("macOS shows only one Quick Look preview per file type. If QLMarkdown or "
+                         + "Syntax Highlight is installed, Qedit’s preview (with these options) only "
+                         + "appears once you switch them off — do that in the app’s **Extensions** tab, "
+                         + "where it’s one tap and fully reversible.")
+                        .font(.caption).foregroundStyle(.secondary)
+                    Button {
+                        NSApp.setActivationPolicy(.regular)
+                        NSApp.activate(ignoringOtherApps: true)
+                        EditorLauncher.shared.openMainWindow?()
+                        // Let the dashboard appear, then switch it to the Extensions tab.
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                            NotificationCenter.default.post(name: .qeditShowExtensions, object: nil)
+                        }
+                    } label: {
+                        Label("Open Extensions tab", systemImage: "puzzlepiece.extension")
+                    }
+                }
+            }
+            .formStyle(.grouped)
+            .tabItem { Label("Preview", systemImage: "doc.richtext") }
+            .frame(width: 480, height: 420)
         }
     }
 }
