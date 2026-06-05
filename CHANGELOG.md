@@ -4,7 +4,7 @@ All notable changes to Qedit. This file feeds both the GitHub release notes and 
 in-app Sparkle updater. 🪄
 
 ## v0.2.0
-- 🎛️ **Markdown preview options.** New **Settings → Preview** tab lets you tune how Qedit renders Markdown — **Theme** (Auto / Light / Dark), **GitHub-flavored Markdown** (tables, task lists, ~~strikethrough~~, autolinks), **hard line breaks**, **syntax highlighting**, and **clickable heading anchors**. The options are shared with the Quick Look extension via a secure App Group, so they apply to the **Space preview** too — not just inside the app.
+- 🎛️ **Markdown preview options.** New **Settings → Preview** tab lets you tune how Qedit renders Markdown — **Theme** (Auto / Light / Dark), **GitHub-flavored Markdown** (tables, task lists, ~~strikethrough~~, autolinks), **hard line breaks**, **syntax highlighting**, and **clickable heading anchors**. Your choices are shared with the Quick Look extension, so they control the **Space preview** in Finder.
 - 🔀 **Right where you need it:** the Preview tab links straight to the **Extensions** tab, where turning off a competing previewer (QLMarkdown, Syntax Highlight) so Qedit wins Space is one reversible tap.
 - ♻️ Changing an option refreshes Quick Look automatically so the next Space press shows it.
 
