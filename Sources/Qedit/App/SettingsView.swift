@@ -70,10 +70,19 @@ struct SettingsView: View {
                          + "The first use prompts macOS for permission to control Finder.")
                         .font(.caption).foregroundStyle(.secondary)
                 }
+                Section("Quick Panel") {
+                    Toggle("Hotkey opens a Quick Panel (editable, like Quick Look)",
+                           isOn: $appState.hotkeyOpensQuickPanel)
+                    Text("On: the hotkey pops a fast, centered, Quick-Look-style panel in front of "
+                         + "Finder — but it’s the real editor (type to edit, ⌘F to find, ⌘S to save "
+                         + "in place, Esc to dismiss), with no app-switch. Off: the hotkey opens a "
+                         + "full editor window instead.")
+                        .font(.caption).foregroundStyle(.secondary)
+                }
             }
             .formStyle(.grouped)
             .tabItem { Label("Hotkey", systemImage: "command") }
-            .frame(width: 480, height: 240)
+            .frame(width: 480, height: 360)
 
             Form {
                 Section("Markdown preview") {

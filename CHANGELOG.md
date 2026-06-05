@@ -3,6 +3,12 @@
 All notable changes to Qedit. This file feeds both the GitHub release notes and the
 in-app Sparkle updater. 🪄
 
+## v0.3.0
+- ⚡️ **Quick Panel — press ⌥⌘E to view *and* edit, instantly.** Select a file in Finder and hit **⌥⌘E**: a fast, centered, Quick-Look-style panel appears *in front of Finder* — but unlike Space, it’s the **real editor**. Type to edit, **⌘F** to find, **⌘S** saves in place (format never changes), **Esc** to dismiss. No app-switch, no second “now open it to edit” step.
+- 🧩 **Why this, and the honest limit:** macOS makes the *system* Quick Look panel (Space / Finder’s side preview) **read-only** and won’t deliver keystrokes to it — no app can edit or ⌘F *inside* that panel. The Quick Panel is the closest possible: a look-alike that **is** editable. Use **Space** to glance (read-only, now with your render options) and **⌥⌘E** to edit the same file.
+- 🎚️ Toggle in **Settings → Hotkey**: “Hotkey opens a Quick Panel (vs. a full window).” PDFs always open as a full window (they need their annotate/page toolbar).
+- 🧰 The editor now has a compact bottom action bar (Save · Reload · Reveal · ⌘F hint) that works in both the window and the panel.
+
 ## v0.2.1
 - 📄 **`.txt` now previews with Qedit.** Plain-text files are handled by Qedit’s Quick Look preview (with the Qedit badge) and by Open With → Qedit, alongside Markdown and code. Note: macOS and Syntax Highlight also handle plain text, so switch them off in the **Extensions** tab for Qedit to win `.txt` on Space.
 - ℹ️ **About editing & ⌘F in the Space preview:** macOS Quick Look previews (Space, and Finder’s side preview pane) are **read-only and don’t receive keystrokes** — no app can edit or run ⌘F *inside* that panel. Editing, ⌘F find, highlight and the other tools live in Qedit’s **editor**: right-click → **Open With → Qedit**, press **⌥⌘E**, or double-click if you set Qedit as the default opener.

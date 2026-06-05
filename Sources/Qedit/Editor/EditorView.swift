@@ -42,7 +42,6 @@ struct EditorView: View {
         content
             .navigationTitle(doc.url.lastPathComponent)
             .navigationSubtitle(statusText)
-            .toolbar { toolbarContent }
             .alert("Couldn’t save", isPresented: errorBinding) {
                 Button("OK", role: .cancel) {}
             } message: {
@@ -73,8 +72,34 @@ struct EditorView: View {
                     ),
                     isEditable: !doc.isReadOnly
                 )
+                editorFooter
             }
         }
+    }
+
+    /// Action bar shown under the editor. Lives in the content (not the window toolbar) so it —
+    /// and the ⌘S shortcut — work both in a full window AND in the borderless Quick Panel,
+    /// which has no window toolbar.
+    private var editorFooter: some View {
+        HStack(spacing: 10) {
+            Text(statusText).font(.caption).foregroundStyle(.secondary).lineLimit(1)
+            Spacer()
+            Text("⌘F to find").font(.caption2).foregroundStyle(.tertiary)
+            Button { doc.load() } label: { Label("Reload", systemImage: "arrow.clockwise") }
+                .help("Discard changes and reload from disk")
+            Button { NSWorkspace.shared.activateFileViewerSelecting([doc.url]) } label: {
+                Label("Reveal", systemImage: "folder")
+            }
+            Button { save() } label: { Label("Save", systemImage: "square.and.arrow.down") }
+                .keyboardShortcut("s", modifiers: .command)
+                .disabled(!doc.isDirty || !doc.isTextEditable)
+                .help("Save in place — original format preserved")
+                .buttonStyle(.borderedProminent)
+        }
+        .controlSize(.small)
+        .labelStyle(.titleAndIcon)
+        .padding(.horizontal, 12).padding(.vertical, 7)
+        .background(.bar)
     }
 
     private var readOnlyBanner: some View {
@@ -107,35 +132,6 @@ struct EditorView: View {
         }
         .padding(40)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-    }
-
-    @ToolbarContentBuilder
-    private var toolbarContent: some ToolbarContent {
-        ToolbarItem(placement: .primaryAction) {
-            Button {
-                save()
-            } label: {
-                Label("Save", systemImage: "square.and.arrow.down")
-            }
-            .keyboardShortcut("s", modifiers: .command)
-            .disabled(!doc.isDirty || !doc.isTextEditable)
-            .help("Save in place — original format preserved")
-        }
-        ToolbarItem(placement: .secondaryAction) {
-            Button {
-                doc.load()
-            } label: {
-                Label("Reload", systemImage: "arrow.clockwise")
-            }
-            .help("Discard changes and reload from disk")
-        }
-        ToolbarItem(placement: .secondaryAction) {
-            Button {
-                NSWorkspace.shared.activateFileViewerSelecting([doc.url])
-            } label: {
-                Label("Reveal in Finder", systemImage: "folder")
-            }
-        }
     }
 
     private var statusText: String {

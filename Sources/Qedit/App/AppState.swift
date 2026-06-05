@@ -42,11 +42,17 @@ final class AppState: ObservableObject {
     @Published var keepRunningInBackground: Bool {
         didSet { UserDefaults.standard.set(keepRunningInBackground, forKey: Self.backgroundKey) }
     }
+    /// When true, the ⌥⌘E hotkey opens the file in the fast, Quick-Look-style **Quick Panel**
+    /// (editable, in front of Finder). When false, it opens a full editor window.
+    @Published var hotkeyOpensQuickPanel: Bool {
+        didSet { UserDefaults.standard.set(hotkeyOpensQuickPanel, forKey: Self.quickPanelKey) }
+    }
 
     private static let recentsKey = "qe.recentFiles"
     private static let backupKey = "qe.makeBackupBeforeFirstWrite"
     private static let appearanceKey = "qe.appearance"
     private static let backgroundKey = "qe.keepRunningInBackground"
+    private static let quickPanelKey = "qe.hotkeyOpensQuickPanel"
     private let maxRecents = 12
 
     init() {
@@ -58,6 +64,7 @@ final class AppState: ObservableObject {
         self.appearance = UserDefaults.standard.string(forKey: Self.appearanceKey)
             .flatMap(AppAppearance.init(rawValue:)) ?? .system
         self.keepRunningInBackground = UserDefaults.standard.object(forKey: Self.backgroundKey) as? Bool ?? true
+        self.hotkeyOpensQuickPanel = UserDefaults.standard.object(forKey: Self.quickPanelKey) as? Bool ?? true
         loadRecents()
     }
 

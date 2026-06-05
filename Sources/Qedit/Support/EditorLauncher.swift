@@ -81,14 +81,22 @@ final class EditorLauncher: ObservableObject {
             && window.className != "NSStatusBarWindow"
     }
 
-    /// Open whatever is selected in Finder (used by the global hotkey).
+    /// Open whatever is selected in Finder (used by the global hotkey). Routes to the fast
+    /// Quick Panel (editable, in front of Finder, no app-switch) unless the user prefers a
+    /// full window.
     @discardableResult
     func openFinderSelection() -> Bool {
         guard let url = FinderSelection.currentFileURL() else {
             NSSound.beep()
             return false
         }
-        open(url)
+        // PDFs use their own toolbar (find/annotate/page ops), which only renders in a full
+        // window — so they always open as a window; text-like files use the Quick Panel.
+        if AppState.shared.hotkeyOpensQuickPanel && !EditorWindowView.isPDF(url) {
+            QuickPanelController.shared.present(url)
+        } else {
+            open(url)
+        }
         return true
     }
 }
