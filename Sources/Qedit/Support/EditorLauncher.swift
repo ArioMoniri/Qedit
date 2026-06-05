@@ -2,8 +2,8 @@ import SwiftUI
 import AppKit
 
 /// Opens editor windows from places that don't have the SwiftUI view environment —
-/// the `qedit://` URL handler and the global hotkey. `RootView` injects the actual
-/// `openWindow` action on appear.
+/// the `qedit://` URL handler, "Open With → Qedit", and the global hotkey. `RootView`
+/// injects the actual `openWindow` action on appear.
 @MainActor
 final class EditorLauncher: ObservableObject {
     static let shared = EditorLauncher()
@@ -18,15 +18,19 @@ final class EditorLauncher: ObservableObject {
     /// Open the SwiftUI Settings scene (used by the menu-bar item).
     var openSettings: (() -> Void)?
 
+    /// The dashboard window, captured by `RootView`. When the user opens a file (Open With /
+    /// hotkey) their intent is "show me THIS file", so we tuck the dashboard away and surface
+    /// only the editor.
+    weak var dashboardWindow: NSWindow?
+
     private var pendingURLs: [URL] = []
 
     func open(_ url: URL) {
         AppState.shared.noteOpened(url)
-        // Restore the regular app (Dock icon) and front it.
+        // Restore the regular app (Dock icon).
         NSApp.setActivationPolicy(.regular)
-        NSApp.activate(ignoringOtherApps: true)
-        if let openEditorWindow {
-            openEditorWindow(url)
+        if openEditorWindow != nil {
+            present(url)
         } else {
             // Cold start (e.g. Open With launched us): buffer until RootView wires the opener.
             pendingURLs.append(url)
@@ -34,10 +38,46 @@ final class EditorLauncher: ObservableObject {
     }
 
     private func flushPending() {
-        guard let openEditorWindow, !pendingURLs.isEmpty else { return }
+        guard openEditorWindow != nil, !pendingURLs.isEmpty else { return }
         let urls = pendingURLs
         pendingURLs.removeAll()
-        for url in urls { openEditorWindow(url) }
+        for url in urls { present(url) }
+    }
+
+    /// Defer the actual window open by one runloop tick so SwiftUI's window machinery is ready
+    /// even at cold launch (otherwise `openWindow` is silently dropped), then raise the new
+    /// editor window above the dashboard.
+    private func present(_ url: URL) {
+        guard let opener = openEditorWindow else { pendingURLs.append(url); return }
+        DispatchQueue.main.async {
+            NSApp.activate(ignoringOtherApps: true)
+            opener(url)
+            self.surfaceEditor(named: url.lastPathComponent)
+        }
+    }
+
+    /// Raise the editor window for `name` and tuck the dashboard behind it. The main
+    /// WindowGroup ("Qedit") otherwise stays key, hiding the file the user asked to open.
+    private func surfaceEditor(named name: String, attempt: Int = 0) {
+        if let editor = NSApp.windows.first(where: {
+            $0 !== dashboardWindow && $0.title == name && Self.isContentWindow($0)
+        }) {
+            // Hide the dashboard so Open With shows just the file (reopen it from the menu bar).
+            dashboardWindow?.close()
+            editor.makeKeyAndOrderFront(nil)
+            return
+        }
+        guard attempt < 15 else { return }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.08) { [weak self] in
+            self?.surfaceEditor(named: name, attempt: attempt + 1)
+        }
+    }
+
+    private static func isContentWindow(_ window: NSWindow) -> Bool {
+        window.contentView != nil
+            && !(window is NSPanel)
+            && window.styleMask.contains(.titled)
+            && window.className != "NSStatusBarWindow"
     }
 
     /// Open whatever is selected in Finder (used by the global hotkey).

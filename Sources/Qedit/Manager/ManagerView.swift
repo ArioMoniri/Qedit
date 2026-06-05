@@ -23,7 +23,7 @@ struct ManagerView: View {
             VStack(alignment: .leading, spacing: 20) {
                 header
                 if let own = ownExtension, own.status != .enabled { enableQeditBanner(own) }
-                if !model.competingExtensions.isEmpty { conflictsCard }
+                if !model.overlappingExtensions.isEmpty { conflictsCard }
                 troubleshootCard
                 updatesCard
                 diagnosticsCard
@@ -95,36 +95,44 @@ struct ManagerView: View {
     // MARK: - Conflicts
 
     private var conflictsCard: some View {
-        Card(title: "Another extension is previewing your files", systemImage: "exclamationmark.2") {
+        let competing = !model.competingExtensions.isEmpty
+        return Card(title: competing ? "Another extension wins your Space preview"
+                                     : "Qedit is set to win these previews",
+                    systemImage: competing ? "exclamationmark.2" : "checkmark.seal") {
             VStack(alignment: .leading, spacing: 12) {
-                Text("macOS uses **one** Quick Look extension per file type. These enabled "
-                     + "extensions also claim types Qedit handles, so Space may show *their* preview "
-                     + "instead of Qedit’s. Disable the ones you don’t want to win:")
+                Text(competing
+                     ? "macOS shows **one** Quick Look preview per type. The switched-on extensions "
+                       + "below also handle types Qedit does, so Space shows *theirs*. Switch one OFF "
+                       + "to hand that type to Qedit:"
+                     : "These extensions also handle Qedit’s types but are switched off, so Space "
+                       + "shows Qedit. Flip one back on anytime — your choice.")
                     .font(.callout).foregroundStyle(.secondary)
 
-                ForEach(model.competingExtensions) { ext in
-                    HStack(spacing: 10) {
-                        Image(systemName: "puzzlepiece.extension.fill").foregroundStyle(.orange)
+                ForEach(model.overlappingExtensions) { ext in
+                    Toggle(isOn: Binding(
+                        get: { ext.status == .enabled },
+                        set: { on in Task { await model.setEnabled(on, for: ext) } }
+                    )) {
                         VStack(alignment: .leading, spacing: 1) {
-                            Text(ext.displayName ?? ext.identifier).bold()
+                            Text(ext.displayName ?? ext.identifier)
                             Text(sharedTypeSummary(ext)).font(.caption2).foregroundStyle(.tertiary)
                         }
-                        Spacer()
-                        Button("Disable") { Task { await model.setEnabled(false, for: ext) } }
-                            .controlSize(.small).buttonStyle(.bordered).buttonBorderShape(.capsule)
                     }
+                    .toggleStyle(.switch)
                     .padding(.vertical, 2)
                 }
 
-                HStack {
-                    Button { Task { await model.disableCompetitors() } } label: {
-                        Label("Use Qedit for these types", systemImage: "checkmark.seal")
+                if competing {
+                    HStack {
+                        Button { Task { await model.disableCompetitors() } } label: {
+                            Label("Switch all off — use Qedit", systemImage: "checkmark.seal")
+                        }
+                        .buttonStyle(.borderedProminent).buttonBorderShape(.capsule)
+                        Spacer()
                     }
-                    .buttonStyle(.borderedProminent).buttonBorderShape(.capsule)
-                    Spacer()
                 }
-                Text("This only disables their Quick Look preview — you can re-enable them anytime "
-                     + "from the list below or in System Settings.")
+                Text("This only changes their Quick Look preview — nothing else about those apps. "
+                     + "After flipping a switch, give Finder a second (or use Refresh below).")
                     .font(.caption2).foregroundStyle(.secondary)
             }
         }

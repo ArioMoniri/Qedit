@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import AppKit
 
 /// A single open file in the editor (Module B).
 ///
@@ -16,10 +17,23 @@ final class EditorDocument: ObservableObject, Identifiable {
     @Published var loadError: String?
     @Published var isBinary = false
     @Published var lastSaved: Date?
+    /// True for rich documents (Word, RTF, ODT…) we can READ for find but won't rewrite,
+    /// because re-serializing would risk changing their formatting/format.
+    @Published var isReadOnly = false
+    /// Friendly name for a rich/read-only document ("Word document", "Rich text"…).
+    @Published var richFormatName: String?
 
     /// Whether this document is editable as text in the current (milestone 1) text editor.
     /// PDFs and other binaries are handed to dedicated editors in later milestones.
-    var isTextEditable: Bool { !isBinary }
+    var isTextEditable: Bool { !isBinary && !isReadOnly }
+
+    /// Label shown in the editor subtitle.
+    var kindLabel: String { richFormatName ?? kind.displayName }
+
+    /// Word / RTF / OpenDocument files AppKit can read into text via NSAttributedString.
+    private static let richTextExtensions: Set<String> = [
+        "docx", "doc", "rtf", "rtfd", "odt", "wordml", "webarchive"
+    ]
 
     private var encoding: String.Encoding = .utf8
     private var didBackupThisSession = false
@@ -35,14 +49,23 @@ final class EditorDocument: ObservableObject, Identifiable {
 
     func load() {
         loadError = nil
+
+        // Rich documents (Word, RTF, ODT…): extract text for reading + ⌘F find, read-only.
+        if Self.richTextExtensions.contains(url.pathExtension.lowercased()) {
+            loadRichDocument()
+            return
+        }
+
         do {
             let data = try Data(contentsOf: url)
             if Self.looksBinary(data) {
                 isBinary = true
+                isReadOnly = false
                 text = ""
                 return
             }
             isBinary = false
+            isReadOnly = false
 
             // Preserve the file's on-disk encoding so we can write it back faithfully.
             var probed: UInt = 0
@@ -59,6 +82,34 @@ final class EditorDocument: ObservableObject, Identifiable {
             isDirty = false
         } catch {
             loadError = error.localizedDescription
+        }
+    }
+
+    /// Read a Word/RTF/ODT file's text via AppKit so the user can read it and ⌘F-find.
+    /// Read-only: Qedit won't re-serialize Word formatting (that could change the file).
+    private func loadRichDocument() {
+        let ext = url.pathExtension.lowercased()
+        richFormatName = Self.richName(for: ext)
+        isReadOnly = true
+        do {
+            let attributed = try NSAttributedString(url: url, options: [:], documentAttributes: nil)
+            text = attributed.string
+            isBinary = false
+            isDirty = false
+        } catch {
+            // Couldn't decode it as a rich document — treat as an opaque binary.
+            isBinary = true
+            text = ""
+        }
+    }
+
+    private static func richName(for ext: String) -> String {
+        switch ext {
+        case "docx", "doc", "wordml": return "Word document"
+        case "rtf", "rtfd": return "Rich text"
+        case "odt": return "OpenDocument text"
+        case "webarchive": return "Web archive"
+        default: return "Document"
         }
     }
 

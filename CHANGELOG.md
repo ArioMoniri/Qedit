@@ -3,6 +3,12 @@
 All notable changes to Qedit. This file feeds both the GitHub release notes and the
 in-app Sparkle updater. 🪄
 
+## v0.1.9
+- 🖊️ **The editor actually opens now.** “Open With → Qedit” (and ⌥⌘E) reliably brings the file’s editor window to the front — previously it could open *behind* the dashboard or, on a cold launch, not appear at all (the file just landed in “Recent”). Opening a file now surfaces just that file; the dashboard tucks away (reopen it from the menu-bar icon).
+- 📄 **Word, RTF & OpenDocument open for reading + ⌘F find.** `.docx`, `.doc`, `.rtf`, `.rtfd` and `.odt` now open read-only in the editor so you can read and search them — Qedit won’t rewrite their formatting, so edit them in their own app. They’re in the **Open With** menu too.
+- 🎚️ **One-tap conflict switches.** The “another extension wins your Space preview” card now has a simple **on/off switch per extension** (QLMarkdown, Syntax Highlight…), and it stays visible so you can flip them back on — no more dead-ends.
+- 🧹 **Simpler Setup.** Removed the pile of half-working “activate/install” buttons. Setup now says the one thing that matters (Open With → Qedit to edit/find) and is honest about the Space/Quick Look trade-off, with one button to manage it.
+
 ## v0.1.8
 - ⚔️ **Conflict detection** — if another Quick Look extension (e.g. QLMarkdown, Syntax Highlight) also handles your Markdown/code, the Extensions tab flags it and offers **“Use Qedit for these types”** (one click disables the competitors so macOS shows *Qedit’s* preview). macOS only allows one previewer per file type — this is why “Space” sometimes showed a different preview.
 - 🏷️ **Qedit badge** on every preview (“⌕ Qedit · Markdown”) so you can instantly tell Qedit rendered it, not another extension.

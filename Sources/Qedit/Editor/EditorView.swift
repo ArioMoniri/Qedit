@@ -58,11 +58,29 @@ struct EditorView: View {
         } else if doc.isBinary {
             binaryNotice
         } else {
-            CodeTextView(
-                text: Binding(get: { doc.text }, set: { doc.text = $0; doc.isDirty = true }),
-                isEditable: true
-            )
+            VStack(spacing: 0) {
+                if doc.isReadOnly { readOnlyBanner }
+                CodeTextView(
+                    text: Binding(get: { doc.text }, set: { doc.text = $0; doc.isDirty = true }),
+                    isEditable: !doc.isReadOnly
+                )
+            }
         }
+    }
+
+    private var readOnlyBanner: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "eye").foregroundStyle(.secondary)
+            Text("\(doc.richFormatName ?? "Rich document") — read-only. Read it and **⌘F find** here; "
+                 + "Qedit won’t rewrite Word/RTF formatting. Edit it in its default app.")
+                .font(.callout).foregroundStyle(.secondary)
+            Spacer()
+            Button("Open in Default App") { NSWorkspace.shared.open(doc.url) }
+                .controlSize(.small)
+        }
+        .padding(.horizontal, 14).padding(.vertical, 8)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(.yellow.opacity(0.12))
     }
 
     private var binaryNotice: some View {
@@ -112,6 +130,7 @@ struct EditorView: View {
     }
 
     private var statusText: String {
+        if doc.isReadOnly { return doc.kindLabel + " · Read-only" }
         if doc.isBinary { return doc.kind.displayName }
         var parts = [doc.kind.displayName]
         if doc.isDirty { parts.append("Edited") }

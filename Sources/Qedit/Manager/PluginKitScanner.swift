@@ -159,10 +159,16 @@ final class ExtensionManagerModel: ObservableObject {
     /// Other ENABLED extensions that also claim Qedit's file types. macOS uses one extension
     /// per type, so these may be chosen instead of Qedit (e.g. QLMarkdown, Syntax Highlight).
     var competingExtensions: [QLExtensionInfo] {
+        overlappingExtensions.filter { $0.status == .enabled }
+    }
+
+    /// Every non-Qedit extension that claims a type Qedit handles — enabled OR disabled — so
+    /// the conflict card can offer a reversible on/off switch for each one.
+    var overlappingExtensions: [QLExtensionInfo] {
         guard let own = extensions.first(where: { $0.isOwnedByQedit }) else { return [] }
         let ours = Set(own.supportedUTIs)
         return extensions.filter { ext in
-            !ext.isOwnedByQedit && ext.status == .enabled && !Set(ext.supportedUTIs).isDisjoint(with: ours)
+            !ext.isOwnedByQedit && !Set(ext.supportedUTIs).isDisjoint(with: ours)
         }
     }
 
