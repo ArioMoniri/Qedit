@@ -11,11 +11,5 @@
 	-->
 	<key>com.apple.security.automation.apple-events</key>
 	<true/>
-	<!-- Shared container so the app can write Markdown-preview options that the sandboxed
-	     Quick Look extension reads (see Shared/RenderPrefs.swift). -->
-	<key>com.apple.security.application-groups</key>
-	<array>
-		<string>group.com.ariomoniri.Qedit</string>
-	</array>
 </dict>
 </plist>

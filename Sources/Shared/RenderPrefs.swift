@@ -3,9 +3,12 @@ import Foundation
 /// User-configurable rendering options for Qedit's Markdown / code preview.
 ///
 /// Shared between the (non-sandboxed) host app, which WRITES them from Settings, and the
-/// (sandboxed) Quick Look extension, which READS them at render time — via a JSON file in the
-/// shared App Group container. If the container is unavailable, both sides fall back to the
-/// defaults, so the preview never breaks.
+/// (sandboxed) Quick Look extension, which READS them at render time.
+///
+/// We avoid App Groups (they'd force a provisioning profile, which the Developer-ID CI build
+/// has none of). Instead, because the host app is unsandboxed, it writes the JSON straight into
+/// the Quick Look extension's own sandbox **container**; the extension then reads it as a file
+/// in its own home. Same physical file, no entitlement needed. Missing file → defaults.
 struct RenderPrefs: Codable, Equatable {
     enum Theme: String, Codable, CaseIterable, Identifiable {
         case auto, light, dark
@@ -30,30 +33,37 @@ struct RenderPrefs: Codable, Equatable {
     /// Add clickable anchor links to headings.
     var headingAnchors: Bool = false
 
-    static let appGroupID = "group.com.ariomoniri.Qedit"
-    static let fileName = "render-prefs.json"
+    /// Bundle id of the Quick Look extension, whose container holds the shared prefs file.
+    private static let quickLookBundleID = "com.ariomoniri.Qedit.QuickLook"
+    /// Path of the prefs file relative to the Quick Look extension's container `Data` root.
+    private static let relativePath = "Library/Application Support/Qedit/render-prefs.json"
 
-    /// The shared JSON file in the App Group container (nil if the entitlement isn't active).
-    static var containerFileURL: URL? {
-        FileManager.default
-            .containerURL(forSecurityApplicationGroupIdentifier: appGroupID)?
-            .appendingPathComponent(fileName)
+    /// The prefs file inside the Quick Look extension's sandbox container.
+    /// - In the extension, `NSHomeDirectory()` already IS that container.
+    /// - In the (unsandboxed) host app, we reach the same place under `~/Library/Containers/…`.
+    static var fileURL: URL {
+        let home = NSHomeDirectory()
+        if Bundle.main.bundleIdentifier == quickLookBundleID {
+            return URL(fileURLWithPath: home).appendingPathComponent(relativePath)
+        }
+        return URL(fileURLWithPath: home)
+            .appendingPathComponent("Library/Containers/\(quickLookBundleID)/Data")
+            .appendingPathComponent(relativePath)
     }
 
-    /// Read shared prefs, falling back to defaults when the container/file is unavailable.
+    /// Read shared prefs, falling back to defaults when the file is missing/unreadable.
     static func load() -> RenderPrefs {
-        guard let url = containerFileURL,
-              let data = try? Data(contentsOf: url),
+        guard let data = try? Data(contentsOf: fileURL),
               let prefs = try? JSONDecoder().decode(RenderPrefs.self, from: data)
         else { return RenderPrefs() }
         return prefs
     }
 
-    /// Persist to the shared container. Returns true on success.
+    /// Persist to the Quick Look extension's container. Returns true on success.
     @discardableResult
     func save() -> Bool {
-        guard let url = Self.containerFileURL,
-              let data = try? JSONEncoder().encode(self) else { return false }
+        let url = Self.fileURL
+        guard let data = try? JSONEncoder().encode(self) else { return false }
         do {
             try FileManager.default.createDirectory(at: url.deletingLastPathComponent(),
                                                     withIntermediateDirectories: true)
