@@ -3,6 +3,9 @@
 All notable changes to Qedit. This file feeds both the GitHub release notes and the
 in-app Sparkle updater. 🪄
 
+## v0.3.1
+- 🖱️ **Edit the Finder selection by button — no Space, no hotkey.** The Home tab has a new “Edit the file selected in Finder” card with **Quick Panel** and **Open Window** buttons, and the menu-bar icon gains **Edit Finder Selection**. Select a file in Finder, click — it opens here. (You can still rebind or turn off the ⌥⌘E shortcut in **Settings → Hotkey**.)
+
 ## v0.3.0
 - ⚡️ **Quick Panel — press ⌥⌘E to view *and* edit, instantly.** Select a file in Finder and hit **⌥⌘E**: a fast, centered, Quick-Look-style panel appears *in front of Finder* — but unlike Space, it’s the **real editor**. Type to edit, **⌘F** to find, **⌘S** saves in place (format never changes), **Esc** to dismiss. No app-switch, no second “now open it to edit” step.
 - 🧩 **Why this, and the honest limit:** macOS makes the *system* Quick Look panel (Space / Finder’s side preview) **read-only** and won’t deliver keystrokes to it — no app can edit or ⌘F *inside* that panel. The Quick Panel is the closest possible: a look-alike that **is** editable. Use **Space** to glance (read-only, now with your render options) and **⌥⌘E** to edit the same file.

@@ -3,12 +3,14 @@ import SwiftUI
 struct HomeView: View {
     @EnvironmentObject private var appState: AppState
     @Environment(\.openWindow) private var openWindow
+    @State private var finderMessage: String?
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
                 header
                 pipelineCard
+                finderSelectionCard
                 openCard
                 if !appState.recentFiles.isEmpty { recentsCard }
             }
@@ -40,6 +42,46 @@ struct HomeView: View {
                      detail: "Use the Quick Action or the global hotkey to open the same file in the "
                            + "editor. Find, change, save in place — original format preserved.")
             }
+        }
+    }
+
+    /// Edit whatever is selected in Finder right now — by button, no Space and no hotkey needed.
+    private var finderSelectionCard: some View {
+        Card(title: "Edit the file selected in Finder", systemImage: "filemenu.and.selection") {
+            VStack(alignment: .leading, spacing: 12) {
+                Text("Select a file in Finder, then click below to open it here — **no Space, no "
+                     + "⌥⌘E needed.** (macOS asks once for permission to read the Finder selection.)")
+                    .foregroundStyle(.secondary).font(.callout)
+                HStack(spacing: 10) {
+                    Button { editFinderSelection(inPanel: true) } label: {
+                        Label("Quick Panel", systemImage: "bolt").padding(.horizontal, 4)
+                    }
+                    .buttonStyle(.borderedProminent).buttonBorderShape(.capsule).controlSize(.large)
+                    Button { editFinderSelection(inPanel: false) } label: {
+                        Label("Open Window", systemImage: "macwindow").padding(.horizontal, 4)
+                    }
+                    .buttonStyle(.bordered).buttonBorderShape(.capsule).controlSize(.large)
+                }
+                if let finderMessage {
+                    Text(finderMessage).font(.caption).foregroundStyle(.secondary)
+                }
+            }
+        }
+    }
+
+    private func editFinderSelection(inPanel: Bool) {
+        guard let url = FinderSelection.currentFileURL() else {
+            NSSound.beep()
+            finderMessage = "No file is selected in Finder (or permission was denied). "
+                + "Select a file in Finder and try again."
+            return
+        }
+        finderMessage = nil
+        appState.noteOpened(url)
+        if inPanel && !EditorWindowView.isPDF(url) {
+            QuickPanelController.shared.present(url)
+        } else {
+            openWindow(id: "editor", value: url)
         }
     }
 

@@ -101,6 +101,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         let menu = NSMenu()
         add(menu, "Open Qedit", #selector(menuOpen))
+        add(menu, "Edit Finder Selection", #selector(menuEditSelection))
         add(menu, "Check for Updates…", #selector(menuCheckUpdates))
         add(menu, "Settings…", #selector(menuSettings), key: ",")
         menu.addItem(.separator())
@@ -116,6 +117,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc private func menuOpen() { showMainWindow() }
+    @objc private func menuEditSelection() {
+        MainActor.assumeIsolated { _ = EditorLauncher.shared.openFinderSelection() }
+    }
     @objc private func menuQuit() { NSApp.terminate(nil) }
     @objc private func menuCheckUpdates() {
         MainActor.assumeIsolated { UpdaterController.shared.checkForUpdates() }
