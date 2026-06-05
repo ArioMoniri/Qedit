@@ -29,12 +29,16 @@
 			<key>QLSupportsSearchableItems</key>
 			<false/>
 			<!--
-			  ONLY non-system UTIs. We deliberately omit Apple-owned rich-preview types
+			  Non-system text UTIs only. We omit Apple-owned rich-preview types
 			  (com.adobe.pdf, public.jpeg, public.png, public.tiff, public.html, public.rtf)
-			  and the broad public.plain-text, so we never fight Apple's built-in previews.
+			  and the over-broad public.text (parent of rtf/html). public.plain-text IS
+			  included so .txt previews with Qedit too; Apple's flat-text preview is the
+			  fallback when Qedit is disabled.
 			-->
 			<key>QLSupportedContentTypes</key>
 			<array>
+				<!-- Plain text (.txt) -->
+				<string>public.plain-text</string>
 				<!-- Markdown -->
 				<string>net.daringfireball.markdown</string>
 				<!-- Logs -->

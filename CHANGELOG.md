@@ -3,6 +3,10 @@
 All notable changes to Qedit. This file feeds both the GitHub release notes and the
 in-app Sparkle updater. 🪄
 
+## v0.2.1
+- 📄 **`.txt` now previews with Qedit.** Plain-text files are handled by Qedit’s Quick Look preview (with the Qedit badge) and by Open With → Qedit, alongside Markdown and code. Note: macOS and Syntax Highlight also handle plain text, so switch them off in the **Extensions** tab for Qedit to win `.txt` on Space.
+- ℹ️ **About editing & ⌘F in the Space preview:** macOS Quick Look previews (Space, and Finder’s side preview pane) are **read-only and don’t receive keystrokes** — no app can edit or run ⌘F *inside* that panel. Editing, ⌘F find, highlight and the other tools live in Qedit’s **editor**: right-click → **Open With → Qedit**, press **⌥⌘E**, or double-click if you set Qedit as the default opener.
+
 ## v0.2.0
 - 🎛️ **Markdown preview options.** New **Settings → Preview** tab lets you tune how Qedit renders Markdown — **Theme** (Auto / Light / Dark), **GitHub-flavored Markdown** (tables, task lists, ~~strikethrough~~, autolinks), **hard line breaks**, **syntax highlighting**, and **clickable heading anchors**. Your choices are shared with the Quick Look extension, so they control the **Space preview** in Finder.
 - 🔀 **Right where you need it:** the Preview tab links straight to the **Extensions** tab, where turning off a competing previewer (QLMarkdown, Syntax Highlight) so Qedit wins Space is one reversible tap.
