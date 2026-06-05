@@ -40,9 +40,10 @@ struct SettingsView: View {
                         .font(.caption).foregroundStyle(.secondary)
                 }
                 Section("Editing safety") {
-                    Toggle("Make a timestamped backup before the first save", isOn: $appState.makeBackupBeforeFirstWrite)
-                    Text("Editing real files is destructive. When on, Qedit copies the original to a "
-                         + "`.bak` file next to it the first time you save in a session.")
+                    Toggle("Keep a .bak backup file", isOn: $appState.makeBackupBeforeFirstWrite)
+                    Text("Off by default — Qedit saves **atomically**, so the file is never left "
+                         + "half-written and **no `.bak` files are left behind**. Turn this on only "
+                         + "if you want a keepable timestamped `.bak` copy next to the file.")
                         .font(.caption).foregroundStyle(.secondary)
                 }
                 Section("Recent files") {

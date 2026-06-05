@@ -3,6 +3,12 @@
 All notable changes to Qedit. This file feeds both the GitHub release notes and the
 in-app Sparkle updater. 🪄
 
+## v0.4.0
+- ✍️ **RTF, RTFD & OpenDocument are now EDITABLE in native form.** They open showing real formatting (fonts, bold, lists) and save back **losslessly in the same format** — no more “read-only”. ⌘F works; ⌘S saves in place.
+- 📄 **Word (.docx/.doc) now renders in its native formatted shape** (read-only), instead of flat plain text. It stays read-only on purpose — re-saving Word through macOS can drop tables/images — with a clear banner pointing you to its app to edit.
+- 🐛 **Fixed “can’t open” for UTF-16/UTF-32 text** (`.md`, `.json`, `.csv`, `.txt` saved in those encodings). They were wrongly treated as binary because the encoding check ran after the “looks binary” check — now encoding is probed first, and the original encoding is preserved on save.
+- 🧹 **No more leftover `.bak` files.** Saves are atomic (the file can never be left half-written), so backups are **off by default** — turn the `.bak` copy back on in Settings if you want one.
+
 ## v0.3.1
 - 🖱️ **Edit the Finder selection by button — no Space, no hotkey.** The Home tab has a new “Edit the file selected in Finder” card with **Quick Panel** and **Open Window** buttons, and the menu-bar icon gains **Edit Finder Selection**. Select a file in Finder, click — it opens here. (You can still rebind or turn off the ⌥⌘E shortcut in **Settings → Hotkey**.)
 

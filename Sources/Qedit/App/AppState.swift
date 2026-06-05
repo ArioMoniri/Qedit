@@ -57,7 +57,9 @@ final class AppState: ObservableObject {
 
     init() {
         if UserDefaults.standard.object(forKey: Self.backupKey) == nil {
-            self.makeBackupBeforeFirstWrite = true // safe default: protect real files
+            // Off by default: saves are atomic (the file can't be left half-written), so we
+            // don't litter `.bak` siblings. Users who want a keepable copy can turn it on.
+            self.makeBackupBeforeFirstWrite = false
         } else {
             self.makeBackupBeforeFirstWrite = UserDefaults.standard.bool(forKey: Self.backupKey)
         }

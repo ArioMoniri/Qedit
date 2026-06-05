@@ -59,19 +59,34 @@ struct EditorView: View {
         } else {
             VStack(spacing: 0) {
                 if doc.isReadOnly { readOnlyBanner }
-                CodeTextView(
-                    text: Binding(
-                        get: { doc.text },
-                        set: { newValue in
-                            // Ignore no-op echoes (the text view re-emitting its initial value),
-                            // so simply opening a file never marks it "Edited".
-                            guard newValue != doc.text else { return }
-                            doc.text = newValue
-                            doc.isDirty = true
-                        }
-                    ),
-                    isEditable: !doc.isReadOnly
-                )
+                if doc.isRich {
+                    // RTF/RTFD/ODT/Word: native formatted rendering (editable when lossless).
+                    RichTextView(
+                        attributedText: Binding(
+                            get: { doc.attributedText },
+                            set: { newValue in
+                                guard !newValue.isEqual(to: doc.attributedText) else { return }
+                                doc.attributedText = newValue
+                                doc.isDirty = true
+                            }
+                        ),
+                        isEditable: !doc.isReadOnly
+                    )
+                } else {
+                    CodeTextView(
+                        text: Binding(
+                            get: { doc.text },
+                            set: { newValue in
+                                // Ignore no-op echoes (the text view re-emitting its initial value),
+                                // so simply opening a file never marks it "Edited".
+                                guard newValue != doc.text else { return }
+                                doc.text = newValue
+                                doc.isDirty = true
+                            }
+                        ),
+                        isEditable: !doc.isReadOnly
+                    )
+                }
                 editorFooter
             }
         }
@@ -105,8 +120,9 @@ struct EditorView: View {
     private var readOnlyBanner: some View {
         HStack(spacing: 10) {
             Image(systemName: "eye").foregroundStyle(.secondary)
-            Text("\(doc.richFormatName ?? "Rich document") — read-only. Read it and **⌘F find** here; "
-                 + "Qedit won’t rewrite Word/RTF formatting. Edit it in its default app.")
+            Text("\(doc.richFormatName ?? "This document") — read-only. Read and **⌘F find** here; "
+                 + "Qedit won’t re-save Word formatting (it could drop tables/images). "
+                 + "Edit it in its default app. (RTF & OpenDocument files ARE editable here.)")
                 .font(.callout).foregroundStyle(.secondary)
             Spacer()
             Button("Open in Default App") { NSWorkspace.shared.open(doc.url) }
