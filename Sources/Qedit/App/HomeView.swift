@@ -81,7 +81,7 @@ struct HomeView: View {
         if inPanel && !EditorWindowView.isPDF(url) {
             QuickPanelController.shared.present(url)
         } else {
-            openWindow(id: "editor", value: url)
+            openWindow(id: "editor", value: url.standardizedFileURL)
         }
     }
 
@@ -141,7 +141,7 @@ struct HomeView: View {
 
     private func open(_ url: URL) {
         appState.noteOpened(url)
-        openWindow(id: "editor", value: url)
+        openWindow(id: "editor", value: url.standardizedFileURL)
     }
 }
 

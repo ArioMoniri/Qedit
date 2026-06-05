@@ -58,8 +58,28 @@ struct SettingsView: View {
             Form {
                 Section("Global hotkey") {
                     Toggle("Open the Finder selection with a hotkey", isOn: $hotKey.enabled)
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Quick presets")
+                            .font(.caption).foregroundStyle(.secondary)
+                        HStack(spacing: 8) {
+                            ForEach(HotKeyConfig.presets, id: \.displayString) { preset in
+                                Button {
+                                    hotKey.config = preset
+                                    hotKey.enabled = true
+                                } label: {
+                                    Text(preset.displayString)
+                                        .font(.system(.callout, design: .rounded).weight(.semibold))
+                                        .frame(minWidth: 54)
+                                }
+                                .buttonStyle(.bordered)
+                                .buttonBorderShape(.roundedRectangle)
+                                .tint(hotKey.config == preset ? .accentColor : .secondary)
+                            }
+                        }
+                        .disabled(!hotKey.enabled)
+                    }
                     HStack {
-                        Text("Shortcut")
+                        Text("Or record your own")
                         Spacer()
                         HotKeyRecorder(config: $hotKey.config)
                             .frame(width: 150, height: 24)
@@ -68,7 +88,8 @@ struct SettingsView: View {
                             .controlSize(.small)
                     }
                     Text("Select a file in Finder and press the shortcut to open it in Qedit. "
-                         + "The first use prompts macOS for permission to control Finder.")
+                         + "(Space on its own can’t be a global shortcut — it would block typing — so the "
+                         + "Space presets add a modifier.) First use asks macOS for Finder permission.")
                         .font(.caption).foregroundStyle(.secondary)
                 }
                 Section("Quick Panel") {

@@ -49,7 +49,7 @@ struct AppMenuCommands: Commands {
             Button("Open…") {
                 if let url = FileOpener.runOpenPanel() {
                     AppState.shared.noteOpened(url)
-                    openWindow(id: "editor", value: url)
+                    openWindow(id: "editor", value: url.standardizedFileURL)
                 }
             }
             .keyboardShortcut("o", modifiers: .command)

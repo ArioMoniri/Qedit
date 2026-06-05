@@ -109,17 +109,21 @@ struct ManagerView: View {
                     .font(.callout).foregroundStyle(.secondary)
 
                 ForEach(model.overlappingExtensions) { ext in
-                    Toggle(isOn: Binding(
-                        get: { ext.status == .enabled },
-                        set: { on in Task { await model.setEnabled(on, for: ext) } }
-                    )) {
+                    HStack(alignment: .firstTextBaseline, spacing: 12) {
                         VStack(alignment: .leading, spacing: 1) {
                             Text(ext.displayName ?? ext.identifier)
                             Text(sharedTypeSummary(ext)).font(.caption2).foregroundStyle(.tertiary)
                         }
+                        Spacer(minLength: 12)
+                        Toggle("", isOn: Binding(
+                            get: { ext.status == .enabled },
+                            set: { on in Task { await model.setEnabled(on, for: ext) } }
+                        ))
+                        .labelsHidden()
+                        .toggleStyle(.switch)
                     }
-                    .toggleStyle(.switch)
-                    .padding(.vertical, 2)
+                    .padding(.vertical, 4)
+                    Divider().opacity(0.4)
                 }
 
                 if competing {

@@ -64,7 +64,7 @@ struct RootView: View {
         .onAppear {
             // Give the launcher (URL handler + global hotkey + Dock reopen) ways to open windows.
             EditorLauncher.shared.openEditorWindow = { url in
-                openWindow(id: "editor", value: url)
+                openWindow(id: "editor", value: url.standardizedFileURL)
             }
             EditorLauncher.shared.openMainWindow = {
                 openWindow(id: "main")

@@ -15,6 +15,16 @@ struct HotKeyConfig: Equatable, Codable {
         keyLabel: "E"
     )
 
+    /// One-tap presets shown in Settings. (Space needs a modifier — a bare Space can't be a
+    /// global hotkey without blocking typing — so the "Space" presets pair it with ⌃/⌥/⌘.)
+    static let presets: [HotKeyConfig] = [
+        .default,
+        HotKeyConfig(keyCode: UInt32(kVK_Space), carbonModifiers: UInt32(controlKey), keyLabel: "Space"),
+        HotKeyConfig(keyCode: UInt32(kVK_Space), carbonModifiers: UInt32(optionKey), keyLabel: "Space"),
+        HotKeyConfig(keyCode: UInt32(kVK_Space), carbonModifiers: UInt32(controlKey | cmdKey), keyLabel: "Space"),
+        HotKeyConfig(keyCode: UInt32(kVK_ANSI_E), carbonModifiers: UInt32(cmdKey), keyLabel: "E"),
+    ]
+
     var displayString: String {
         var s = ""
         if carbonModifiers & UInt32(controlKey) != 0 { s += "⌃" }

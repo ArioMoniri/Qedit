@@ -3,6 +3,11 @@
 All notable changes to Qedit. This file feeds both the GitHub release notes and the
 in-app Sparkle updater. 🪄
 
+## v0.4.1
+- ⌨️ **Keyboard-shortcut preset buttons** in Settings → Hotkey — one tap to pick ⌥⌘E, ⌃Space, ⌥Space, ⌃⌘Space or ⌘E (or still record your own). A bare Space can’t be a global shortcut without blocking typing, so the Space presets add a modifier.
+- 📐 **Aligned the conflict toggles** — every Quick-Look-extension switch now lines up in one right-hand column, with dividers, instead of floating at different positions.
+- 🪟 **Same file → one window.** Opening the same file from different places now reuses its window (URLs are normalized) instead of stacking duplicates. (If you see two windows with *different* wording, you have two Qedit versions running — quit all and reopen one.)
+
 ## v0.4.0
 - ✍️ **RTF, RTFD & OpenDocument are now EDITABLE in native form.** They open showing real formatting (fonts, bold, lists) and save back **losslessly in the same format** — no more “read-only”. ⌘F works; ⌘S saves in place.
 - 📄 **Word (.docx/.doc) now renders in its native formatted shape** (read-only), instead of flat plain text. It stays read-only on purpose — re-saving Word through macOS can drop tables/images — with a clear banner pointing you to its app to edit.
