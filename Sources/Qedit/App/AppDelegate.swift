@@ -35,8 +35,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     /// Clicking the Dock icon (while it's showing) with no windows reopens the dashboard.
+    /// We open it ourselves and return false so AppKit doesn't ALSO run its default reopen,
+    /// which would spawn a second, duplicate dashboard window.
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
-        if !flag { MainActor.assumeIsolated { showMainWindow() } }
+        if !flag {
+            MainActor.assumeIsolated { showMainWindow() }
+            return false
+        }
         return true
     }
 

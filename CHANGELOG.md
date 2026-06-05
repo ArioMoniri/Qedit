@@ -3,6 +3,11 @@
 All notable changes to Qedit. This file feeds both the GitHub release notes and the
 in-app Sparkle updater. 🪄
 
+## v0.1.10
+- 🪟 **No more double dashboard.** Reopening Qedit from the Dock or menu bar after closing its window opened *two* identical dashboards — now it’s always one.
+- 🧼 **Freshly opened files aren’t marked “Edited.”** Opening a file no longer flips it to a dirty/“Edited” state (which had enabled Save and could trigger a needless backup) — it only marks edited once you actually change something.
+- ⬆️ **Open With reliably brings the file’s editor to the front** on a cold launch, instead of leaving it hidden behind the dashboard.
+
 ## v0.1.9
 - 🖊️ **The editor actually opens now.** “Open With → Qedit” (and ⌥⌘E) reliably brings the file’s editor window to the front — previously it could open *behind* the dashboard or, on a cold launch, not appear at all (the file just landed in “Recent”). Opening a file now surfaces just that file; the dashboard tucks away (reopen it from the menu-bar icon).
 - 📄 **Word, RTF & OpenDocument open for reading + ⌘F find.** `.docx`, `.doc`, `.rtf`, `.rtfd` and `.odt` now open read-only in the editor so you can read and search them — Qedit won’t rewrite their formatting, so edit them in their own app. They’re in the **Open With** menu too.

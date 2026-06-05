@@ -56,14 +56,15 @@ final class EditorLauncher: ObservableObject {
         }
     }
 
-    /// Raise the editor window for `name` and tuck the dashboard behind it. The main
-    /// WindowGroup ("Qedit") otherwise stays key, hiding the file the user asked to open.
+    /// Raise the editor window for `name` to the front. The main WindowGroup ("Qedit")
+    /// otherwise stays key on a cold launch, hiding the file the user asked to open. We only
+    /// raise the editor — never hide/close the dashboard — because programmatically closing a
+    /// SwiftUI WindowGroup window and reopening it spawns a duplicate. Leaving it untouched
+    /// (just behind the editor) is the reliable choice.
     private func surfaceEditor(named name: String, attempt: Int = 0) {
         if let editor = NSApp.windows.first(where: {
             $0 !== dashboardWindow && $0.title == name && Self.isContentWindow($0)
         }) {
-            // Hide the dashboard so Open With shows just the file (reopen it from the menu bar).
-            dashboardWindow?.close()
             editor.makeKeyAndOrderFront(nil)
             return
         }

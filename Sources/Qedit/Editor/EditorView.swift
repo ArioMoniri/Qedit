@@ -61,7 +61,16 @@ struct EditorView: View {
             VStack(spacing: 0) {
                 if doc.isReadOnly { readOnlyBanner }
                 CodeTextView(
-                    text: Binding(get: { doc.text }, set: { doc.text = $0; doc.isDirty = true }),
+                    text: Binding(
+                        get: { doc.text },
+                        set: { newValue in
+                            // Ignore no-op echoes (the text view re-emitting its initial value),
+                            // so simply opening a file never marks it "Edited".
+                            guard newValue != doc.text else { return }
+                            doc.text = newValue
+                            doc.isDirty = true
+                        }
+                    ),
                     isEditable: !doc.isReadOnly
                 )
             }
