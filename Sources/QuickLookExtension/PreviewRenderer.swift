@@ -84,6 +84,9 @@ struct PreviewRenderer {
         let darkCSS = asset("github-dark.min", "css")
         let markedJS = asset("marked.min", "js")
         let purifyJS = asset("purify.min", "js")
+        // KaTeX (MathML output, no font files needed) only when math is enabled.
+        let katexJS = prefs.math ? asset("katex.min", "js") : ""
+        let autoRenderJS = prefs.math ? asset("auto-render.min", "js") : ""
 
         let b64 = Data(text.utf8).base64EncodedString()
         let lang = kind.hljsLanguage ?? ""
@@ -125,6 +128,8 @@ struct PreviewRenderer {
         <script>\(hljsJS)</script>
         <script>\(markedJS)</script>
         <script>\(purifyJS)</script>
+        <script>\(katexJS)</script>
+        <script>\(autoRenderJS)</script>
         <script>
         (function () {
           const FILE_KEY = "\(fileKey)";
@@ -133,6 +138,9 @@ struct PreviewRenderer {
           const HARD_BREAKS = \(prefs.hardBreaks);
           const SYNTAX = \(prefs.syntaxHighlighting);
           const ANCHORS = \(prefs.headingAnchors);
+          const MATH = \(prefs.math);
+          const EMOJI = \(prefs.emoji);
+          const SMART = \(prefs.smartQuotes);
           function b64ToString(b64) {
             const bin = atob(b64);
             const bytes = new Uint8Array(bin.length);
@@ -140,6 +148,28 @@ struct PreviewRenderer {
             return new TextDecoder("utf-8").decode(bytes);
           }
           const SRC = b64ToString("\(b64)");
+          const EMOJI_MAP = {smile:"😄",grinning:"😀",joy:"😂",heart:"❤️",thumbsup:"👍","+1":"👍",thumbsdown:"👎","-1":"👎",fire:"🔥",rocket:"🚀",tada:"🎉",check:"✔️",white_check_mark:"✅",x:"❌",warning:"⚠️",star:"⭐",eyes:"👀","100":"💯",wave:"👋",pray:"🙏",clap:"👏",bulb:"💡",bug:"🐛",sparkles:"✨",zap:"⚡",books:"📚",memo:"📝",lock:"🔒",key:"🔑",mag:"🔍",gear:"⚙️",question:"❓",bell:"🔔",calendar:"📅",email:"📧",computer:"💻",coffee:"☕",sun:"☀️",moon:"🌙",ok_hand:"👌",muscle:"💪",point_right:"👉",arrow_right:"➡️"};
+          function replaceTextNodes(root, fn) {
+            const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode: function (n) {
+              var p = n.parentElement, t = p && p.tagName;
+              if (t === "CODE" || t === "PRE" || t === "SCRIPT" || t === "STYLE") return NodeFilter.FILTER_REJECT;
+              if (p && p.closest && p.closest("math")) return NodeFilter.FILTER_REJECT;
+              return NodeFilter.FILTER_ACCEPT; } });
+            var nodes = []; while (walker.nextNode()) nodes.push(walker.currentNode);
+            nodes.forEach(function (n) { var v = fn(n.nodeValue); if (v !== n.nodeValue) n.nodeValue = v; });
+          }
+          function emojiReplace(s) { return s.replace(/:([a-z0-9_+\\-]+):/gi, function (m, name) { return EMOJI_MAP[name.toLowerCase()] || m; }); }
+          function smartReplace(s) { return s.replace(/(^|[\\s([{])"/g, "$1\\u201C").replace(/"/g, "\\u201D").replace(/(^|[\\s([{])'/g, "$1\\u2018").replace(/'/g, "\\u2019").replace(/---/g, "\\u2014").replace(/(\\w)--(\\w)/g, "$1\\u2013$2"); }
+          function postProcess(root) {
+            if (!root) return;
+            if (MATH && window.renderMathInElement) {
+              try { renderMathInElement(root, { output: "mathml", throwOnError: false, delimiters: [
+                { left: "$$", right: "$$", display: true }, { left: "$", right: "$", display: false },
+                { left: "\\\\[", right: "\\\\]", display: true }, { left: "\\\\(", right: "\\\\)", display: false } ] }); } catch (e) {}
+            }
+            if (EMOJI) replaceTextNodes(root, emojiReplace);
+            if (SMART) replaceTextNodes(root, smartReplace);
+          }
           \(renderScript)
           \(scrollRestoreJS)
         })();
@@ -300,6 +330,7 @@ struct PreviewRenderer {
                   }
                 });
               }
+              postProcess(el);
             } catch (e) {
               document.getElementById("content").textContent = SRC;
             }

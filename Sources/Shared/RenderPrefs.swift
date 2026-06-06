@@ -32,6 +32,12 @@ struct RenderPrefs: Codable, Equatable {
     var syntaxHighlighting: Bool = true
     /// Add clickable anchor links to headings.
     var headingAnchors: Bool = false
+    /// Render LaTeX math ($…$ / $$…$$) via KaTeX (MathML output — no fonts needed).
+    var math: Bool = false
+    /// Replace :shortcode: with emoji.
+    var emoji: Bool = false
+    /// Curly quotes / dashes (typographic).
+    var smartQuotes: Bool = false
 
     /// Bundle id of the Quick Look extension, whose container holds the shared prefs file.
     private static let quickLookBundleID = "com.ariomoniri.Qedit.QuickLook"

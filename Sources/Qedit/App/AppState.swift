@@ -125,7 +125,7 @@ final class AppState: ObservableObject {
         self.keepRunningInBackground = UserDefaults.standard.object(forKey: Self.backgroundKey) as? Bool ?? true
         self.hotkeyOpensQuickPanel = UserDefaults.standard.object(forKey: Self.quickPanelKey) as? Bool ?? true
         self.autoSave = UserDefaults.standard.object(forKey: Self.autoSaveKey) as? Bool ?? false
-        self.highlightChanges = UserDefaults.standard.object(forKey: Self.highlightChangesKey) as? Bool ?? false
+        self.highlightChanges = UserDefaults.standard.object(forKey: Self.highlightChangesKey) as? Bool ?? true
         self.changeHighlightStyle = UserDefaults.standard.string(forKey: Self.changeStyleKey)
             .flatMap(ChangeHighlightStyle.init(rawValue:)) ?? .background
         self.allowWordEditing = UserDefaults.standard.object(forKey: Self.allowWordKey) as? Bool ?? false

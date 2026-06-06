@@ -3,6 +3,11 @@
 All notable changes to Qedit. This file feeds both the GitHub release notes and the
 in-app Sparkle updater. 🪄
 
+## v0.6.2
+- 🎞️ **PowerPoint renders the REAL slides now.** `.pptx` opens in a native Quick Look view (actual layout, images and text) instead of extracted text — fixes blank/incorrect slides for image- or SmartArt-based decks.
+- ➗ **Math, emoji & smart quotes in Markdown preview** (Settings → Preview): **LaTeX math** via KaTeX rendered as MathML (offline, no extra fonts), `:shortcode:` → **emoji**, and **curly quotes / en–em dashes**. (These join GFM, hard breaks, syntax highlighting and heading anchors.)
+- 🖍️ **Change highlighting is ON by default** — your edits show colored as you type (change the style or turn it off in Settings → Editing).
+
 ## v0.6.1
 - ⌨️ **Clearer shortcut + macOS settings buttons.** Settings → Shortcut now shows your **current shortcut** in big type, adds an **“Open macOS Keyboard Settings”** button, and a **“Show Qedit when you press Space”** section that explains the Space/Quick-Look rule and gives one‑tap buttons to **make Qedit win Space** (Extensions) and to **open macOS’s Extensions settings**.
 
