@@ -3,6 +3,10 @@
 All notable changes to Qedit. This file feeds both the GitHub release notes and the
 in-app Sparkle updater. 🪄
 
+## v0.6.0
+- 🔎 **⌘F now works in spreadsheets and presentations.** Press **⌘F** in an `.xlsx`/`.csv` grid or a `.pptx` slide view to find — matching cells/paragraphs highlight, **n/N** counts, ↑/↓ step through them and the view scrolls to each. (Text/code/RTF/Word already had ⌘F — so find now spans **every** supported type.)
+- ✏️ **PDF text editing (beta).** Select text in a PDF, click **Replace Text** — Qedit covers it and drops an editable text box pre‑filled with the original, so you can **type a correction over it** and Save back into the `.pdf`. It’s an overlay edit (double‑click to edit the text), not full reflow, and the original glyphs stay underneath (so it’s not redaction for privacy).
+
 ## v0.5.6
 - 🛟 **Much safer spreadsheet editing.** Rewrote how `.xlsx` saves: it now changes **only the cells you actually edited** (everything else — styles, number formats, other sheets, formulas — is preserved byte‑for‑byte), resolves the **correct worksheet** (not just “sheet1”), drops `calcChain` after a formula edit so Excel won’t show a repair prompt, **makes a backup first**, and reports a clear message if a workbook is too complex to edit safely. This replaces v0.5.5’s simpler writer, which could lose formatting on real workbooks.
 

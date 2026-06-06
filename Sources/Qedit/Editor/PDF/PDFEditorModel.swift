@@ -149,6 +149,42 @@ final class PDFEditorModel: ObservableObject {
         pdfView.scrollSelectionToVisible(nil)
     }
 
+    // MARK: - Replace text (Tier-1 overlay: cover old glyphs + editable text on top)
+
+    /// Whether there is selected text to replace right now.
+    var hasTextSelection: Bool { !(pdfView.currentSelection?.string ?? "").isEmpty }
+
+    /// Cover the current text selection with a page-colored box and drop an EDITABLE free-text
+    /// annotation pre-filled with that text. Double-click the new text to edit it; Save writes the
+    /// PDF back. This is an overlay edit (not reflow); the original glyphs remain underneath, so it
+    /// is NOT redaction for privacy.
+    @discardableResult
+    func replaceSelectedText() -> Bool {
+        guard let selection = pdfView.currentSelection,
+              let text = selection.string, !text.isEmpty else { return false }
+        var didAny = false
+        for page in selection.pages {
+            let b = selection.bounds(for: page)
+            guard b.width > 1, b.height > 1 else { continue }
+            let cover = PDFAnnotation(bounds: b.insetBy(dx: -1, dy: -1), forType: .square, withProperties: nil)
+            cover.color = .clear
+            cover.interiorColor = .white
+            let noBorder = PDFBorder(); noBorder.lineWidth = 0; cover.border = noBorder
+            page.addAnnotation(cover)
+
+            let ft = PDFAnnotation(bounds: b.insetBy(dx: -2, dy: -2), forType: .freeText, withProperties: nil)
+            ft.contents = text
+            ft.font = NSFont.systemFont(ofSize: max(8, b.height * 0.72))
+            ft.fontColor = .black
+            ft.color = .clear
+            ft.alignment = .left
+            page.addAnnotation(ft)
+            didAny = true
+        }
+        if didAny { pdfView.clearSelection(); markDirty() }
+        return didAny
+    }
+
     // MARK: - Copy as plain text
 
     func copyAllAsPlainText() {

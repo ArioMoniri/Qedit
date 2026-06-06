@@ -106,6 +106,11 @@ struct PDFEditorView: View {
                 Button("Copy Selection as Plain Text") { model.copySelectionAsPlainText() }
             } label: { Label("Copy Text", systemImage: "doc.on.clipboard") }
 
+            Button {
+                if !model.replaceSelectedText() { NSSound.beep() }
+            } label: { Label("Replace Text", systemImage: "character.cursor.ibeam") }
+                .help("Select text in the PDF, then Replace Text — covers it and lets you type a correction over it (double-click to edit; overlay, not reflow).")
+
             Menu {
                 Button { model.rotateCurrentPage(by: -90) } label: { Label("Rotate Left", systemImage: "rotate.left") }
                 Button { model.rotateCurrentPage(by: 90) } label: { Label("Rotate Right", systemImage: "rotate.right") }
