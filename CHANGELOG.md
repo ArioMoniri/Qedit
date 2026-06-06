@@ -3,6 +3,9 @@
 All notable changes to Qedit. This file feeds both the GitHub release notes and the
 in-app Sparkle updater. 🪄
 
+## v0.5.6
+- 🛟 **Much safer spreadsheet editing.** Rewrote how `.xlsx` saves: it now changes **only the cells you actually edited** (everything else — styles, number formats, other sheets, formulas — is preserved byte‑for‑byte), resolves the **correct worksheet** (not just “sheet1”), drops `calcChain` after a formula edit so Excel won’t show a repair prompt, **makes a backup first**, and reports a clear message if a workbook is too complex to edit safely. This replaces v0.5.5’s simpler writer, which could lose formatting on real workbooks.
+
 ## v0.5.5
 - 📝 **Edit spreadsheet cells.** New **Settings → Editing → “Allow editing spreadsheet cells (.xlsx)”** turns the cell grid editable — change values and **Save** writes them straight back into the `.xlsx` in place (verified: the rewritten file is a valid workbook with other sheets/styles preserved). Off by default; values only (formulas/number formats are dropped), so keep `.bak` on for important sheets.
 

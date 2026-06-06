@@ -83,10 +83,7 @@ struct SpreadsheetView: View {
             }
             Spacer()
             if editable {
-                Button {
-                    if SpreadsheetWriter.write(rows, to: url) { dirty = false; saveError = nil }
-                    else { saveError = "Couldn’t save the spreadsheet." }
-                } label: { Label("Save", systemImage: "square.and.arrow.down") }
+                Button { save() } label: { Label("Save", systemImage: "square.and.arrow.down") }
                     .keyboardShortcut("s", modifiers: .command)
                     .disabled(!dirty).buttonStyle(.borderedProminent).controlSize(.small)
             }
@@ -95,5 +92,23 @@ struct SpreadsheetView: View {
         .padding(.horizontal, 14).padding(.vertical, 8)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(.green.opacity(0.10))
+        .overlay(alignment: .bottomLeading) {
+            if let saveError {
+                Text(saveError).font(.caption).foregroundStyle(.red)
+                    .padding(.horizontal, 14).padding(.bottom, 2)
+            }
+        }
+    }
+
+    private func save() {
+        // Editing a spreadsheet is risky — always take a safety copy first (respecting the .bak
+        // preference), then write the minimal-diff back.
+        if appState.makeBackupBeforeFirstWrite { try? FileBackup.make(for: url) }
+        if SpreadsheetWriter.write(rows, to: url) {
+            dirty = false; saveError = nil
+        } else {
+            saveError = "Couldn’t save — this workbook has a structure Qedit can’t safely edit yet. "
+                + "Open it in Numbers/Excel."
+        }
     }
 }

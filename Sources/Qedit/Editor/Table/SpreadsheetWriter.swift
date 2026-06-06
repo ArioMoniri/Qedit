@@ -1,9 +1,10 @@
 import Foundation
 
-/// Writes an edited cell grid back into an existing .xlsx, in place. It unzips the original,
-/// replaces ONLY `xl/worksheets/sheet1.xml` with the edited values (as inline strings), and
-/// re-zips — every other part of the workbook (other sheets, styles, docProps) is preserved.
-/// Lossy by design for sheet 1: cell formulas/number-formats become plain values. Opt-in.
+/// Writes an edited cell grid back into an existing .xlsx, in place, with a MINIMAL DIFF:
+/// only the cells the user actually changed are touched, and each keeps its style index (`s`)
+/// and reference (`r`). Numeric-looking values stay numbers; everything else becomes an inline
+/// string. Unchanged cells, other sheets, sharedStrings, styles and docProps are left byte-for-
+/// byte. Editing a formula cell drops `calcChain.xml` so Excel doesn't show a repair dialog.
 enum SpreadsheetWriter {
     @discardableResult
     static func write(_ grid: [[String]], to url: URL) -> Bool {
@@ -14,66 +15,141 @@ enum SpreadsheetWriter {
         defer { try? FileManager.default.removeItem(at: tmp) }
 
         guard run("/usr/bin/unzip", ["-o", "-q", url.path, "-d", tmp.path]) else { return false }
-        let sheet = tmp.appendingPathComponent("xl/worksheets/sheet1.xml")
-        guard FileManager.default.fileExists(atPath: sheet.path) else { return false }
+        guard let sheetURL = XLSXParts.firstSheetURL(in: tmp),
+              let doc = try? XMLDocument(contentsOf: sheetURL) else { return false }
+        let shared = XLSXParts.sharedStrings(in: tmp)
 
-        let xml = sheetXML(from: grid)
-        guard (try? xml.data(using: .utf8)?.write(to: sheet, options: .atomic)) != nil else { return false }
+        // Index existing cells + their original resolved values.
+        guard let cellNodes = try? doc.nodes(forXPath: "//*[local-name()='c']") else { return false }
+        var cellByRef: [String: XMLElement] = [:]
+        var origByRef: [String: String] = [:]
+        for case let c as XMLElement in cellNodes {
+            guard let ref = c.attribute(forName: "r")?.stringValue else { continue }
+            cellByRef[ref] = c
+            origByRef[ref] = resolvedValue(c, shared: shared)
+        }
 
-        // Re-zip the workbook with clean relative paths (no "./" prefix) into a temp file.
+        var changed = false, formulaEdited = false
+        for (r, row) in grid.enumerated() {
+            for (col, newVal) in row.enumerated() {
+                let ref = "\(XLSXParts.columnLetters(col))\(r + 1)"
+                if newVal == (origByRef[ref] ?? "") { continue }   // unchanged → leave it alone
+                changed = true
+                if let c = cellByRef[ref] {
+                    if hasFormula(c) { formulaEdited = true }
+                    setValue(c, newVal)
+                } else if !newVal.isEmpty, let rowEl = ensureRow(doc, rowIndex: r + 1) {
+                    let c = XMLElement(name: "c")
+                    c.addAttribute(attr("r", ref))
+                    setValue(c, newVal)
+                    insertCellInOrder(c, into: rowEl, col: col)
+                    cellByRef[ref] = c
+                }
+            }
+        }
+        guard changed else { return true }   // nothing edited → original untouched
+
+        if formulaEdited { removeCalcChain(in: tmp) }
+        guard (try? doc.xmlData().write(to: sheetURL, options: .atomic)) != nil else { return false }
+
         let out = tmp.appendingPathComponent("out.xlsx")
-        let script = "cd \(shellQuote(tmp.path)) && /usr/bin/find . -type f ! -name out.xlsx "
-            + "| /usr/bin/sed 's|^\\./||' | /usr/bin/zip -X -q \(shellQuote(out.path)) -@"
+        let script = "cd \(quote(tmp.path)) && /usr/bin/find . -type f ! -name out.xlsx "
+            + "! -name '.DS_Store' ! -path './__MACOSX/*' "
+            + "| /usr/bin/sed 's|^\\./||' | /usr/bin/zip -X -q \(quote(out.path)) -@"
         guard run("/bin/sh", ["-c", script]), FileManager.default.fileExists(atPath: out.path) else { return false }
-
-        // Replace the original atomically.
         do {
             _ = try FileManager.default.replaceItemAt(url, withItemAt: out)
             return true
-        } catch {
-            return (try? FileManager.default.removeItem(at: url)) != nil
-                && (try? FileManager.default.copyItem(at: out, to: url)) != nil
+        } catch { return false }
+    }
+
+    // MARK: - Cell helpers
+
+    private static func resolvedValue(_ c: XMLElement, shared: [String]) -> String {
+        let t = c.attribute(forName: "t")?.stringValue
+        if t == "inlineStr" {
+            let ts = (try? c.nodes(forXPath: ".//*[local-name()='t']")) ?? []
+            return ts.compactMap { $0.stringValue }.joined()
+        }
+        let raw = ((try? c.nodes(forXPath: "./*[local-name()='v']"))?.first?.stringValue) ?? ""
+        if t == "s", let i = Int(raw), i >= 0, i < shared.count { return shared[i] }
+        return raw
+    }
+
+    private static func hasFormula(_ c: XMLElement) -> Bool {
+        ((try? c.nodes(forXPath: "./*[local-name()='f']"))?.isEmpty == false)
+    }
+
+    /// Replace a cell's value, preserving its `r`/`s` attributes. Numeric → bare `<v>`; text →
+    /// `t="inlineStr"` with `<is><t>`; empty → cleared.
+    private static func setValue(_ c: XMLElement, _ value: String) {
+        if let kids = c.children { for _ in kids { c.removeChild(at: 0) } }
+        c.removeAttribute(forName: "t")
+        if value.isEmpty { return }
+        let trimmed = value.trimmingCharacters(in: .whitespaces)
+        if trimmed == value, let d = Double(value), d.isFinite {
+            let v = XMLElement(name: "v"); v.stringValue = value; c.addChild(v)
+        } else {
+            c.addAttribute(attr("t", "inlineStr"))
+            let isEl = XMLElement(name: "is")
+            let tEl = XMLElement(name: "t"); tEl.stringValue = value
+            tEl.addAttribute(attr("xml:space", "preserve"))
+            isEl.addChild(tEl); c.addChild(isEl)
         }
     }
 
-    private static func sheetXML(from grid: [[String]]) -> String {
-        var rows = ""
-        for (r, row) in grid.enumerated() {
-            var cells = ""
-            for (c, value) in row.enumerated() where !value.isEmpty {
-                let ref = "\(columnLetters(c))\(r + 1)"
-                cells += "<c r=\"\(ref)\" t=\"inlineStr\"><is><t xml:space=\"preserve\">\(escape(value))</t></is></c>"
+    private static func ensureRow(_ doc: XMLDocument, rowIndex: Int) -> XMLElement? {
+        guard let sheetData = (try? doc.nodes(forXPath: "//*[local-name()='sheetData']"))?.first as? XMLElement
+        else { return nil }
+        let rows = (try? sheetData.nodes(forXPath: "./*[local-name()='row']")) ?? []
+        for case let row as XMLElement in rows
+        where Int(row.attribute(forName: "r")?.stringValue ?? "") == rowIndex { return row }
+        let newRow = XMLElement(name: "row"); newRow.addAttribute(attr("r", "\(rowIndex)"))
+        for case let row as XMLElement in rows {
+            if let ri = Int(row.attribute(forName: "r")?.stringValue ?? ""), ri > rowIndex {
+                sheetData.insertChild(newRow, at: row.index); return newRow
             }
-            if !cells.isEmpty { rows += "<row r=\"\(r + 1)\">\(cells)</row>" }
         }
-        return "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
-            + "<worksheet xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\">"
-            + "<sheetData>\(rows)</sheetData></worksheet>"
+        sheetData.addChild(newRow); return newRow
     }
 
-    /// 0 → "A", 25 → "Z", 26 → "AA".
-    private static func columnLetters(_ index: Int) -> String {
-        var n = index, s = ""
-        repeat {
-            s = String(UnicodeScalar(UInt8(65 + n % 26))) + s
-            n = n / 26 - 1
-        } while n >= 0
-        return s
+    private static func insertCellInOrder(_ cell: XMLElement, into row: XMLElement, col: Int) {
+        let existing = (try? row.nodes(forXPath: "./*[local-name()='c']")) ?? []
+        for case let c as XMLElement in existing {
+            if let ref = c.attribute(forName: "r")?.stringValue,
+               let coord = XLSXParts.cellCoord(ref), coord.col > col {
+                row.insertChild(cell, at: c.index); return
+            }
+        }
+        row.addChild(cell)
     }
 
-    private static func escape(_ s: String) -> String {
-        s.replacingOccurrences(of: "&", with: "&amp;")
-            .replacingOccurrences(of: "<", with: "&lt;")
-            .replacingOccurrences(of: ">", with: "&gt;")
+    private static func removeCalcChain(in tmp: URL) {
+        try? FileManager.default.removeItem(at: tmp.appendingPathComponent("xl/calcChain.xml"))
+        detachMatching(tmp.appendingPathComponent("[Content_Types].xml"),
+                       xpath: "//*[local-name()='Override']", attr: "PartName", contains: "calcChain")
+        detachMatching(tmp.appendingPathComponent("xl/_rels/workbook.xml.rels"),
+                       xpath: "//*[local-name()='Relationship']", attr: "Target", contains: "calcChain")
     }
 
-    private static func shellQuote(_ s: String) -> String { "'" + s.replacingOccurrences(of: "'", with: "'\\''") + "'" }
+    private static func detachMatching(_ url: URL, xpath: String, attr: String, contains: String) {
+        guard let doc = try? XMLDocument(contentsOf: url),
+              let nodes = try? doc.nodes(forXPath: xpath) else { return }
+        var any = false
+        for case let el as XMLElement in nodes
+        where (el.attribute(forName: attr)?.stringValue ?? "").contains(contains) { el.detach(); any = true }
+        if any { try? doc.xmlData().write(to: url, options: .atomic) }
+    }
+
+    private static func attr(_ name: String, _ value: String) -> XMLNode {
+        (XMLNode.attribute(withName: name, stringValue: value) as? XMLNode) ?? XMLNode(kind: .attribute)
+    }
+
+    private static func quote(_ s: String) -> String { "'" + s.replacingOccurrences(of: "'", with: "'\\''") + "'" }
 
     @discardableResult
     private static func run(_ path: String, _ args: [String]) -> Bool {
-        let p = Process()
-        p.executableURL = URL(fileURLWithPath: path)
-        p.arguments = args
+        let p = Process(); p.executableURL = URL(fileURLWithPath: path); p.arguments = args
         p.standardOutput = nil; p.standardError = nil
         do { try p.run(); p.waitUntilExit() } catch { return false }
         return p.terminationStatus == 0

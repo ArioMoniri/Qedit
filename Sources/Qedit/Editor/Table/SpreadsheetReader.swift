@@ -68,19 +68,9 @@ enum SpreadsheetReader {
         do { try unzip.run(); unzip.waitUntilExit() } catch { return nil }
         guard unzip.terminationStatus == 0 else { return nil }
 
-        let shared = parseSharedStrings(tmp.appendingPathComponent("xl/sharedStrings.xml"))
-        let sheet = tmp.appendingPathComponent("xl/worksheets/sheet1.xml")
-        guard FileManager.default.fileExists(atPath: sheet.path) else { return nil }
+        let shared = XLSXParts.sharedStrings(in: tmp)
+        guard let sheet = XLSXParts.firstSheetURL(in: tmp) else { return nil }
         return parseSheet(sheet, shared: shared)
-    }
-
-    private static func parseSharedStrings(_ url: URL) -> [String] {
-        guard let doc = try? XMLDocument(contentsOf: url),
-              let sis = try? doc.nodes(forXPath: "//*[local-name()='si']") else { return [] }
-        return sis.map { si in
-            let ts = (try? si.nodes(forXPath: ".//*[local-name()='t']")) ?? []
-            return ts.compactMap { $0.stringValue }.joined()
-        }
     }
 
     private static func parseSheet(_ url: URL, shared: [String]) -> [[String]]? {
