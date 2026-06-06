@@ -84,7 +84,8 @@ struct EditorView: View {
                                 doc.isDirty = true
                             }
                         ),
-                        isEditable: !doc.isReadOnly
+                        isEditable: !doc.isReadOnly,
+                        language: codeLanguage
                     )
                 }
                 editorFooter
@@ -148,6 +149,15 @@ struct EditorView: View {
         }
         .padding(40)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    /// Syntax-coloring language for code/config files (nil = plain text/markdown/log, no coloring).
+    private var codeLanguage: String? {
+        switch doc.kind {
+        case .sourceCode(let lang): return lang ?? "code"
+        case .config(let lang): return lang ?? "code"
+        default: return nil
+        }
     }
 
     private var statusText: String {

@@ -3,6 +3,10 @@
 All notable changes to Qedit. This file feeds both the GitHub release notes and the
 in-app Sparkle updater. 🪄
 
+## v0.5.0
+- 🎛️ **Redesigned, dynamic Settings.** Cleaner partitioned tabs (General · Shortcut · Preview) where **every option shows a clear `✓ On` / `✗ Off` chip** at a glance, each section shows an “N / M on” count, and the shortcut **preset buttons** sit right alongside the recorder. Much easier to scan than the old plain list.
+- 🌈 **Syntax coloring in the editor.** Code & config files (Swift, Python, JS/TS, JSON…) now open with **colored keywords, strings, numbers and comments** — their native “code shape” — and recolor live as you type. Display-only: it never changes the saved bytes.
+
 ## v0.4.1
 - ⌨️ **Keyboard-shortcut preset buttons** in Settings → Hotkey — one tap to pick ⌥⌘E, ⌃Space, ⌥Space, ⌃⌘Space or ⌘E (or still record your own). A bare Space can’t be a global shortcut without blocking typing, so the Space presets add a modifier.
 - 📐 **Aligned the conflict toggles** — every Quick-Look-extension switch now lines up in one right-hand column, with dividers, instead of floating at different positions.

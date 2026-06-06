@@ -7,6 +7,9 @@ import AppKit
 struct CodeTextView: NSViewRepresentable {
     @Binding var text: String
     var isEditable: Bool = true
+    /// When non-nil, fenced code is syntax-colored for this highlight.js language id
+    /// ("swift", "python", "json"…, or "code" for an unknown source language).
+    var language: String? = nil
 
     func makeCoordinator() -> Coordinator { Coordinator(self) }
 
@@ -40,6 +43,7 @@ struct CodeTextView: NSViewRepresentable {
         textView.isIncrementalSearchingEnabled = true
         textView.textContainerInset = NSSize(width: 8, height: 10)
         textView.string = text
+        highlight(textView)
 
         scrollView.documentView = textView
         return scrollView
@@ -49,19 +53,39 @@ struct CodeTextView: NSViewRepresentable {
         guard let textView = scrollView.documentView as? NSTextView else { return }
         if textView.string != text {
             textView.string = text
+            highlight(textView)
         }
         if textView.isEditable != isEditable {
             textView.isEditable = isEditable
         }
     }
 
+    /// Apply syntax colors to the whole document (display-only; never touches the text bytes).
+    private func highlight(_ textView: NSTextView) {
+        guard language != nil, let storage = textView.textStorage else { return }
+        let font = textView.font ?? .monospacedSystemFont(ofSize: 12, weight: .regular)
+        SyntaxHighlighter.apply(to: storage, language: language, font: font)
+    }
+
     final class Coordinator: NSObject, NSTextViewDelegate {
         var parent: CodeTextView
+        private var rehighlight: DispatchWorkItem?
         init(_ parent: CodeTextView) { self.parent = parent }
 
         func textDidChange(_ notification: Notification) {
             guard let textView = notification.object as? NSTextView else { return }
             parent.text = textView.string
+            // Re-color shortly after typing settles (skip during IME composition).
+            guard parent.language != nil, textView.hasMarkedText() == false else { return }
+            rehighlight?.cancel()
+            let work = DispatchWorkItem { [weak textView] in
+                guard let textView, let storage = textView.textStorage,
+                      textView.hasMarkedText() == false else { return }
+                let font = textView.font ?? .monospacedSystemFont(ofSize: 12, weight: .regular)
+                SyntaxHighlighter.apply(to: storage, language: self.parent.language, font: font)
+            }
+            rehighlight = work
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.25, execute: work)
         }
     }
 }

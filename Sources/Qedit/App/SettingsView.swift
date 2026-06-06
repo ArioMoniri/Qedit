@@ -10,7 +10,6 @@ final class RenderPrefsStore: ObservableObject {
 
     private func persist() {
         let saved = prefs.save()
-        // Drop Quick Look's cached previews so the next Space press re-renders with the change.
         if saved { Task.detached { _ = Diagnostics.resetQuickLookCache() } }
     }
 }
@@ -22,126 +21,151 @@ struct SettingsView: View {
 
     var body: some View {
         TabView {
-            Form {
-                Section("Appearance") {
-                    Picker("Theme", selection: $appState.appearance) {
-                        ForEach(AppAppearance.allCases) { Text($0.label).tag($0) }
-                    }
-                    .pickerStyle(.segmented)
-                    Text("Previews and the code preview follow the system light/dark automatically; "
-                         + "this overrides the editor and app windows.")
-                        .font(.caption).foregroundStyle(.secondary)
+            generalTab.tabItem { Label("General", systemImage: "gearshape") }
+            shortcutTab.tabItem { Label("Shortcut", systemImage: "command") }
+            previewTab.tabItem { Label("Preview", systemImage: "eye") }
+        }
+        .frame(width: 520)
+    }
+
+    private func tab<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
+        ScrollView { VStack(spacing: 14) { content() }.padding(18) }
+            .frame(width: 520, height: 470)
+    }
+
+    // MARK: - General
+
+    private var generalTab: some View {
+        tab {
+            SettingsGroup(title: "Appearance") {
+                Picker("Theme", selection: $appState.appearance) {
+                    ForEach(AppAppearance.allCases) { Text($0.label).tag($0) }
                 }
-                Section("When the window closes") {
-                    Toggle("Keep Qedit running in the menu bar", isOn: $appState.keepRunningInBackground)
-                    Text("On: closing the window drops the Dock icon and keeps Qedit running in the "
-                         + "background (the global hotkey and Quick Action stay live); use the menu-bar "
-                         + "icon to reopen or quit. Off: closing the last window quits Qedit.")
-                        .font(.caption).foregroundStyle(.secondary)
-                }
-                Section("Editing safety") {
-                    Toggle("Keep a .bak backup file", isOn: $appState.makeBackupBeforeFirstWrite)
-                    Text("Off by default — Qedit saves **atomically**, so the file is never left "
-                         + "half-written and **no `.bak` files are left behind**. Turn this on only "
-                         + "if you want a keepable timestamped `.bak` copy next to the file.")
-                        .font(.caption).foregroundStyle(.secondary)
-                }
-                Section("Recent files") {
-                    Button("Clear Recent Files") { appState.clearRecents() }
+                .pickerStyle(.segmented)
+                Text("Light/Dark for Qedit’s windows. Previews follow the system automatically.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+
+            SettingsGroup(title: "Behavior", onCount: appState.keepRunningInBackground ? 1 : 0, total: 1) {
+                SettingRow(icon: "menubar.rectangle", title: "Keep running in the menu bar",
+                           detail: "Closing the window keeps Qedit alive in the menu bar (hotkey + Quick Action stay live). Off: closing the last window quits.",
+                           isOn: $appState.keepRunningInBackground)
+            }
+
+            SettingsGroup(title: "Files & safety",
+                          onCount: appState.makeBackupBeforeFirstWrite ? 1 : 0, total: 1) {
+                SettingRow(icon: "doc.badge.clock", title: "Keep a .bak backup file",
+                           detail: "Off by default — saves are atomic, so the file is never half-written and no .bak files are left behind. On: keep a timestamped .bak copy.",
+                           isOn: $appState.makeBackupBeforeFirstWrite)
+            }
+
+            SettingsGroup(title: "Recent files") {
+                HStack {
+                    Text("\(appState.recentFiles.count) item\(appState.recentFiles.count == 1 ? "" : "s")")
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                    Button("Clear Recents") { appState.clearRecents() }
                         .disabled(appState.recentFiles.isEmpty)
                 }
             }
-            .formStyle(.grouped)
-            .tabItem { Label("General", systemImage: "gearshape") }
-            .frame(width: 480, height: 380)
+        }
+    }
 
-            Form {
-                Section("Global hotkey") {
-                    Toggle("Open the Finder selection with a hotkey", isOn: $hotKey.enabled)
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("Quick presets")
-                            .font(.caption).foregroundStyle(.secondary)
-                        HStack(spacing: 8) {
-                            ForEach(HotKeyConfig.presets, id: \.displayString) { preset in
-                                Button {
-                                    hotKey.config = preset
-                                    hotKey.enabled = true
-                                } label: {
-                                    Text(preset.displayString)
-                                        .font(.system(.callout, design: .rounded).weight(.semibold))
-                                        .frame(minWidth: 54)
-                                }
-                                .buttonStyle(.bordered)
-                                .buttonBorderShape(.roundedRectangle)
-                                .tint(hotKey.config == preset ? .accentColor : .secondary)
-                            }
+    // MARK: - Shortcut
+
+    private var shortcutTab: some View {
+        tab {
+            SettingsGroup(title: "Quick-Look → edit hotkey",
+                          subtitle: "Select a file in Finder, press the shortcut to open it here.",
+                          onCount: hotKey.enabled ? 1 : 0, total: 1) {
+                SettingRow(icon: "bolt", title: "Enable the global hotkey",
+                           detail: "First use asks macOS for permission to read the Finder selection.",
+                           isOn: $hotKey.enabled)
+
+                Text("Quick presets").font(.caption).foregroundStyle(.secondary).padding(.top, 4)
+                HStack(spacing: 8) {
+                    ForEach(HotKeyConfig.presets, id: \.displayString) { preset in
+                        Button {
+                            hotKey.config = preset; hotKey.enabled = true
+                        } label: {
+                            Text(preset.displayString)
+                                .font(.system(.callout, design: .rounded).weight(.semibold))
+                                .frame(minWidth: 52)
                         }
-                        .disabled(!hotKey.enabled)
+                        .buttonStyle(.bordered).buttonBorderShape(.roundedRectangle)
+                        .tint(hotKey.config == preset ? .accentColor : .secondary)
                     }
-                    HStack {
-                        Text("Or record your own")
-                        Spacer()
-                        HotKeyRecorder(config: $hotKey.config)
-                            .frame(width: 150, height: 24)
-                            .disabled(!hotKey.enabled)
-                        Button("Reset") { hotKey.config = .default }
-                            .controlSize(.small)
-                    }
-                    Text("Select a file in Finder and press the shortcut to open it in Qedit. "
-                         + "(Space on its own can’t be a global shortcut — it would block typing — so the "
-                         + "Space presets add a modifier.) First use asks macOS for Finder permission.")
-                        .font(.caption).foregroundStyle(.secondary)
                 }
-                Section("Quick Panel") {
-                    Toggle("Hotkey opens a Quick Panel (editable, like Quick Look)",
+                .disabled(!hotKey.enabled)
+
+                HStack {
+                    Text("Or record your own").foregroundStyle(.secondary)
+                    Spacer()
+                    HotKeyRecorder(config: $hotKey.config)
+                        .frame(width: 140, height: 24).disabled(!hotKey.enabled)
+                    Button("Reset") { hotKey.config = .default }.controlSize(.small)
+                }
+                Text("Space alone can’t be a global shortcut (it would block typing), so the Space presets add a modifier.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+
+            SettingsGroup(title: "Where it opens",
+                          onCount: appState.hotkeyOpensQuickPanel ? 1 : 0, total: 1) {
+                SettingRow(icon: "rectangle.center.inset.filled", title: "Open in a Quick Panel",
+                           detail: "On: a fast, centered, Quick-Look-style panel that IS the editor (type, ⌘F, ⌘S, Esc), no app-switch. Off: a full editor window.",
                            isOn: $appState.hotkeyOpensQuickPanel)
-                    Text("On: the hotkey pops a fast, centered, Quick-Look-style panel in front of "
-                         + "Finder — but it’s the real editor (type to edit, ⌘F to find, ⌘S to save "
-                         + "in place, Esc to dismiss), with no app-switch. Off: the hotkey opens a "
-                         + "full editor window instead.")
-                        .font(.caption).foregroundStyle(.secondary)
-                }
             }
-            .formStyle(.grouped)
-            .tabItem { Label("Hotkey", systemImage: "command") }
-            .frame(width: 480, height: 360)
+        }
+    }
 
-            Form {
-                Section("Markdown preview") {
-                    Picker("Theme", selection: $render.prefs.theme) {
-                        ForEach(RenderPrefs.Theme.allCases) { Text($0.label).tag($0) }
-                    }
-                    .pickerStyle(.segmented)
-                    Toggle("GitHub-flavored Markdown", isOn: $render.prefs.gfm)
-                    Toggle("Hard line breaks", isOn: $render.prefs.hardBreaks)
-                    Toggle("Syntax highlighting in code", isOn: $render.prefs.syntaxHighlighting)
-                    Toggle("Clickable heading anchors", isOn: $render.prefs.headingAnchors)
-                    Text("GitHub-flavored Markdown adds tables, task lists, ~~strikethrough~~ and "
-                         + "autolinks. These apply to Qedit’s preview.")
-                        .font(.caption).foregroundStyle(.secondary)
+    // MARK: - Preview
+
+    private var previewMarkdownOnCount: Int {
+        [render.prefs.gfm, render.prefs.hardBreaks,
+         render.prefs.syntaxHighlighting, render.prefs.headingAnchors].filter { $0 }.count
+    }
+
+    private var previewTab: some View {
+        tab {
+            SettingsGroup(title: "Theme") {
+                Picker("Theme", selection: $render.prefs.theme) {
+                    ForEach(RenderPrefs.Theme.allCases) { Text($0.label).tag($0) }
                 }
-                Section("Showing on Space in Finder") {
-                    Text("macOS shows only one Quick Look preview per file type. If QLMarkdown or "
-                         + "Syntax Highlight is installed, Qedit’s preview (with these options) only "
-                         + "appears once you switch them off — do that in the app’s **Extensions** tab, "
-                         + "where it’s one tap and fully reversible.")
-                        .font(.caption).foregroundStyle(.secondary)
-                    Button {
-                        NSApp.setActivationPolicy(.regular)
-                        NSApp.activate(ignoringOtherApps: true)
-                        EditorLauncher.shared.openMainWindow?()
-                        // Let the dashboard appear, then switch it to the Extensions tab.
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-                            NotificationCenter.default.post(name: .qeditShowExtensions, object: nil)
-                        }
-                    } label: {
-                        Label("Open Extensions tab", systemImage: "puzzlepiece.extension")
-                    }
-                }
+                .pickerStyle(.segmented)
             }
-            .formStyle(.grouped)
-            .tabItem { Label("Preview", systemImage: "doc.richtext") }
-            .frame(width: 480, height: 420)
+
+            SettingsGroup(title: "Markdown rendering",
+                          subtitle: "Applies to Qedit’s Quick Look (Space) preview.",
+                          onCount: previewMarkdownOnCount, total: 4) {
+                SettingRow(icon: "tablecells", tint: .blue, title: "GitHub-flavored Markdown",
+                           detail: "Tables, task lists, ~~strikethrough~~ and autolinks.",
+                           isOn: $render.prefs.gfm)
+                SettingRow(icon: "arrow.turn.down.left", tint: .blue, title: "Hard line breaks",
+                           detail: "Treat single newlines as line breaks.",
+                           isOn: $render.prefs.hardBreaks)
+                SettingRow(icon: "curlybraces", tint: .blue, title: "Syntax highlighting in code",
+                           detail: "Color fenced code blocks.",
+                           isOn: $render.prefs.syntaxHighlighting)
+                SettingRow(icon: "number", tint: .blue, title: "Clickable heading anchors",
+                           detail: "Add anchor links to headings.",
+                           isOn: $render.prefs.headingAnchors)
+            }
+
+            SettingsGroup(title: "Showing on Space") {
+                Text("macOS shows one preview per type. If QLMarkdown / Syntax Highlight is on, Qedit’s preview only appears once you switch them off — one tap in Extensions.")
+                    .font(.caption).foregroundStyle(.secondary)
+                Button {
+                    NSApp.setActivationPolicy(.regular)
+                    NSApp.activate(ignoringOtherApps: true)
+                    EditorLauncher.shared.openMainWindow?()
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                        NotificationCenter.default.post(name: .qeditShowExtensions, object: nil)
+                    }
+                } label: {
+                    Label("Open Extensions tab", systemImage: "puzzlepiece.extension")
+                }
+                .buttonStyle(.bordered).buttonBorderShape(.capsule)
+            }
         }
     }
 }
