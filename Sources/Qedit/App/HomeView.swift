@@ -78,7 +78,7 @@ struct HomeView: View {
         }
         finderMessage = nil
         appState.noteOpened(url)
-        if inPanel && !EditorWindowView.isPDF(url) && !EditorWindowView.isSpreadsheet(url) {
+        if inPanel && !EditorWindowView.needsWindow(url) {
             QuickPanelController.shared.present(url)
         } else {
             openWindow(id: "editor", value: url.standardizedFileURL)

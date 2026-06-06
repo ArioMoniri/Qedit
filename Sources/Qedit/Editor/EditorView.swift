@@ -14,6 +14,8 @@ struct EditorWindowView: View {
                     PDFEditorView(url: url)
                 } else if Self.isSpreadsheet(url) {
                     SpreadsheetView(url: url)
+                } else if Self.isPresentation(url) {
+                    PptxView(url: url)
                 } else {
                     EditorView(url: url)
                 }
@@ -33,6 +35,16 @@ struct EditorWindowView: View {
     /// Spreadsheets get a read-only cell grid in a full window (tables need room).
     static func isSpreadsheet(_ url: URL) -> Bool {
         url.pathExtension.lowercased() == "xlsx"
+    }
+
+    /// Presentations get a read-only slide viewer in a full window.
+    static func isPresentation(_ url: URL) -> Bool {
+        url.pathExtension.lowercased() == "pptx"
+    }
+
+    /// Types that need a full window (not the Quick Panel) because they have their own chrome.
+    static func needsWindow(_ url: URL) -> Bool {
+        isPDF(url) || isSpreadsheet(url) || isPresentation(url)
     }
 }
 
@@ -65,7 +77,11 @@ struct EditorView: View {
             binaryNotice
         } else {
             VStack(spacing: 0) {
-                if doc.isReadOnly { readOnlyBanner }
+                if doc.isReadOnly {
+                    readOnlyBanner
+                } else if doc.richFormatName == "Word document" {
+                    wordEditWarningBanner
+                }
                 if doc.isRich {
                     // RTF/RTFD/ODT/Word: native formatted rendering (editable when lossless).
                     RichTextView(
@@ -144,6 +160,19 @@ struct EditorView: View {
         .padding(.horizontal, 14).padding(.vertical, 8)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(.yellow.opacity(0.12))
+    }
+
+    private var wordEditWarningBanner: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "exclamationmark.triangle").foregroundStyle(.orange)
+            Text("Editing a Word document — **saving may simplify complex formatting** (tables, images). "
+                 + "Keep the `.bak` backup on (Settings → Editing) for important files.")
+                .font(.callout).foregroundStyle(.secondary)
+            Spacer()
+        }
+        .padding(.horizontal, 14).padding(.vertical, 8)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(.orange.opacity(0.12))
     }
 
     private var binaryNotice: some View {

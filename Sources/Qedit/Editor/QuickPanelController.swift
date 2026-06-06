@@ -28,7 +28,10 @@ final class QuickPanelController {
         }
 
         panel.title = url.lastPathComponent
-        if !panel.isVisible { panel.center() }
+        if !panel.isVisible {
+            panel.setContentSize(AppState.shared.quickPanelSize.size)
+            panel.center()
+        }
         panel.makeKeyAndOrderFront(nil)
         panel.orderFrontRegardless()
         // Put the caret in the editor so typing / ⌘F work immediately.

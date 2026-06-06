@@ -106,7 +106,7 @@ enum FileTypeClassifier {
         "scala": "scala",
         "dart": "dart",
         "lua": "lua",
-        "html": "xml", "htm": "xml",
+        "html": "xml", "htm": "xml", "svg": "xml",
         "css": "css", "scss": "scss", "sass": "scss", "less": "less",
         "vue": "xml",
         "dockerfile": "dockerfile",

@@ -91,6 +91,14 @@ struct SettingsView: View {
                 }
             }
 
+            SettingsGroup(title: "Word documents",
+                          onCount: appState.allowWordEditing ? 1 : 0, total: 1) {
+                SettingRow(icon: "doc.richtext", tint: .blue,
+                           title: "Allow editing Word (.docx/.doc)",
+                           detail: "Off by default: Word opens read-only because re-saving through macOS can simplify complex formatting (tables/images). On: edit & save in place — turn on the .bak backup below if the doc is complex. (RTF & OpenDocument are always editable.)",
+                           isOn: $appState.allowWordEditing)
+            }
+
             SettingsGroup(title: "Backup",
                           onCount: appState.makeBackupBeforeFirstWrite ? 1 : 0, total: 1) {
                 SettingRow(icon: "doc.badge.clock", title: "Keep a .bak backup file",
@@ -143,6 +151,16 @@ struct SettingsView: View {
                 SettingRow(icon: "rectangle.center.inset.filled", title: "Open in a Quick Panel",
                            detail: "On: a fast, centered, Quick-Look-style panel that IS the editor (type, ⌘F, ⌘S, Esc), no app-switch. Off: a full editor window.",
                            isOn: $appState.hotkeyOpensQuickPanel)
+                if appState.hotkeyOpensQuickPanel {
+                    HStack {
+                        Text("Panel size").foregroundStyle(.secondary)
+                        Spacer()
+                        Picker("Panel size", selection: $appState.quickPanelSize) {
+                            ForEach(QuickPanelSize.allCases) { Text($0.label).tag($0) }
+                        }
+                        .pickerStyle(.segmented).labelsHidden().frame(width: 240)
+                    }
+                }
             }
         }
     }

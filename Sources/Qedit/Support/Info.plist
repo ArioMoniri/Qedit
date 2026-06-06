@@ -60,6 +60,7 @@
 				<string>public.yaml</string>
 				<string>public.xml</string>
 				<string>public.log</string>
+				<string>public.svg-image</string>
 			</array>
 		</dict>
 		<dict>
@@ -92,7 +93,7 @@
 		</dict>
 		<dict>
 			<key>CFBundleTypeName</key>
-			<string>Spreadsheets</string>
+			<string>Spreadsheets &amp; Presentations</string>
 			<key>CFBundleTypeRole</key>
 			<string>Viewer</string>
 			<key>LSHandlerRank</key>
@@ -100,6 +101,7 @@
 			<key>LSItemContentTypes</key>
 			<array>
 				<string>org.openxmlformats.spreadsheetml.sheet</string>
+				<string>org.openxmlformats.presentationml.presentation</string>
 				<string>public.comma-separated-values-text</string>
 				<string>public.tab-separated-values-text</string>
 			</array>

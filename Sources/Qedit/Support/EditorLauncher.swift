@@ -90,10 +90,9 @@ final class EditorLauncher: ObservableObject {
             NSSound.beep()
             return false
         }
-        // PDFs (toolbar) and spreadsheets (cell grid) need room → always a full window.
+        // PDFs/spreadsheets/presentations have their own chrome → always a full window.
         // Text-like files use the Quick Panel.
-        if AppState.shared.hotkeyOpensQuickPanel
-            && !EditorWindowView.isPDF(url) && !EditorWindowView.isSpreadsheet(url) {
+        if AppState.shared.hotkeyOpensQuickPanel && !EditorWindowView.needsWindow(url) {
             QuickPanelController.shared.present(url)
         } else {
             open(url)

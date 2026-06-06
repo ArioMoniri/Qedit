@@ -59,9 +59,15 @@ final class EditorDocument: ObservableObject, Identifiable {
     func load() {
         loadError = nil
         let ext = url.pathExtension.lowercased()
-        if Self.richEditableExtensions.contains(ext) { loadRich(ext: ext, editable: true) }
-        else if Self.richReadOnlyExtensions.contains(ext) { loadRich(ext: ext, editable: false) }
-        else { loadPlainText() }
+        if Self.richEditableExtensions.contains(ext) {
+            loadRich(ext: ext, editable: true)
+        } else if Self.richReadOnlyExtensions.contains(ext) {
+            // Word is read-only unless the user opts into editing (it can simplify formatting).
+            let wordEditable = (ext == "docx" || ext == "doc") && AppState.shared.allowWordEditing
+            loadRich(ext: ext, editable: wordEditable)
+        } else {
+            loadPlainText()
+        }
         originalText = text   // snapshot for change-highlighting
     }
 

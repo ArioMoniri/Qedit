@@ -3,6 +3,12 @@
 All notable changes to Qedit. This file feeds both the GitHub release notes and the
 in-app Sparkle updater. 🪄
 
+## v0.5.3
+- ✍️ **Edit Word documents (opt-in).** New **Settings → Editing → “Allow editing Word (.docx/.doc)”** makes Word files editable and saves them back in place as `.docx` (verified). Off by default with a clear in-editor warning, because re-saving can simplify complex formatting — keep the `.bak` backup on for important docs.
+- 🎞️ **PowerPoint `.pptx` opens** as a native read-only **slide viewer** (per-slide text, selectable, ⌘F find).
+- 🟣 **SVG support** — `.svg` opens as editable XML with syntax coloring (it’s text, after all), saved in place.
+- 📐 **Quick Panel size** — choose **Small / Medium / Large** in Settings → Shortcut.
+
 ## v0.5.2
 - 📊 **Spreadsheets open as a native cell grid.** `.xlsx` files now open in a real **table view** — a header row + selectable, monospaced cells you can read and **⌘F find** — instead of “can’t open”. Read-only (re-saving .xlsx losslessly isn’t safe), with a one-click “Open in Default App” to edit in Numbers/Excel. (CSV/TSV parsing is built in too.)
 - 🔎 `.xlsx`, `.csv` and `.tsv` are now in the **Open With → Qedit** menu.

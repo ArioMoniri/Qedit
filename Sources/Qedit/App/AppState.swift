@@ -34,6 +34,20 @@ enum ChangeHighlightStyle: String, CaseIterable, Identifiable {
     }
 }
 
+/// Size the Quick Panel opens at.
+enum QuickPanelSize: String, CaseIterable, Identifiable {
+    case small, medium, large
+    var id: String { rawValue }
+    var label: String { rawValue.capitalized }
+    var size: NSSize {
+        switch self {
+        case .small: return NSSize(width: 640, height: 440)
+        case .medium: return NSSize(width: 880, height: 600)
+        case .large: return NSSize(width: 1120, height: 760)
+        }
+    }
+}
+
 /// App-wide state: recent files and editor preferences. A shared singleton so the
 /// menu commands (which run outside the SwiftUI view environment) can reach it too.
 @MainActor
@@ -72,6 +86,14 @@ final class AppState: ObservableObject {
     @Published var changeHighlightStyle: ChangeHighlightStyle {
         didSet { UserDefaults.standard.set(changeHighlightStyle.rawValue, forKey: Self.changeStyleKey) }
     }
+    /// Allow editing Word (.docx/.doc) — saving may simplify complex formatting, so it's opt-in.
+    @Published var allowWordEditing: Bool {
+        didSet { UserDefaults.standard.set(allowWordEditing, forKey: Self.allowWordKey) }
+    }
+    /// Size the Quick Panel opens at.
+    @Published var quickPanelSize: QuickPanelSize {
+        didSet { UserDefaults.standard.set(quickPanelSize.rawValue, forKey: Self.quickPanelSizeKey) }
+    }
 
     private static let recentsKey = "qe.recentFiles"
     private static let backupKey = "qe.makeBackupBeforeFirstWrite"
@@ -81,6 +103,8 @@ final class AppState: ObservableObject {
     private static let autoSaveKey = "qe.autoSave"
     private static let highlightChangesKey = "qe.highlightChanges"
     private static let changeStyleKey = "qe.changeHighlightStyle"
+    private static let allowWordKey = "qe.allowWordEditing"
+    private static let quickPanelSizeKey = "qe.quickPanelSize"
     private let maxRecents = 12
 
     init() {
@@ -99,6 +123,9 @@ final class AppState: ObservableObject {
         self.highlightChanges = UserDefaults.standard.object(forKey: Self.highlightChangesKey) as? Bool ?? false
         self.changeHighlightStyle = UserDefaults.standard.string(forKey: Self.changeStyleKey)
             .flatMap(ChangeHighlightStyle.init(rawValue:)) ?? .background
+        self.allowWordEditing = UserDefaults.standard.object(forKey: Self.allowWordKey) as? Bool ?? false
+        self.quickPanelSize = UserDefaults.standard.string(forKey: Self.quickPanelSizeKey)
+            .flatMap(QuickPanelSize.init(rawValue:)) ?? .medium
         loadRecents()
     }
 
