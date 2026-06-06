@@ -40,9 +40,37 @@ final class QuickPanelController {
                   let textView = Self.firstTextView(in: content) else { return }
             panel.makeFirstResponder(textView)
         }
+        FinderSelectionObserver.shared.refresh()
     }
 
-    func hide() { panel?.orderOut(nil) }
+    func hide() {
+        panel?.orderOut(nil)
+        FinderSelectionObserver.shared.refresh()
+    }
+
+    // MARK: - Follow Finder selection
+
+    /// Swap the previewed file WITHOUT stealing key focus or moving first responder — so the user
+    /// can keep arrowing through files in Finder while the panel tracks the selection. They click
+    /// into the panel (making it key) when they actually want to type. Only swaps when the panel
+    /// is already visible and the file differs from what's shown.
+    func follow(_ url: URL) {
+        guard let panel, panel.isVisible else { return }
+        if currentURL?.standardizedFileURL != url.standardizedFileURL || hosting == nil {
+            mountEditor(for: url, in: panel)
+            currentURL = url
+            AppState.shared.noteOpened(url)
+        }
+        panel.title = url.lastPathComponent
+        panel.orderFrontRegardless()
+    }
+
+    /// Whether the panel is on screen.
+    var isPanelVisible: Bool { panel?.isVisible ?? false }
+    /// Whether the panel is the key window (i.e. the user is typing in it — don't swap then).
+    var isPanelKey: Bool { panel?.isKeyWindow ?? false }
+    /// The file currently shown in the panel.
+    var currentPanelURL: URL? { currentURL }
 
     // MARK: - Internals
 

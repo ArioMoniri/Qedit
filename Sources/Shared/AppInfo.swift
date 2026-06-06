@@ -44,7 +44,8 @@ enum SupportedFormats {
     static let edit = "PDF — find, highlight, notes, text boxes, signature, and page ops — plus "
         + "every text, source-code, Markdown, log and config type Qedit previews. PDFs save via "
         + "PDFKit; text saves in its original encoding; nothing ever changes format. Word (.docx, "
-        + ".doc), RTF and OpenDocument (.odt) open read-only for reading and find."
+        + ".doc), RTF and OpenDocument (.odt) are editable rich text; spreadsheet cells (.xlsx) and "
+        + "PowerPoint text (.pptx) edit in place too. Everything saves back in its original format."
 
     /// Short inline list.
     static let short = "PDF, Markdown, source code, logs, JSON / YAML / XML / TOML, and plain text"

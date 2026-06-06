@@ -10,6 +10,7 @@ struct HomeView: View {
             VStack(alignment: .leading, spacing: 24) {
                 header
                 pipelineCard
+                browserCard
                 finderSelectionCard
                 openCard
                 if !appState.recentFiles.isEmpty { recentsCard }
@@ -41,6 +42,24 @@ struct HomeView: View {
                 Step(number: "2", title: "Edit (write)",
                      detail: "Use the Quick Action or the global hotkey to open the same file in the "
                            + "editor. Find, change, save in place — original format preserved.")
+            }
+        }
+    }
+
+    /// Browse a folder and edit files inline — the closest thing to "edit in the preview" macOS
+    /// allows (Finder's own preview pane is read-only and can't take keystrokes).
+    private var browserCard: some View {
+        Card(title: "Browse & edit files (live preview)", systemImage: "sidebar.right") {
+            VStack(alignment: .leading, spacing: 12) {
+                Text("Open a folder and **click any file to edit it right there** in the side-by-side "
+                     + "editor — no Space, no shortcut. Find with ⌘F, save in place. This is Qedit’s "
+                     + "own editable preview pane (macOS won’t let any app edit inside Finder’s).")
+                    .foregroundStyle(.secondary).font(.callout)
+                Button { openWindow(id: "browser") } label: {
+                    Label("Open Browser", systemImage: "sidebar.right").padding(.horizontal, 4)
+                }
+                .buttonStyle(.borderedProminent).buttonBorderShape(.capsule).controlSize(.large)
+                .keyboardShortcut("b", modifiers: [.command, .shift])
             }
         }
     }

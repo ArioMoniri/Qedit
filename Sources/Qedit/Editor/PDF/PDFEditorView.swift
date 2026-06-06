@@ -40,6 +40,18 @@ struct PDFEditorView: View {
         .alert("Couldn’t save", isPresented: errorBinding) {
             Button("OK", role: .cancel) {}
         } message: { Text(errorMessage ?? "") }
+        .onAppear { registerActive() }
+        .onChange(of: model.isDirty) { _, _ in registerActive() }
+        .onDisappear { ActiveEditor.shared.resign(url: model.url) }
+    }
+
+    /// Publish dirty state + a synchronous save to the shared bridge for the Browser / follow-Finder.
+    private func registerActive() {
+        ActiveEditor.shared.register(url: model.url, isDirty: model.isDirty) { [model, appState] in
+            guard model.isDirty else { return true }
+            do { try model.save(makeBackup: appState.makeBackupBeforeFirstWrite); return true }
+            catch { return false }
+        }
     }
 
     // MARK: - Find bar
@@ -130,10 +142,22 @@ struct PDFEditorView: View {
                 Label("Reveal in Finder", systemImage: "folder")
             }
 
-            Button { save() } label: { Label("Save", systemImage: "square.and.arrow.down") }
-                .keyboardShortcut("s", modifiers: .command)
-                .disabled(!model.isDirty)
-                .help("Save in place — stays a .pdf")
+            Menu {
+                Button("Save") { save() }
+                    .keyboardShortcut("s", modifiers: .command)
+                Divider()
+                Button("Save & Flatten (for printing/sharing)…") { save(flatten: true) }
+                    .help("Burn highlights, notes and replacement text into the page so every viewer "
+                          + "shows them. Flattened edits can’t be moved later, and text under a "
+                          + "replacement is hidden, not removed.")
+            } label: {
+                Label("Save", systemImage: "square.and.arrow.down")
+            } primaryAction: {
+                save()
+            }
+            .menuStyle(.button)
+            .disabled(!model.isDirty)
+            .help("Save in place — stays a .pdf")
         }
     }
 
@@ -155,8 +179,8 @@ struct PDFEditorView: View {
         Binding(get: { errorMessage != nil }, set: { if !$0 { errorMessage = nil } })
     }
 
-    private func save() {
-        do { try model.save(makeBackup: appState.makeBackupBeforeFirstWrite) }
+    private func save(flatten: Bool = false) {
+        do { try model.save(makeBackup: appState.makeBackupBeforeFirstWrite, flatten: flatten) }
         catch { errorMessage = error.localizedDescription }
     }
 

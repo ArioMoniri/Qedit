@@ -98,12 +98,22 @@ final class PDFEditorModel: ObservableObject {
     // MARK: - Save in place
 
     func save(makeBackup: Bool) throws {
+        try save(makeBackup: makeBackup, flatten: false)
+    }
+
+    /// Save in place. When `flatten` is true, annotations (highlights, notes, replacement text)
+    /// are burned into the page so they render everywhere, even in viewers that ignore annotations
+    /// — useful before printing/sharing. Flattened edits can no longer be moved or deleted, and any
+    /// text covered by a replacement is hidden beneath the new text (painted over, not removed), so
+    /// flattening is offered per-save, never as the default.
+    func save(makeBackup: Bool, flatten: Bool) throws {
         guard let document else { throw PDFEditError.notLoaded }
         if makeBackup && !didBackup {
             try FileBackup.make(for: url)
             didBackup = true
         }
-        guard document.write(to: url) else { throw PDFEditError.writeFailed }
+        let options: [PDFDocumentWriteOption: Any] = flatten ? [.burnInAnnotationsOption: true] : [:]
+        guard document.write(to: url, withOptions: options) else { throw PDFEditError.writeFailed }
         isDirty = false
         lastSaved = Date()
     }
@@ -162,20 +172,30 @@ final class PDFEditorModel: ObservableObject {
     func replaceSelectedText() -> Bool {
         guard let selection = pdfView.currentSelection,
               let text = selection.string, !text.isEmpty else { return false }
+        // Read the ORIGINAL font, size and color from the selected glyphs so the replacement looks
+        // like the surrounding text instead of generic system black. Embedded/subset fonts resolve
+        // to a close substitute; size and color come through accurately.
+        let attrs = selection.attributedString
+        let originalFont = attrs?.length ?? 0 > 0
+            ? attrs?.attribute(.font, at: 0, effectiveRange: nil) as? NSFont : nil
+        let originalColor = attrs?.length ?? 0 > 0
+            ? attrs?.attribute(.foregroundColor, at: 0, effectiveRange: nil) as? NSColor : nil
+
         var didAny = false
         for page in selection.pages {
             let b = selection.bounds(for: page)
             guard b.width > 1, b.height > 1 else { continue }
+
             let cover = PDFAnnotation(bounds: b.insetBy(dx: -1, dy: -1), forType: .square, withProperties: nil)
             cover.color = .clear
-            cover.interiorColor = .white
+            cover.interiorColor = sampledBackgroundColor(for: page, around: b)
             let noBorder = PDFBorder(); noBorder.lineWidth = 0; cover.border = noBorder
             page.addAnnotation(cover)
 
             let ft = PDFAnnotation(bounds: b.insetBy(dx: -2, dy: -2), forType: .freeText, withProperties: nil)
             ft.contents = text
-            ft.font = NSFont.systemFont(ofSize: max(8, b.height * 0.72))
-            ft.fontColor = .black
+            ft.font = originalFont ?? NSFont.systemFont(ofSize: max(8, b.height * 0.72))
+            ft.fontColor = originalColor ?? .black
             ft.color = .clear
             ft.alignment = .left
             page.addAnnotation(ft)
@@ -183,6 +203,46 @@ final class PDFEditorModel: ObservableObject {
         }
         if didAny { pdfView.clearSelection(); markDirty() }
         return didAny
+    }
+
+    /// Sample the page color behind a selection so the cover box blends in. Renders a thin strip
+    /// just below the text (usually whitespace) and averages it; if that region isn't uniform we
+    /// fall back to white — correct for the overwhelming majority of PDFs and never a dark blotch.
+    private func sampledBackgroundColor(for page: PDFPage, around bounds: CGRect) -> NSColor {
+        let stripHeight = max(2, bounds.height * 0.5)
+        let strip = CGRect(x: bounds.minX,
+                           y: max(0, bounds.minY - stripHeight - 1),
+                           width: bounds.width, height: stripHeight)
+        let scale: CGFloat = 1.5
+        let w = Int((strip.width * scale).rounded()), h = Int((strip.height * scale).rounded())
+        guard w > 1, h > 1, w * h <= 500_000,
+              let ctx = CGContext(data: nil, width: w, height: h, bitsPerComponent: 8,
+                                  bytesPerRow: w * 4, space: CGColorSpaceCreateDeviceRGB(),
+                                  bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)
+        else { return .white }
+        ctx.setFillColor(NSColor.white.cgColor)
+        ctx.fill(CGRect(x: 0, y: 0, width: w, height: h))
+        ctx.scaleBy(x: scale, y: scale)
+        ctx.translateBy(x: -strip.origin.x, y: -strip.origin.y)
+        page.draw(with: .mediaBox, to: ctx)
+
+        guard let data = ctx.data else { return .white }
+        let ptr = data.bindMemory(to: UInt8.self, capacity: w * h * 4)
+        var sumR = 0, sumG = 0, sumB = 0, n = 0
+        var minL = 255, maxL = 0
+        let stepX = max(1, w / 24), stepY = max(1, h / 8)
+        for y in stride(from: 0, to: h, by: stepY) {
+            for x in stride(from: 0, to: w, by: stepX) {
+                let i = (y * w + x) * 4
+                let r = Int(ptr[i]), g = Int(ptr[i + 1]), bl = Int(ptr[i + 2])
+                sumR += r; sumG += g; sumB += bl; n += 1
+                let lum = (r + g + bl) / 3
+                minL = min(minL, lum); maxL = max(maxL, lum)
+            }
+        }
+        guard n > 0, (maxL - minL) <= 24 else { return .white }   // not uniform → safe white
+        return NSColor(deviceRed: CGFloat(sumR / n) / 255, green: CGFloat(sumG / n) / 255,
+                       blue: CGFloat(sumB / n) / 255, alpha: 1)
     }
 
     // MARK: - Copy as plain text

@@ -17,6 +17,8 @@ final class EditorLauncher: ObservableObject {
     var openMainWindow: (() -> Void)?
     /// Open the SwiftUI Settings scene (used by the menu-bar item).
     var openSettings: (() -> Void)?
+    /// Open the Qedit Browser window (folder list + live editable editor).
+    var openBrowser: (() -> Void)?
 
     /// The dashboard window, captured by `RootView`. When the user opens a file (Open With /
     /// hotkey) their intent is "show me THIS file", so we tuck the dashboard away and surface

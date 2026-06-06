@@ -72,6 +72,9 @@ struct RootView: View {
             EditorLauncher.shared.openSettings = {
                 openSettings()
             }
+            EditorLauncher.shared.openBrowser = {
+                openWindow(id: "browser")
+            }
         }
     }
 }

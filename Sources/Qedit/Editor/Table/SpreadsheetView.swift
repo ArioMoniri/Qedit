@@ -64,6 +64,22 @@ struct SpreadsheetView: View {
             rows = result ?? []
             loaded = true
         }
+        .onAppear { registerActive() }
+        .onChange(of: dirty) { _, _ in registerActive() }
+        .onChange(of: rows) { _, _ in if dirty { registerActive() } }
+        .onDisappear { ActiveEditor.shared.resign(url: url) }
+    }
+
+    /// Publish a fresh snapshot + save to the shared bridge (re-run on every edit since `rows` is
+    /// value-typed, so a save closure must capture the current grid, not a stale one).
+    private func registerActive() {
+        guard editable else { ActiveEditor.shared.resign(url: url); return }
+        let snapshot = rows
+        let backup = appState.makeBackupBeforeFirstWrite
+        ActiveEditor.shared.register(url: url, isDirty: dirty) {
+            if backup { try? FileBackup.make(for: url) }
+            return SpreadsheetWriter.write(snapshot, to: url)
+        }
     }
 
     @ViewBuilder

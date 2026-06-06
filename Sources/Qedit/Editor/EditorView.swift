@@ -46,6 +46,20 @@ struct EditorWindowView: View {
     static func needsWindow(_ url: URL) -> Bool {
         isPDF(url) || isSpreadsheet(url) || isPresentation(url)
     }
+
+    /// Quick-Panel-able and worth auto-previewing in "follow Finder selection" mode: text/code/
+    /// data/rich files, but not the full-window types and not opaque binaries (images, archives).
+    static func isTextLike(_ url: URL) -> Bool {
+        if needsWindow(url) { return false }
+        let rich: Set<String> = ["rtf", "rtfd", "odt", "docx", "doc", "wordml", "webarchive"]
+        if rich.contains(url.pathExtension.lowercased()) { return true }
+        guard let type = UTType(filenameExtension: url.pathExtension) else {
+            return true   // no recognized type → most likely an extensionless text file
+        }
+        let textyTypes: [UTType] = [.text, .plainText, .sourceCode, .script, .shellScript,
+                                    .json, .xml, .yaml, .propertyList, .delimitedText, .svg]
+        return textyTypes.contains { type.conforms(to: $0) }
+    }
 }
 
 struct EditorView: View {
@@ -67,6 +81,20 @@ struct EditorView: View {
             } message: {
                 Text(errorMessage ?? "")
             }
+            .onAppear { registerActive() }
+            .onChange(of: doc.isDirty) { _, _ in registerActive() }
+            .onDisappear { ActiveEditor.shared.resign(url: doc.url) }
+    }
+
+    /// Publish this document's dirty state + a synchronous save to the shared bridge, so the
+    /// Browser / follow-Finder containers can flush unsaved edits before swapping files.
+    private func registerActive() {
+        let canEdit = doc.isTextEditable
+        ActiveEditor.shared.register(url: doc.url, isDirty: canEdit && doc.isDirty) { [doc, appState] in
+            guard doc.isTextEditable, doc.isDirty else { return true }
+            do { try doc.save(makeBackup: appState.makeBackupBeforeFirstWrite); return true }
+            catch { return false }
+        }
     }
 
     @ViewBuilder

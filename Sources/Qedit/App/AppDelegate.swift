@@ -115,6 +115,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         let menu = NSMenu()
         add(menu, "Open Qedit", #selector(menuOpen))
+        add(menu, "Browse & Edit Files…", #selector(menuBrowse))
         add(menu, "Edit Finder Selection", #selector(menuEditSelection))
         add(menu, "Check for Updates…", #selector(menuCheckUpdates))
         add(menu, "Settings…", #selector(menuSettings), key: ",")
@@ -131,6 +132,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc private func menuOpen() { showMainWindow() }
+    @objc private func menuBrowse() {
+        NSApp.setActivationPolicy(.regular)
+        NSApp.activate(ignoringOtherApps: true)
+        MainActor.assumeIsolated { EditorLauncher.shared.openBrowser?() }
+    }
     @objc private func menuEditSelection() {
         MainActor.assumeIsolated { _ = EditorLauncher.shared.openFinderSelection() }
     }

@@ -119,7 +119,7 @@ struct SettingsView: View {
                           onCount: appState.allowWordEditing ? 1 : 0, total: 1) {
                 SettingRow(icon: "doc.richtext", tint: .blue,
                            title: "Allow editing Word (.docx/.doc)",
-                           detail: "Off by default: Word opens read-only because re-saving through macOS can simplify complex formatting (tables/images). On: edit & save in place — turn on the .bak backup below if the doc is complex. (RTF & OpenDocument are always editable.)",
+                           detail: "On by default: Word opens ready to edit and saves in place. Re-saving through macOS can simplify complex formatting (tables/images), so Qedit always keeps one .bak backup the first time you save a Word file. Turn off for view-only. (RTF & OpenDocument are always editable.)",
                            isOn: $appState.allowWordEditing)
             }
 
@@ -127,8 +127,16 @@ struct SettingsView: View {
                           onCount: appState.allowSpreadsheetEditing ? 1 : 0, total: 1) {
                 SettingRow(icon: "tablecells", tint: .green,
                            title: "Allow editing spreadsheet cells (.xlsx)",
-                           detail: "Off by default: .xlsx opens as a read-only grid. On: edit cell values and Save back to .xlsx — values only (formulas/styles are dropped). Keep .bak on for important files.",
+                           detail: "On by default: edit cell values and Save back to .xlsx. Qedit rewrites only the cells you changed and preserves everything else — styles, number formats, and formulas in other cells. Turn off for a view-only grid.",
                            isOn: $appState.allowSpreadsheetEditing)
+            }
+
+            SettingsGroup(title: "Presentations",
+                          onCount: appState.allowPptxEditing ? 1 : 0, total: 1) {
+                SettingRow(icon: "rectangle.on.rectangle", tint: .orange,
+                           title: "Allow editing PowerPoint text (.pptx)",
+                           detail: "Off by default. On: a panel lists the simple text lines (titles/bullets) next to the rendered slides — edit one and Save rewrites just that line in place, keeping layout, images and formatting. Mixed-format text and table/chart text stay read-only; open those in Keynote/PowerPoint.",
+                           isOn: $appState.allowPptxEditing)
             }
 
             SettingsGroup(title: "Backup",
@@ -228,6 +236,13 @@ struct SettingsView: View {
                         .pickerStyle(.segmented).labelsHidden().frame(width: 240)
                     }
                 }
+            }
+
+            SettingsGroup(title: "Follow Finder selection",
+                          onCount: appState.followFinderSelection ? 1 : 0, total: 1) {
+                SettingRow(icon: "filemenu.and.cursorarrow", title: "Track the Finder selection",
+                           detail: "While the Quick Panel is open, clicking through files in Finder re-loads each one into the panel — like a live, editable preview pane. It waits while you’re typing in the panel and never swaps away from unsaved edits. Uses the Finder-read permission you already granted.",
+                           isOn: $appState.followFinderSelection)
             }
         }
     }

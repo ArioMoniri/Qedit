@@ -86,17 +86,34 @@ final class AppState: ObservableObject {
     @Published var changeHighlightStyle: ChangeHighlightStyle {
         didSet { UserDefaults.standard.set(changeHighlightStyle.rawValue, forKey: Self.changeStyleKey) }
     }
-    /// Allow editing Word (.docx/.doc) — saving may simplify complex formatting, so it's opt-in.
+    /// Allow editing Word (.docx/.doc). ON by default so Word opens editable; an orange banner
+    /// still warns that saving may simplify complex formatting (tables/images). Turn off to view-only.
     @Published var allowWordEditing: Bool {
         didSet { UserDefaults.standard.set(allowWordEditing, forKey: Self.allowWordKey) }
     }
-    /// Allow editing spreadsheet cells (.xlsx) — saving keeps values but drops formulas/styles.
+    /// Allow editing spreadsheet cells (.xlsx). ON by default; the minimal-diff writer rewrites only
+    /// changed cells and preserves styles/types/formulas. Turn off to view-only.
     @Published var allowSpreadsheetEditing: Bool {
         didSet { UserDefaults.standard.set(allowSpreadsheetEditing, forKey: Self.allowSheetKey) }
+    }
+    /// Allow editing PowerPoint text (.pptx). OFF by default — it edits the text of simple,
+    /// single-style lines/titles in place (minimal-diff; layout/images preserved) and leaves
+    /// complex/mixed-format text read-only. Opt-in because slide structure varies widely.
+    @Published var allowPptxEditing: Bool {
+        didSet { UserDefaults.standard.set(allowPptxEditing, forKey: Self.allowPptxKey) }
     }
     /// Size the Quick Panel opens at.
     @Published var quickPanelSize: QuickPanelSize {
         didSet { UserDefaults.standard.set(quickPanelSize.rawValue, forKey: Self.quickPanelSizeKey) }
+    }
+    /// While the Quick Panel is open (and you're not typing in it), follow the Finder selection:
+    /// as you click through files in Finder, the panel re-loads each one — like a live, editable
+    /// preview pane. Off by default; uses the existing Finder-read permission, no new prompts.
+    @Published var followFinderSelection: Bool {
+        didSet {
+            UserDefaults.standard.set(followFinderSelection, forKey: Self.followFinderKey)
+            FinderSelectionObserver.shared.refresh()
+        }
     }
 
     private static let recentsKey = "qe.recentFiles"
@@ -109,7 +126,9 @@ final class AppState: ObservableObject {
     private static let changeStyleKey = "qe.changeHighlightStyle"
     private static let allowWordKey = "qe.allowWordEditing"
     private static let allowSheetKey = "qe.allowSpreadsheetEditing"
+    private static let allowPptxKey = "qe.allowPptxEditing"
     private static let quickPanelSizeKey = "qe.quickPanelSize"
+    private static let followFinderKey = "qe.followFinderSelection"
     private let maxRecents = 12
 
     init() {
@@ -128,10 +147,14 @@ final class AppState: ObservableObject {
         self.highlightChanges = UserDefaults.standard.object(forKey: Self.highlightChangesKey) as? Bool ?? true
         self.changeHighlightStyle = UserDefaults.standard.string(forKey: Self.changeStyleKey)
             .flatMap(ChangeHighlightStyle.init(rawValue:)) ?? .background
-        self.allowWordEditing = UserDefaults.standard.object(forKey: Self.allowWordKey) as? Bool ?? false
-        self.allowSpreadsheetEditing = UserDefaults.standard.object(forKey: Self.allowSheetKey) as? Bool ?? false
+        // Editable by default: Word and Excel open ready to edit (banners/minimal-diff writer keep
+        // it safe). Users who want pure view-only can switch these off in Settings → Editing.
+        self.allowWordEditing = UserDefaults.standard.object(forKey: Self.allowWordKey) as? Bool ?? true
+        self.allowSpreadsheetEditing = UserDefaults.standard.object(forKey: Self.allowSheetKey) as? Bool ?? true
+        self.allowPptxEditing = UserDefaults.standard.object(forKey: Self.allowPptxKey) as? Bool ?? false
         self.quickPanelSize = UserDefaults.standard.string(forKey: Self.quickPanelSizeKey)
             .flatMap(QuickPanelSize.init(rawValue:)) ?? .medium
+        self.followFinderSelection = UserDefaults.standard.object(forKey: Self.followFinderKey) as? Bool ?? false
         loadRecents()
     }
 

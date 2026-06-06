@@ -21,6 +21,13 @@ struct QeditApp: App {
         }
         .defaultSize(width: 920, height: 660)
 
+        // The Qedit Browser: folder list + live editable editor. Single instance.
+        Window("Qedit Browser", id: "browser") {
+            BrowserView()
+                .environmentObject(appState)
+        }
+        .defaultSize(width: 1100, height: 720)
+
         Settings {
             SettingsView()
                 .environmentObject(appState)
@@ -53,6 +60,8 @@ struct AppMenuCommands: Commands {
                 }
             }
             .keyboardShortcut("o", modifiers: .command)
+            Button("Browse & Edit Files…") { openWindow(id: "browser") }
+                .keyboardShortcut("b", modifiers: [.command, .shift])
         }
         CommandGroup(replacing: .help) {
             Link("Qedit on GitHub", destination: URL(string: "https://github.com/ArioMoniri/Qedit")!)
