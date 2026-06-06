@@ -12,6 +12,8 @@ struct EditorWindowView: View {
             if let url {
                 if Self.isPDF(url) {
                     PDFEditorView(url: url)
+                } else if Self.isSpreadsheet(url) {
+                    SpreadsheetView(url: url)
                 } else {
                     EditorView(url: url)
                 }
@@ -26,6 +28,11 @@ struct EditorWindowView: View {
         if url.pathExtension.lowercased() == "pdf" { return true }
         if let type = UTType(filenameExtension: url.pathExtension) { return type.conforms(to: .pdf) }
         return false
+    }
+
+    /// Spreadsheets get a read-only cell grid in a full window (tables need room).
+    static func isSpreadsheet(_ url: URL) -> Bool {
+        url.pathExtension.lowercased() == "xlsx"
     }
 }
 

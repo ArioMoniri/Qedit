@@ -90,9 +90,10 @@ final class EditorLauncher: ObservableObject {
             NSSound.beep()
             return false
         }
-        // PDFs use their own toolbar (find/annotate/page ops), which only renders in a full
-        // window — so they always open as a window; text-like files use the Quick Panel.
-        if AppState.shared.hotkeyOpensQuickPanel && !EditorWindowView.isPDF(url) {
+        // PDFs (toolbar) and spreadsheets (cell grid) need room → always a full window.
+        // Text-like files use the Quick Panel.
+        if AppState.shared.hotkeyOpensQuickPanel
+            && !EditorWindowView.isPDF(url) && !EditorWindowView.isSpreadsheet(url) {
             QuickPanelController.shared.present(url)
         } else {
             open(url)

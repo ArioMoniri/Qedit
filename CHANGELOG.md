@@ -3,6 +3,10 @@
 All notable changes to Qedit. This file feeds both the GitHub release notes and the
 in-app Sparkle updater. 🪄
 
+## v0.5.2
+- 📊 **Spreadsheets open as a native cell grid.** `.xlsx` files now open in a real **table view** — a header row + selectable, monospaced cells you can read and **⌘F find** — instead of “can’t open”. Read-only (re-saving .xlsx losslessly isn’t safe), with a one-click “Open in Default App” to edit in Numbers/Excel. (CSV/TSV parsing is built in too.)
+- 🔎 `.xlsx`, `.csv` and `.tsv` are now in the **Open With → Qedit** menu.
+
 ## v0.5.1
 - 🖍️ **Live change highlighting.** New **Settings → Editing → “Highlight my changes”** marks the text you’ve edited since opening the file, in your chosen style — **Highlight**, **Underline**, or **Color** — and clears when you save. See your edits at a glance.
 - 💾 **Auto-save (or manual).** New **Settings → Editing → “Auto-save changes”** saves a moment after you stop typing (⌘S still saves instantly). Off by default — manual ⌘S as before.
