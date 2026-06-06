@@ -3,6 +3,11 @@
 All notable changes to Qedit. This file feeds both the GitHub release notes and the
 in-app Sparkle updater. 🪄
 
+## v0.5.1
+- 🖍️ **Live change highlighting.** New **Settings → Editing → “Highlight my changes”** marks the text you’ve edited since opening the file, in your chosen style — **Highlight**, **Underline**, or **Color** — and clears when you save. See your edits at a glance.
+- 💾 **Auto-save (or manual).** New **Settings → Editing → “Auto-save changes”** saves a moment after you stop typing (⌘S still saves instantly). Off by default — manual ⌘S as before.
+- 🗂️ New **Editing** tab groups Saving, change highlighting and the `.bak` option together.
+
 ## v0.5.0
 - 🎛️ **Redesigned, dynamic Settings.** Cleaner partitioned tabs (General · Shortcut · Preview) where **every option shows a clear `✓ On` / `✗ Off` chip** at a glance, each section shows an “N / M on” count, and the shortcut **preset buttons** sit right alongside the recorder. Much easier to scan than the old plain list.
 - 🌈 **Syntax coloring in the editor.** Code & config files (Swift, Python, JS/TS, JSON…) now open with **colored keywords, strings, numbers and comments** — their native “code shape” — and recolor live as you type. Display-only: it never changes the saved bytes.

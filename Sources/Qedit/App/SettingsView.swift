@@ -22,6 +22,7 @@ struct SettingsView: View {
     var body: some View {
         TabView {
             generalTab.tabItem { Label("General", systemImage: "gearshape") }
+            editingTab.tabItem { Label("Editing", systemImage: "square.and.pencil") }
             shortcutTab.tabItem { Label("Shortcut", systemImage: "command") }
             previewTab.tabItem { Label("Preview", systemImage: "eye") }
         }
@@ -52,13 +53,6 @@ struct SettingsView: View {
                            isOn: $appState.keepRunningInBackground)
             }
 
-            SettingsGroup(title: "Files & safety",
-                          onCount: appState.makeBackupBeforeFirstWrite ? 1 : 0, total: 1) {
-                SettingRow(icon: "doc.badge.clock", title: "Keep a .bak backup file",
-                           detail: "Off by default — saves are atomic, so the file is never half-written and no .bak files are left behind. On: keep a timestamped .bak copy.",
-                           isOn: $appState.makeBackupBeforeFirstWrite)
-            }
-
             SettingsGroup(title: "Recent files") {
                 HStack {
                     Text("\(appState.recentFiles.count) item\(appState.recentFiles.count == 1 ? "" : "s")")
@@ -67,6 +61,41 @@ struct SettingsView: View {
                     Button("Clear Recents") { appState.clearRecents() }
                         .disabled(appState.recentFiles.isEmpty)
                 }
+            }
+        }
+    }
+
+    // MARK: - Editing
+
+    private var editingTab: some View {
+        tab {
+            SettingsGroup(title: "Saving", onCount: appState.autoSave ? 1 : 0, total: 1) {
+                SettingRow(icon: "externaldrive.badge.checkmark", tint: .green,
+                           title: "Auto-save changes",
+                           detail: "Save automatically a moment after you stop typing. ⌘S still saves instantly. Off: save only with ⌘S / the Save button.",
+                           isOn: $appState.autoSave)
+            }
+
+            SettingsGroup(title: "Live change highlighting",
+                          subtitle: "Mark what you’ve changed since opening the file.",
+                          onCount: appState.highlightChanges ? 1 : 0, total: 1) {
+                SettingRow(icon: "highlighter", tint: .orange,
+                           title: "Highlight my changes",
+                           detail: "As you edit, the changed text is marked so you can see your edits at a glance.",
+                           isOn: $appState.highlightChanges)
+                if appState.highlightChanges {
+                    Picker("Style", selection: $appState.changeHighlightStyle) {
+                        ForEach(ChangeHighlightStyle.allCases) { Text($0.label).tag($0) }
+                    }
+                    .pickerStyle(.segmented)
+                }
+            }
+
+            SettingsGroup(title: "Backup",
+                          onCount: appState.makeBackupBeforeFirstWrite ? 1 : 0, total: 1) {
+                SettingRow(icon: "doc.badge.clock", title: "Keep a .bak backup file",
+                           detail: "Off by default — saves are atomic, so the file is never half-written and no .bak files are left behind. On: keep a timestamped .bak copy next to the file.",
+                           isOn: $appState.makeBackupBeforeFirstWrite)
             }
         }
     }

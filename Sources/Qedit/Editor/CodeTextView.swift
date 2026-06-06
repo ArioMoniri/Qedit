@@ -10,6 +10,10 @@ struct CodeTextView: NSViewRepresentable {
     /// When non-nil, fenced code is syntax-colored for this highlight.js language id
     /// ("swift", "python", "json"…, or "code" for an unknown source language).
     var language: String? = nil
+    /// The on-disk text, for highlighting what you've changed.
+    var originalText: String = ""
+    var highlightChanges: Bool = false
+    var changeStyle: ChangeHighlightStyle = .background
 
     func makeCoordinator() -> Coordinator { Coordinator(self) }
 
@@ -60,11 +64,55 @@ struct CodeTextView: NSViewRepresentable {
         }
     }
 
-    /// Apply syntax colors to the whole document (display-only; never touches the text bytes).
+    /// Apply syntax colors + change marks (display-only; never touches the text bytes).
     private func highlight(_ textView: NSTextView) {
-        guard language != nil, let storage = textView.textStorage else { return }
-        let font = textView.font ?? .monospacedSystemFont(ofSize: 12, weight: .regular)
-        SyntaxHighlighter.apply(to: storage, language: language, font: font)
+        guard let storage = textView.textStorage else { return }
+        Self.applyHighlight(storage, language: language, highlightChanges: highlightChanges,
+                            changeStyle: changeStyle, original: originalText,
+                            font: textView.font ?? .monospacedSystemFont(ofSize: 12, weight: .regular))
+    }
+
+    static func applyHighlight(_ storage: NSTextStorage, language: String?, highlightChanges: Bool,
+                              changeStyle: ChangeHighlightStyle, original: String, font: NSFont) {
+        let needsSyntax = language != nil
+        guard needsSyntax || highlightChanges else { return }
+        let full = NSRange(location: 0, length: (storage.string as NSString).length)
+        if needsSyntax {
+            SyntaxHighlighter.apply(to: storage, language: language, font: font)  // resets base attrs
+        } else {
+            // Plain text: clear our previous marks, restore default color.
+            storage.removeAttribute(.backgroundColor, range: full)
+            storage.removeAttribute(.underlineStyle, range: full)
+            storage.addAttribute(.foregroundColor, value: NSColor.labelColor, range: full)
+        }
+        guard highlightChanges,
+              let range = changedRange(original: original as NSString, current: storage.string as NSString)
+        else { return }
+        switch changeStyle {
+        case .background:
+            storage.addAttribute(.backgroundColor, value: NSColor.systemYellow.withAlphaComponent(0.32), range: range)
+        case .underline:
+            storage.addAttribute(.underlineStyle, value: NSUnderlineStyle.single.rawValue, range: range)
+            storage.addAttribute(.underlineColor, value: NSColor.systemOrange, range: range)
+        case .color:
+            storage.addAttribute(.foregroundColor, value: NSColor.systemOrange, range: range)
+        }
+    }
+
+    /// The single span (in the current text) that differs from `original`, via common
+    /// prefix/suffix — coarse but cheap, and shows "what you changed".
+    static func changedRange(original: NSString, current: NSString) -> NSRange? {
+        let oLen = original.length, cLen = current.length
+        var prefix = 0
+        while prefix < oLen && prefix < cLen
+            && original.character(at: prefix) == current.character(at: prefix) { prefix += 1 }
+        var suffix = 0
+        while suffix < (oLen - prefix) && suffix < (cLen - prefix)
+            && original.character(at: oLen - 1 - suffix) == current.character(at: cLen - 1 - suffix) { suffix += 1 }
+        let start = prefix
+        let end = cLen - suffix
+        guard end > start else { return nil }
+        return NSRange(location: start, length: end - start)
     }
 
     final class Coordinator: NSObject, NSTextViewDelegate {
@@ -76,13 +124,17 @@ struct CodeTextView: NSViewRepresentable {
             guard let textView = notification.object as? NSTextView else { return }
             parent.text = textView.string
             // Re-color shortly after typing settles (skip during IME composition).
-            guard parent.language != nil, textView.hasMarkedText() == false else { return }
+            guard parent.language != nil || parent.highlightChanges,
+                  textView.hasMarkedText() == false else { return }
             rehighlight?.cancel()
             let work = DispatchWorkItem { [weak textView] in
                 guard let textView, let storage = textView.textStorage,
                       textView.hasMarkedText() == false else { return }
-                let font = textView.font ?? .monospacedSystemFont(ofSize: 12, weight: .regular)
-                SyntaxHighlighter.apply(to: storage, language: self.parent.language, font: font)
+                CodeTextView.applyHighlight(storage, language: self.parent.language,
+                                            highlightChanges: self.parent.highlightChanges,
+                                            changeStyle: self.parent.changeStyle,
+                                            original: self.parent.originalText,
+                                            font: textView.font ?? .monospacedSystemFont(ofSize: 12, weight: .regular))
             }
             rehighlight = work
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.25, execute: work)

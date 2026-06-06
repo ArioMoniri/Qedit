@@ -16,6 +16,8 @@ final class EditorDocument: ObservableObject, Identifiable {
 
     /// Plain-text content (used by the code/text editor).
     @Published var text: String = ""
+    /// The text as it was on disk when opened/last saved — used to highlight what changed.
+    @Published private(set) var originalText: String = ""
     /// Native rich content (used by the rich editor for RTF/Word/ODT…).
     @Published var attributedText = NSAttributedString(string: "")
     @Published var isDirty = false
@@ -43,6 +45,7 @@ final class EditorDocument: ObservableObject, Identifiable {
     private var encoding: String.Encoding = .utf8
     private var richDocType: NSAttributedString.DocumentType?
     private var didBackupThisSession = false
+    private var autoSaveWork: DispatchWorkItem?
 
     init(url: URL) {
         self.id = url.standardizedFileURL
@@ -56,9 +59,22 @@ final class EditorDocument: ObservableObject, Identifiable {
     func load() {
         loadError = nil
         let ext = url.pathExtension.lowercased()
-        if Self.richEditableExtensions.contains(ext) { loadRich(ext: ext, editable: true); return }
-        if Self.richReadOnlyExtensions.contains(ext) { loadRich(ext: ext, editable: false); return }
-        loadPlainText()
+        if Self.richEditableExtensions.contains(ext) { loadRich(ext: ext, editable: true) }
+        else if Self.richReadOnlyExtensions.contains(ext) { loadRich(ext: ext, editable: false) }
+        else { loadPlainText() }
+        originalText = text   // snapshot for change-highlighting
+    }
+
+    /// Schedule an auto-save (debounced) if the user has auto-save on. Call after each edit.
+    func scheduleAutoSave() {
+        guard AppState.shared.autoSave, isTextEditable, isDirty else { return }
+        autoSaveWork?.cancel()
+        let work = DispatchWorkItem { [weak self] in
+            guard let self, self.isDirty else { return }
+            try? self.save(makeBackup: AppState.shared.makeBackupBeforeFirstWrite)
+        }
+        autoSaveWork = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5, execute: work)
     }
 
     private func loadPlainText() {
@@ -164,6 +180,7 @@ final class EditorDocument: ObservableObject, Identifiable {
         }
         isDirty = false
         lastSaved = Date()
+        originalText = text   // changes are now the baseline — clear change highlights
     }
 
     /// Save the attributed text back in the original rich format. RTFD is a file package, so it

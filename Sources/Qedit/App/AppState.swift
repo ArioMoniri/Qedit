@@ -21,6 +21,19 @@ enum AppAppearance: String, CaseIterable, Identifiable {
     }
 }
 
+/// How edited text is marked when "highlight my changes" is on.
+enum ChangeHighlightStyle: String, CaseIterable, Identifiable {
+    case background, underline, color
+    var id: String { rawValue }
+    var label: String {
+        switch self {
+        case .background: return "Highlight"
+        case .underline: return "Underline"
+        case .color: return "Color"
+        }
+    }
+}
+
 /// App-wide state: recent files and editor preferences. A shared singleton so the
 /// menu commands (which run outside the SwiftUI view environment) can reach it too.
 @MainActor
@@ -47,12 +60,27 @@ final class AppState: ObservableObject {
     @Published var hotkeyOpensQuickPanel: Bool {
         didSet { UserDefaults.standard.set(hotkeyOpensQuickPanel, forKey: Self.quickPanelKey) }
     }
+    /// Save edits automatically (after a short pause) instead of requiring ⌘S.
+    @Published var autoSave: Bool {
+        didSet { UserDefaults.standard.set(autoSave, forKey: Self.autoSaveKey) }
+    }
+    /// Highlight the parts of the document you've changed since opening it.
+    @Published var highlightChanges: Bool {
+        didSet { UserDefaults.standard.set(highlightChanges, forKey: Self.highlightChangesKey) }
+    }
+    /// How to mark changed text.
+    @Published var changeHighlightStyle: ChangeHighlightStyle {
+        didSet { UserDefaults.standard.set(changeHighlightStyle.rawValue, forKey: Self.changeStyleKey) }
+    }
 
     private static let recentsKey = "qe.recentFiles"
     private static let backupKey = "qe.makeBackupBeforeFirstWrite"
     private static let appearanceKey = "qe.appearance"
     private static let backgroundKey = "qe.keepRunningInBackground"
     private static let quickPanelKey = "qe.hotkeyOpensQuickPanel"
+    private static let autoSaveKey = "qe.autoSave"
+    private static let highlightChangesKey = "qe.highlightChanges"
+    private static let changeStyleKey = "qe.changeHighlightStyle"
     private let maxRecents = 12
 
     init() {
@@ -67,6 +95,10 @@ final class AppState: ObservableObject {
             .flatMap(AppAppearance.init(rawValue:)) ?? .system
         self.keepRunningInBackground = UserDefaults.standard.object(forKey: Self.backgroundKey) as? Bool ?? true
         self.hotkeyOpensQuickPanel = UserDefaults.standard.object(forKey: Self.quickPanelKey) as? Bool ?? true
+        self.autoSave = UserDefaults.standard.object(forKey: Self.autoSaveKey) as? Bool ?? false
+        self.highlightChanges = UserDefaults.standard.object(forKey: Self.highlightChangesKey) as? Bool ?? false
+        self.changeHighlightStyle = UserDefaults.standard.string(forKey: Self.changeStyleKey)
+            .flatMap(ChangeHighlightStyle.init(rawValue:)) ?? .background
         loadRecents()
     }
 

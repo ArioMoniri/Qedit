@@ -68,6 +68,7 @@ struct EditorView: View {
                                 guard !newValue.isEqual(to: doc.attributedText) else { return }
                                 doc.attributedText = newValue
                                 doc.isDirty = true
+                                doc.scheduleAutoSave()
                             }
                         ),
                         isEditable: !doc.isReadOnly
@@ -82,10 +83,14 @@ struct EditorView: View {
                                 guard newValue != doc.text else { return }
                                 doc.text = newValue
                                 doc.isDirty = true
+                                doc.scheduleAutoSave()
                             }
                         ),
                         isEditable: !doc.isReadOnly,
-                        language: codeLanguage
+                        language: codeLanguage,
+                        originalText: doc.originalText,
+                        highlightChanges: appState.highlightChanges,
+                        changeStyle: appState.changeHighlightStyle
                     )
                 }
                 editorFooter
