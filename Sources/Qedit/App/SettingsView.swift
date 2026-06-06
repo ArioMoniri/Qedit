@@ -151,6 +151,15 @@ struct SettingsView: View {
                            detail: "First use asks macOS for permission to read the Finder selection.",
                            isOn: $hotKey.enabled)
 
+                HStack {
+                    Text("Current shortcut").foregroundStyle(.secondary)
+                    Spacer()
+                    Text(hotKey.enabled ? hotKey.config.displayString : "Off")
+                        .font(.system(.title3, design: .rounded).weight(.bold))
+                        .padding(.horizontal, 12).padding(.vertical, 4)
+                        .background(.tint.opacity(0.15), in: RoundedRectangle(cornerRadius: 8))
+                }
+
                 Text("Quick presets").font(.caption).foregroundStyle(.secondary).padding(.top, 4)
                 HStack(spacing: 8) {
                     ForEach(HotKeyConfig.presets, id: \.displayString) { preset in
@@ -176,6 +185,32 @@ struct SettingsView: View {
                 }
                 Text("Space alone can’t be a global shortcut (it would block typing), so the Space presets add a modifier.")
                     .font(.caption).foregroundStyle(.secondary)
+                Button {
+                    Permissions.openKeyboardSettings()
+                } label: { Label("Open macOS Keyboard Settings", systemImage: "keyboard") }
+                    .buttonStyle(.bordered).buttonBorderShape(.capsule).controlSize(.small)
+            }
+
+            SettingsGroup(title: "Show Qedit when you press Space") {
+                Text("Pressing **Space** in Finder is macOS Quick Look. Qedit shows its preview there "
+                     + "only when it **wins** the file type — if QLMarkdown / Syntax Highlight is on, "
+                     + "*they* win. Switch them off (one tap) so Space shows Qedit. macOS doesn’t let "
+                     + "any app turn Space into the editor, but ⌥⌘E (above) opens the editable panel.")
+                    .font(.caption).foregroundStyle(.secondary)
+                HStack(spacing: 8) {
+                    Button {
+                        NSApp.setActivationPolicy(.regular); NSApp.activate(ignoringOtherApps: true)
+                        EditorLauncher.shared.openMainWindow?()
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                            NotificationCenter.default.post(name: .qeditShowExtensions, object: nil)
+                        }
+                    } label: { Label("Make Qedit win Space (Extensions)", systemImage: "puzzlepiece.extension") }
+                        .buttonStyle(.borderedProminent).buttonBorderShape(.capsule).controlSize(.small)
+                    Button {
+                        Permissions.openLoginItemsAndExtensions()
+                    } label: { Label("macOS Extensions Settings", systemImage: "gearshape") }
+                        .buttonStyle(.bordered).buttonBorderShape(.capsule).controlSize(.small)
+                }
             }
 
             SettingsGroup(title: "Where it opens",

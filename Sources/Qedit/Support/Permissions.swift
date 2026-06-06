@@ -66,6 +66,12 @@ enum Permissions {
     static func openFullDiskSettings() {
         open("x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles", "Privacy → Full Disk Access")
     }
+    static func openKeyboardSettings() {
+        open("x-apple.systempreferences:com.apple.Keyboard-Settings.extension", "Keyboard")
+    }
+    static func openLoginItemsAndExtensions() {
+        open("x-apple.systempreferences:com.apple.LoginItems-Settings.extension", "Login Items & Extensions")
+    }
 
     private static func open(_ string: String, _ name: String) {
         DebugLog.shared.log("Opening System Settings: \(name)")
