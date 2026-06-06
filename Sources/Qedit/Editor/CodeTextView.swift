@@ -14,6 +14,7 @@ struct CodeTextView: NSViewRepresentable {
     var originalText: String = ""
     var highlightChanges: Bool = false
     var changeStyle: ChangeHighlightStyle = .background
+    var colors: SyntaxColors = .system
 
     func makeCoordinator() -> Coordinator { Coordinator(self) }
 
@@ -68,17 +69,18 @@ struct CodeTextView: NSViewRepresentable {
     private func highlight(_ textView: NSTextView) {
         guard let storage = textView.textStorage else { return }
         Self.applyHighlight(storage, language: language, highlightChanges: highlightChanges,
-                            changeStyle: changeStyle, original: originalText,
+                            changeStyle: changeStyle, original: originalText, colors: colors,
                             font: textView.font ?? .monospacedSystemFont(ofSize: 12, weight: .regular))
     }
 
     static func applyHighlight(_ storage: NSTextStorage, language: String?, highlightChanges: Bool,
-                              changeStyle: ChangeHighlightStyle, original: String, font: NSFont) {
+                              changeStyle: ChangeHighlightStyle, original: String,
+                              colors: SyntaxColors, font: NSFont) {
         let needsSyntax = language != nil
         guard needsSyntax || highlightChanges else { return }
         let full = NSRange(location: 0, length: (storage.string as NSString).length)
         if needsSyntax {
-            SyntaxHighlighter.apply(to: storage, language: language, font: font)  // resets base attrs
+            SyntaxHighlighter.apply(to: storage, language: language, font: font, colors: colors)
         } else {
             // Plain text: clear our previous marks, restore default color.
             storage.removeAttribute(.backgroundColor, range: full)
@@ -90,12 +92,12 @@ struct CodeTextView: NSViewRepresentable {
         else { return }
         switch changeStyle {
         case .background:
-            storage.addAttribute(.backgroundColor, value: NSColor.systemYellow.withAlphaComponent(0.32), range: range)
+            storage.addAttribute(.backgroundColor, value: colors.change.withAlphaComponent(0.34), range: range)
         case .underline:
             storage.addAttribute(.underlineStyle, value: NSUnderlineStyle.single.rawValue, range: range)
-            storage.addAttribute(.underlineColor, value: NSColor.systemOrange, range: range)
+            storage.addAttribute(.underlineColor, value: colors.change, range: range)
         case .color:
-            storage.addAttribute(.foregroundColor, value: NSColor.systemOrange, range: range)
+            storage.addAttribute(.foregroundColor, value: colors.change, range: range)
         }
     }
 
@@ -134,6 +136,7 @@ struct CodeTextView: NSViewRepresentable {
                                             highlightChanges: self.parent.highlightChanges,
                                             changeStyle: self.parent.changeStyle,
                                             original: self.parent.originalText,
+                                            colors: self.parent.colors,
                                             font: textView.font ?? .monospacedSystemFont(ofSize: 12, weight: .regular))
             }
             rehighlight = work

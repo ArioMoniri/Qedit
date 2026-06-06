@@ -31,6 +31,9 @@ struct QLExtensionInfo: Identifiable {
     var supportedUTIs: [String] = []
 
     var isOwnedByQedit: Bool { identifier.hasPrefix("com.ariomoniri.Qedit") }
+    /// Sibling apps by the same author that are meant to run ALONGSIDE Qedit (e.g. ChangeX) —
+    /// never flagged as competitors and never swept up by "Disable all".
+    var isKnownSibling: Bool { identifier.hasPrefix("dev.changex.") }
 }
 
 /// Parses `pluginkit -mAvvv -p com.apple.quicklook.preview` and enriches each entry with
@@ -168,7 +171,8 @@ final class ExtensionManagerModel: ObservableObject {
         guard let own = extensions.first(where: { $0.isOwnedByQedit }) else { return [] }
         let ours = Set(own.supportedUTIs)
         return extensions.filter { ext in
-            !ext.isOwnedByQedit && !Set(ext.supportedUTIs).isDisjoint(with: ours)
+            !ext.isOwnedByQedit && !ext.isKnownSibling
+                && !Set(ext.supportedUTIs).isDisjoint(with: ours)
         }
     }
 
@@ -233,7 +237,8 @@ final class ExtensionManagerModel: ObservableObject {
     }
 
     func setAllEnabled(_ enabled: Bool) async {
-        let ids = extensions.map(\.identifier)
+        // Never bulk-DISABLE a known sibling (ChangeX) — it's meant to run alongside Qedit.
+        let ids = extensions.filter { enabled || !$0.isKnownSibling }.map(\.identifier)
         isScanning = true
         await Task.detached {
             for id in ids { _ = PluginKitScanner.setEnabled(enabled, identifier: id) }

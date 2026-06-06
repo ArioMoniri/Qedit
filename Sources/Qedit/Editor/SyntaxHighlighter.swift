@@ -9,7 +9,8 @@ enum SyntaxHighlighter {
         "python", "ruby", "bash", "perl", "r", "yaml", "ini", "makefile", "properties", "toml"
     ]
 
-    static func apply(to storage: NSTextStorage, language: String?, font: NSFont) {
+    static func apply(to storage: NSTextStorage, language: String?, font: NSFont,
+                      colors: SyntaxColors = .system) {
         let nsText = storage.string as NSString
         let length = nsText.length
         guard length > 0, length < 400_000 else {   // skip very large files to stay responsive
@@ -22,27 +23,25 @@ enum SyntaxHighlighter {
         storage.beginEditing()
         storage.setAttributes([.foregroundColor: NSColor.labelColor, .font: font], range: full)
 
-        // Numbers
-        color(storage, nsText, #"\b\d+(?:\.\d+)?\b"#, .systemBlue)
+        color(storage, nsText, #"\b\d+(?:\.\d+)?\b"#, colors.number)
 
-        // Keywords
         if let words = keywords(for: language), !words.isEmpty {
             let pattern = "\\b(?:" + words.joined(separator: "|") + ")\\b"
-            color(storage, nsText, pattern, .systemPink)
+            color(storage, nsText, pattern, colors.keyword)
         }
 
         // Strings (after keywords so quoted text wins)
-        color(storage, nsText, "\"(?:\\\\.|[^\"\\\\])*\"", .systemRed)
-        color(storage, nsText, "'(?:\\\\.|[^'\\\\])*'", .systemRed)
+        color(storage, nsText, "\"(?:\\\\.|[^\"\\\\])*\"", colors.string)
+        color(storage, nsText, "'(?:\\\\.|[^'\\\\])*'", colors.string)
 
         // Comments (win over everything). Hash-comment languages use `#`; everything else
         // (incl. unknown) gets C-style `//` and `/* */`.
         let lang = language ?? ""
         if hashComment.contains(lang) {
-            color(storage, nsText, #"#[^\n]*"#, .systemGreen)
+            color(storage, nsText, #"#[^\n]*"#, colors.comment)
         } else {
-            color(storage, nsText, #"//[^\n]*"#, .systemGreen)
-            color(storage, nsText, #"/\*[\s\S]*?\*/"#, .systemGreen)
+            color(storage, nsText, #"//[^\n]*"#, colors.comment)
+            color(storage, nsText, #"/\*[\s\S]*?\*/"#, colors.comment)
         }
         storage.endEditing()
     }

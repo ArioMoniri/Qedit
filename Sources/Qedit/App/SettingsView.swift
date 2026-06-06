@@ -18,6 +18,7 @@ struct SettingsView: View {
     @EnvironmentObject private var appState: AppState
     @StateObject private var hotKey = HotKeyStore.shared
     @StateObject private var render = RenderPrefsStore()
+    @ObservedObject private var syntaxTheme = SyntaxThemeStore.shared
 
     var body: some View {
         TabView {
@@ -88,6 +89,29 @@ struct SettingsView: View {
                         ForEach(ChangeHighlightStyle.allCases) { Text($0.label).tag($0) }
                     }
                     .pickerStyle(.segmented)
+                }
+            }
+
+            SettingsGroup(title: "Code colors",
+                          onCount: syntaxTheme.enabled ? 1 : 0, total: 1) {
+                SettingRow(icon: "paintpalette", tint: .purple,
+                           title: "Customize syntax & change colors",
+                           detail: "Off: the editor uses system colors that adapt to light/dark. On: pick your own for keywords, strings, numbers, comments and changed text.",
+                           isOn: $syntaxTheme.enabled)
+                if syntaxTheme.enabled {
+                    HStack(spacing: 8) {
+                        Text("Presets").foregroundStyle(.secondary)
+                        Spacer()
+                        ForEach(SyntaxThemeStore.Preset.allCases) { preset in
+                            Button(preset.label) { syntaxTheme.apply(preset) }
+                                .controlSize(.small).buttonStyle(.bordered)
+                        }
+                    }
+                    ColorPicker("Keywords", selection: $syntaxTheme.keyword)
+                    ColorPicker("Strings", selection: $syntaxTheme.string)
+                    ColorPicker("Numbers", selection: $syntaxTheme.number)
+                    ColorPicker("Comments", selection: $syntaxTheme.comment)
+                    ColorPicker("Changed text", selection: $syntaxTheme.change)
                 }
             }
 

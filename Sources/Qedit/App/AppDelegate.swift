@@ -5,6 +5,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         MainActor.assumeIsolated {
+            terminateOtherInstances()             // after an update: only the newest copy runs
             HotKeyManager.shared.start()          // global hotkey (works in the background too)
             AppState.shared.applyAppearance()     // System / Light / Dark
             _ = UpdaterController.shared          // start Sparkle
@@ -25,6 +26,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationSupportsSecureRestorableState(_ app: NSApplication) -> Bool { true }
+
+    /// Quit any OTHER copy of Qedit that's still running (e.g. an old build left over after an
+    /// update). This is why "two windows with different wording" appeared — multiple versions
+    /// running at once. Keeping a single instance also keeps the Quick Look registration clean.
+    private func terminateOtherInstances() {
+        let me = NSRunningApplication.current
+        let bundleID = Bundle.main.bundleIdentifier ?? "com.ariomoniri.Qedit"
+        let others = NSRunningApplication.runningApplications(withBundleIdentifier: bundleID)
+            .filter { $0.processIdentifier != me.processIdentifier }
+        for app in others {
+            if !app.terminate() { app.forceTerminate() }
+        }
+    }
 
     /// Don't quit on last-window-close when "keep running in background" is on — instead we
     /// drop the Dock icon and live in the menu bar (see `updateActivationPolicy`).

@@ -3,6 +3,11 @@
 All notable changes to Qedit. This file feeds both the GitHub release notes and the
 in-app Sparkle updater. 🪄
 
+## v0.5.4
+- 🧹 **Clean environment on launch.** Opening Qedit now **quits any older copy still running** — this is what caused "two windows with different wording" after an update. One Qedit, one registration.
+- 🎨 **Custom code colors.** **Settings → Editing → Code colors** lets you set your own colors for keywords, strings, numbers, comments and changed text, with **Classic / GitHub / Solarized** presets. Off by default (the editor keeps system colors that adapt to light/dark).
+- 🤝 **Plays nicely with ChangeX.** Qedit no longer flags your **ChangeX** Quick Look extension as a competitor, and "Disable all" never switches it off — the two run side by side.
+
 ## v0.5.3
 - ✍️ **Edit Word documents (opt-in).** New **Settings → Editing → “Allow editing Word (.docx/.doc)”** makes Word files editable and saves them back in place as `.docx` (verified). Off by default with a clear in-editor warning, because re-saving can simplify complex formatting — keep the `.bak` backup on for important docs.
 - 🎞️ **PowerPoint `.pptx` opens** as a native read-only **slide viewer** (per-slide text, selectable, ⌘F find).

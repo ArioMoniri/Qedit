@@ -51,6 +51,7 @@ struct EditorWindowView: View {
 struct EditorView: View {
     @StateObject private var doc: EditorDocument
     @EnvironmentObject private var appState: AppState
+    @ObservedObject private var theme = SyntaxThemeStore.shared
     @State private var errorMessage: String?
 
     init(url: URL) {
@@ -113,7 +114,8 @@ struct EditorView: View {
                         language: codeLanguage,
                         originalText: doc.originalText,
                         highlightChanges: appState.highlightChanges,
-                        changeStyle: appState.changeHighlightStyle
+                        changeStyle: appState.changeHighlightStyle,
+                        colors: theme.activeColors
                     )
                 }
                 editorFooter
