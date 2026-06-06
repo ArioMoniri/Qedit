@@ -1,6 +1,6 @@
 cask "qedit" do
-  version "0.5.6"
-  sha256 "d5cbdb180c8a9b9987209d9c89b3beecb082411a1eb3ca31df14603cd15782ad"
+  version "0.6.0"
+  sha256 "0ef0cfd3c2752d780d3f979d8f68db70c3dc6d0d213634876551a321c2d132a5"
 
   url "https://github.com/ArioMoniri/Qedit/releases/download/v#{version}/Qedit.dmg",
       verified: "github.com/ArioMoniri/Qedit/"
