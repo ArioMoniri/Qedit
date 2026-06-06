@@ -123,6 +123,14 @@ struct SettingsView: View {
                            isOn: $appState.allowWordEditing)
             }
 
+            SettingsGroup(title: "Spreadsheets",
+                          onCount: appState.allowSpreadsheetEditing ? 1 : 0, total: 1) {
+                SettingRow(icon: "tablecells", tint: .green,
+                           title: "Allow editing spreadsheet cells (.xlsx)",
+                           detail: "Off by default: .xlsx opens as a read-only grid. On: edit cell values and Save back to .xlsx — values only (formulas/styles are dropped). Keep .bak on for important files.",
+                           isOn: $appState.allowSpreadsheetEditing)
+            }
+
             SettingsGroup(title: "Backup",
                           onCount: appState.makeBackupBeforeFirstWrite ? 1 : 0, total: 1) {
                 SettingRow(icon: "doc.badge.clock", title: "Keep a .bak backup file",

@@ -3,6 +3,9 @@
 All notable changes to Qedit. This file feeds both the GitHub release notes and the
 in-app Sparkle updater. 🪄
 
+## v0.5.5
+- 📝 **Edit spreadsheet cells.** New **Settings → Editing → “Allow editing spreadsheet cells (.xlsx)”** turns the cell grid editable — change values and **Save** writes them straight back into the `.xlsx` in place (verified: the rewritten file is a valid workbook with other sheets/styles preserved). Off by default; values only (formulas/number formats are dropped), so keep `.bak` on for important sheets.
+
 ## v0.5.4
 - 🧹 **Clean environment on launch.** Opening Qedit now **quits any older copy still running** — this is what caused "two windows with different wording" after an update. One Qedit, one registration.
 - 🎨 **Custom code colors.** **Settings → Editing → Code colors** lets you set your own colors for keywords, strings, numbers, comments and changed text, with **Classic / GitHub / Solarized** presets. Off by default (the editor keeps system colors that adapt to light/dark).

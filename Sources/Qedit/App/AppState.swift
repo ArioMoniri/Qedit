@@ -90,6 +90,10 @@ final class AppState: ObservableObject {
     @Published var allowWordEditing: Bool {
         didSet { UserDefaults.standard.set(allowWordEditing, forKey: Self.allowWordKey) }
     }
+    /// Allow editing spreadsheet cells (.xlsx) — saving keeps values but drops formulas/styles.
+    @Published var allowSpreadsheetEditing: Bool {
+        didSet { UserDefaults.standard.set(allowSpreadsheetEditing, forKey: Self.allowSheetKey) }
+    }
     /// Size the Quick Panel opens at.
     @Published var quickPanelSize: QuickPanelSize {
         didSet { UserDefaults.standard.set(quickPanelSize.rawValue, forKey: Self.quickPanelSizeKey) }
@@ -104,6 +108,7 @@ final class AppState: ObservableObject {
     private static let highlightChangesKey = "qe.highlightChanges"
     private static let changeStyleKey = "qe.changeHighlightStyle"
     private static let allowWordKey = "qe.allowWordEditing"
+    private static let allowSheetKey = "qe.allowSpreadsheetEditing"
     private static let quickPanelSizeKey = "qe.quickPanelSize"
     private let maxRecents = 12
 
@@ -124,6 +129,7 @@ final class AppState: ObservableObject {
         self.changeHighlightStyle = UserDefaults.standard.string(forKey: Self.changeStyleKey)
             .flatMap(ChangeHighlightStyle.init(rawValue:)) ?? .background
         self.allowWordEditing = UserDefaults.standard.object(forKey: Self.allowWordKey) as? Bool ?? false
+        self.allowSpreadsheetEditing = UserDefaults.standard.object(forKey: Self.allowSheetKey) as? Bool ?? false
         self.quickPanelSize = UserDefaults.standard.string(forKey: Self.quickPanelSizeKey)
             .flatMap(QuickPanelSize.init(rawValue:)) ?? .medium
         loadRecents()
