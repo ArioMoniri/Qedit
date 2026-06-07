@@ -27,12 +27,14 @@ struct SettingsView: View {
             shortcutTab.tabItem { Label("Shortcut", systemImage: "command") }
             previewTab.tabItem { Label("Preview", systemImage: "eye") }
         }
-        .frame(width: 520)
+        .padding(.top, 6)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .navigationTitle("Settings")
     }
 
     private func tab<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
-        ScrollView { VStack(spacing: 14) { content() }.padding(18) }
-            .frame(width: 520, height: 470)
+        ScrollView { VStack(spacing: 14) { content() }.padding(18).frame(maxWidth: 600) }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     // MARK: - General
@@ -82,7 +84,7 @@ struct SettingsView: View {
                           onCount: appState.highlightChanges ? 1 : 0, total: 1) {
                 SettingRow(icon: "highlighter", tint: .orange,
                            title: "Highlight my changes",
-                           detail: "As you edit, the changed text is marked so you can see your edits at a glance.",
+                           detail: "As you edit, exactly the added/changed text is marked (e.g. typing “hi asfas” over “hi” marks just “ asfas”), with a dashed mark where text was removed. Works in text, code, Markdown, Word/RTF, Excel cells and PowerPoint text.",
                            isOn: $appState.highlightChanges)
                 if appState.highlightChanges {
                     Picker("Style", selection: $appState.changeHighlightStyle) {
@@ -139,11 +141,23 @@ struct SettingsView: View {
                            isOn: $appState.allowPptxEditing)
             }
 
+            SettingsGroup(title: "Editor banners",
+                          onCount: appState.showEditorBanners ? 1 : 0, total: 1) {
+                SettingRow(icon: "info.circle", tint: .blue, title: "Show editor info banners",
+                           detail: "The colored notices at the top of the editor (read-only, Word/Excel/PowerPoint tips). Turn off (or click the ✕ on a banner) to hide them; Save and the other buttons stay.",
+                           isOn: $appState.showEditorBanners)
+            }
+
             SettingsGroup(title: "Backup",
-                          onCount: appState.makeBackupBeforeFirstWrite ? 1 : 0, total: 1) {
-                SettingRow(icon: "doc.badge.clock", title: "Keep a .bak backup file",
-                           detail: "Off by default — saves are atomic, so the file is never half-written and no .bak files are left behind. On: keep a timestamped .bak copy next to the file.",
+                          onCount: (appState.makeBackupBeforeFirstWrite ? 1 : 0) + (appState.backupRichBeforeEdit ? 1 : 0),
+                          total: 2) {
+                SettingRow(icon: "doc.badge.clock", title: "Keep a .bak backup of every file",
+                           detail: "Off by default — saves are atomic, so the file is never half-written. On: keep a timestamped .bak copy next to any file before the first save.",
                            isOn: $appState.makeBackupBeforeFirstWrite)
+                SettingRow(icon: "doc.badge.clock", tint: .orange,
+                           title: "Back up Word/PowerPoint before the first edit",
+                           detail: "On by default: because re-saving .docx/.pptx can simplify complex formatting, Qedit keeps one .bak the first time you save one. Turn off if you don’t want any .bak files.",
+                           isOn: $appState.backupRichBeforeEdit)
             }
         }
     }
@@ -243,6 +257,29 @@ struct SettingsView: View {
                 SettingRow(icon: "filemenu.and.cursorarrow", title: "Track the Finder selection",
                            detail: "While the Quick Panel is open, clicking through files in Finder re-loads each one into the panel — like a live, editable preview pane. It waits while you’re typing in the panel and never swaps away from unsaved edits. Uses the Finder-read permission you already granted.",
                            isOn: $appState.followFinderSelection)
+            }
+
+            SettingsGroup(title: "Browse Files shortcut",
+                          subtitle: "Open the Qedit Browser (folder list + live editable editor) from anywhere.",
+                          onCount: hotKey.browserEnabled ? 1 : 0, total: 1) {
+                SettingRow(icon: "sidebar.right", title: "Enable the Browser shortcut",
+                           detail: "A global shortcut that opens the Browser window. Default ⌥⌘B (⇧⌘B can clash with system shortcuts) — record your own below.",
+                           isOn: $hotKey.browserEnabled)
+                HStack {
+                    Text("Current shortcut").foregroundStyle(.secondary)
+                    Spacer()
+                    Text(hotKey.browserEnabled ? hotKey.browserConfig.displayString : "Off")
+                        .font(.system(.title3, design: .rounded).weight(.bold))
+                        .padding(.horizontal, 12).padding(.vertical, 4)
+                        .background(.tint.opacity(0.15), in: RoundedRectangle(cornerRadius: 8))
+                }
+                HStack {
+                    Text("Record your own").foregroundStyle(.secondary)
+                    Spacer()
+                    HotKeyRecorder(config: $hotKey.browserConfig)
+                        .frame(width: 140, height: 24).disabled(!hotKey.browserEnabled)
+                    Button("Reset") { hotKey.browserConfig = .defaultBrowser }.controlSize(.small)
+                }
             }
         }
     }

@@ -102,6 +102,15 @@ final class AppState: ObservableObject {
     @Published var allowPptxEditing: Bool {
         didSet { UserDefaults.standard.set(allowPptxEditing, forKey: Self.allowPptxKey) }
     }
+    /// Keep one `.bak` backup the first time you save a lossy-to-rewrite format (Word, PowerPoint).
+    /// On by default for safety, but optional — turn off if you don't want any `.bak` files.
+    @Published var backupRichBeforeEdit: Bool {
+        didSet { UserDefaults.standard.set(backupRichBeforeEdit, forKey: Self.backupRichKey) }
+    }
+    /// Show the in-editor info banners (read-only notices, Word/Excel/PPTX tips). Off hides them.
+    @Published var showEditorBanners: Bool {
+        didSet { UserDefaults.standard.set(showEditorBanners, forKey: Self.showBannersKey) }
+    }
     /// Size the Quick Panel opens at.
     @Published var quickPanelSize: QuickPanelSize {
         didSet { UserDefaults.standard.set(quickPanelSize.rawValue, forKey: Self.quickPanelSizeKey) }
@@ -127,6 +136,8 @@ final class AppState: ObservableObject {
     private static let allowWordKey = "qe.allowWordEditing"
     private static let allowSheetKey = "qe.allowSpreadsheetEditing"
     private static let allowPptxKey = "qe.allowPptxEditing"
+    private static let backupRichKey = "qe.backupRichBeforeEdit"
+    private static let showBannersKey = "qe.showEditorBanners"
     private static let quickPanelSizeKey = "qe.quickPanelSize"
     private static let followFinderKey = "qe.followFinderSelection"
     private let maxRecents = 12
@@ -152,6 +163,8 @@ final class AppState: ObservableObject {
         self.allowWordEditing = UserDefaults.standard.object(forKey: Self.allowWordKey) as? Bool ?? true
         self.allowSpreadsheetEditing = UserDefaults.standard.object(forKey: Self.allowSheetKey) as? Bool ?? true
         self.allowPptxEditing = UserDefaults.standard.object(forKey: Self.allowPptxKey) as? Bool ?? false
+        self.backupRichBeforeEdit = UserDefaults.standard.object(forKey: Self.backupRichKey) as? Bool ?? true
+        self.showEditorBanners = UserDefaults.standard.object(forKey: Self.showBannersKey) as? Bool ?? true
         self.quickPanelSize = UserDefaults.standard.string(forKey: Self.quickPanelSizeKey)
             .flatMap(QuickPanelSize.init(rawValue:)) ?? .medium
         self.followFinderSelection = UserDefaults.standard.object(forKey: Self.followFinderKey) as? Bool ?? false

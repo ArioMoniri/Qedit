@@ -10,7 +10,8 @@ import Foundation
 enum PptxParts {
     /// One `<a:t>` text run inside a slide, in document order.
     struct Run {
-        var text: String        // human text (XML-unescaped)
+        var text: String        // current human text (XML-unescaped)
+        let original: String     // text as loaded, for change highlighting
         let editable: Bool      // single-run body paragraph (safe to edit); else shown read-only
     }
 

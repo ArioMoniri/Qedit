@@ -59,7 +59,6 @@ struct HomeView: View {
                     Label("Open Browser", systemImage: "sidebar.right").padding(.horizontal, 4)
                 }
                 .buttonStyle(.borderedProminent).buttonBorderShape(.capsule).controlSize(.large)
-                .keyboardShortcut("b", modifiers: [.command, .shift])
             }
         }
     }

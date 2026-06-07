@@ -171,11 +171,11 @@ final class EditorDocument: ObservableObject, Identifiable {
     func save(makeBackup: Bool) throws {
         guard isTextEditable else { throw EditorError.notTextEditable }
 
-        // Word re-serialization is lossy (it can simplify tables/images/headers), and Word is now
-        // editable by default — so ALWAYS keep one safety copy on the first write of a session for
-        // Word, regardless of the global backup setting. This also covers the auto-save path, which
-        // calls straight through here. Other formats follow the user's global preference.
-        let forceBackup = (richFormatName == "Word document")
+        // Word re-serialization is lossy (it can simplify tables/images/headers), so keep one safety
+        // copy on the first write of a session for Word — unless the user turned that off
+        // (Settings → Editing → "Back up Word/PowerPoint before the first edit"). This also covers
+        // the auto-save path. Other formats follow the global backup preference.
+        let forceBackup = (richFormatName == "Word document") && AppState.shared.backupRichBeforeEdit
         if (makeBackup || forceBackup) && !didBackupThisSession {
             try FileBackup.make(for: url)
             didBackupThisSession = true

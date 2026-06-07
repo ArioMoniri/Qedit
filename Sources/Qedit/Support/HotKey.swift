@@ -15,6 +15,13 @@ struct HotKeyConfig: Equatable, Codable {
         keyLabel: "E"
     )
 
+    /// Default Browser hotkey: ⌥⌘B (⇧⌘B collides with some system/app shortcuts).
+    static let defaultBrowser = HotKeyConfig(
+        keyCode: UInt32(kVK_ANSI_B),
+        carbonModifiers: UInt32(optionKey | cmdKey),
+        keyLabel: "B"
+    )
+
     /// One-tap presets shown in Settings. (Space needs a modifier — a bare Space can't be a
     /// global hotkey without blocking typing — so the "Space" presets pair it with ⌃/⌥/⌘.)
     static let presets: [HotKeyConfig] = [
@@ -51,9 +58,10 @@ struct HotKeyConfig: Equatable, Codable {
 final class HotKeyStore: ObservableObject {
     static let shared = HotKeyStore()
     private static let key = "qe.globalHotKey"
+    private static let browserKey = "qe.browserHotKey"
 
     @Published var config: HotKeyConfig {
-        didSet { save(); HotKeyManager.shared.reregister() }
+        didSet { save(config, Self.key); HotKeyManager.shared.reregister() }
     }
     @Published var enabled: Bool {
         didSet {
@@ -61,20 +69,32 @@ final class HotKeyStore: ObservableObject {
             HotKeyManager.shared.reregister()
         }
     }
-
-    init() {
-        if let data = UserDefaults.standard.data(forKey: Self.key),
-           let decoded = try? JSONDecoder().decode(HotKeyConfig.self, from: data) {
-            config = decoded
-        } else {
-            config = .default
+    /// Configurable global shortcut to open the Browser window.
+    @Published var browserConfig: HotKeyConfig {
+        didSet { save(browserConfig, Self.browserKey); HotKeyManager.shared.reregister() }
+    }
+    @Published var browserEnabled: Bool {
+        didSet {
+            UserDefaults.standard.set(browserEnabled, forKey: "qe.browserHotKeyEnabled")
+            HotKeyManager.shared.reregister()
         }
-        enabled = UserDefaults.standard.object(forKey: "qe.globalHotKeyEnabled") as? Bool ?? true
     }
 
-    private func save() {
+    init() {
+        config = Self.decode(Self.key) ?? .default
+        enabled = UserDefaults.standard.object(forKey: "qe.globalHotKeyEnabled") as? Bool ?? true
+        browserConfig = Self.decode(Self.browserKey) ?? .defaultBrowser
+        browserEnabled = UserDefaults.standard.object(forKey: "qe.browserHotKeyEnabled") as? Bool ?? true
+    }
+
+    private static func decode(_ key: String) -> HotKeyConfig? {
+        guard let data = UserDefaults.standard.data(forKey: key) else { return nil }
+        return try? JSONDecoder().decode(HotKeyConfig.self, from: data)
+    }
+
+    private func save(_ config: HotKeyConfig, _ key: String) {
         if let data = try? JSONEncoder().encode(config) {
-            UserDefaults.standard.set(data, forKey: Self.key)
+            UserDefaults.standard.set(data, forKey: key)
         }
     }
 }

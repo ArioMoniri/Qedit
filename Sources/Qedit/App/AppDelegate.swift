@@ -149,9 +149,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         NSApp.activate(ignoringOtherApps: true)
         MainActor.assumeIsolated {
             if let openSettings = EditorLauncher.shared.openSettings {
-                openSettings()
-            } else if !NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil) {
-                NSApp.sendAction(Selector(("showPreferencesWindow:")), to: nil, from: nil)
+                openSettings()   // opens the main window and selects the in-window Settings tab
+            } else {
+                EditorLauncher.shared.openMainWindow?()
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    NotificationCenter.default.post(name: .qeditShowSettings, object: nil)
+                }
             }
         }
     }

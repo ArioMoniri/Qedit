@@ -3,6 +3,13 @@
 All notable changes to Qedit. This file feeds both the GitHub release notes and the
 in-app Sparkle updater. 🪄
 
+## v0.7.1
+- 🖍️ **Change highlighting actually works now — and in every editor.** It marks *exactly* what you changed: type “hi asfas” over “hi” and only “ asfas” lights up (a real word-level diff, so several separate edits each highlight instead of one big block), with a dashed mark where text was **removed**. It now runs in **text/code/Markdown, Word/RTF/ODT, Excel cells, CSV and PowerPoint text** — not just plain text. Toggling it (or the style) in Settings now applies to already-open editors immediately.
+- 🪟 **One Settings, one window.** Settings moved *inside* the main Qedit window (sidebar → **Settings**); there’s no longer a separate, different-looking preferences window. **⌘,** and the menu-bar item jump straight to it.
+- ⌨️ **Browse Files shortcut is yours to choose.** ⇧⌘B clashed with other shortcuts, so the Browser now has its own **configurable global shortcut** (Settings → Shortcut → “Browse Files shortcut”, default **⌥⌘B**) that you can re-record or turn off — and it works whenever Qedit is running, not only when a window is focused.
+- 💾 **The Word/PowerPoint backup is now optional.** It’s still on by default (re-saving those formats can simplify formatting), but there’s a switch: **Settings → Editing → “Back up Word/PowerPoint before the first edit.”** Turn it off if you don’t want any `.bak` files.
+- 🙈 **Editor banners are dismissible.** Click the **✕** on any editor banner, or turn them all off in **Settings → Editing → “Show editor info banners.”** Save and the other buttons always stay.
+
 ## v0.7.0
 - 🗂️ **New: the Qedit Browser — edit files from a live preview pane.** A new window (**⇧⌘B**, or the “Browse & edit files” card / menu‑bar item) shows a folder list on the left and a **fully editable editor on the right**: click any file and it opens *right there* ready to edit — find with **⌘F**, save in place — with **no Space and no shortcut**. Switching files while you have unsaved edits asks before discarding. This is the legitimate macOS answer to “edit in the preview”: Apple’s Quick Look pane (Space / Finder’s preview) is read‑only and receives no keystrokes, so no app can edit *inside Finder’s own* pane — this is Qedit’s editable equivalent.
 - 🧲 **Quick Panel can follow the Finder selection.** Turn on **Settings → Shortcut → “Follow Finder selection”**: while the Quick Panel is open, clicking through files in Finder re‑loads each one into the panel — a live, editable preview. It waits while you’re typing and never swaps away from unsaved edits. Uses the Finder‑read permission you already granted (no new prompt).

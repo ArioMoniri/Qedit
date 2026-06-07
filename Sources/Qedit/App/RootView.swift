@@ -4,6 +4,8 @@ import AppKit
 extension Notification.Name {
     /// Posted (e.g. from Setup) to jump the dashboard to the Extensions tab.
     static let qeditShowExtensions = Notification.Name("qedit.showExtensions")
+    /// Posted (from ⌘, / the menu-bar) to jump the dashboard to the Settings tab.
+    static let qeditShowSettings = Notification.Name("qedit.showSettings")
 }
 
 /// Reports the hosting `NSWindow` once the view is in the window hierarchy.
@@ -19,6 +21,7 @@ struct WindowAccessor: NSViewRepresentable {
 
 enum SidebarItem: String, CaseIterable, Identifiable {
     case home = "Home"
+    case settings = "Settings"
     case extensions = "Extensions"
     case updates = "Updates"
     case setup = "Setup"
@@ -27,6 +30,7 @@ enum SidebarItem: String, CaseIterable, Identifiable {
     var systemImage: String {
         switch self {
         case .home: return "house"
+        case .settings: return "gearshape"
         case .extensions: return "puzzlepiece.extension"
         case .updates: return "arrow.down.circle"
         case .setup: return "checklist"
@@ -37,7 +41,6 @@ enum SidebarItem: String, CaseIterable, Identifiable {
 struct RootView: View {
     @EnvironmentObject private var appState: AppState
     @Environment(\.openWindow) private var openWindow
-    @Environment(\.openSettings) private var openSettings
     @State private var selection: SidebarItem? = .home
 
     var body: some View {
@@ -49,6 +52,7 @@ struct RootView: View {
         } detail: {
             switch selection ?? .home {
             case .home: HomeView()
+            case .settings: SettingsView()
             case .extensions: ManagerView()
             case .updates: UpdatesView()
             case .setup: OnboardingView()
@@ -61,6 +65,9 @@ struct RootView: View {
         .onReceive(NotificationCenter.default.publisher(for: .qeditShowExtensions)) { _ in
             selection = .extensions
         }
+        .onReceive(NotificationCenter.default.publisher(for: .qeditShowSettings)) { _ in
+            selection = .settings
+        }
         .onAppear {
             // Give the launcher (URL handler + global hotkey + Dock reopen) ways to open windows.
             EditorLauncher.shared.openEditorWindow = { url in
@@ -69,8 +76,12 @@ struct RootView: View {
             EditorLauncher.shared.openMainWindow = {
                 openWindow(id: "main")
             }
+            // Settings now lives INSIDE the dashboard — open the window and select the Settings tab.
             EditorLauncher.shared.openSettings = {
-                openSettings()
+                openWindow(id: "main")
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                    NotificationCenter.default.post(name: .qeditShowSettings, object: nil)
+                }
             }
             EditorLauncher.shared.openBrowser = {
                 openWindow(id: "browser")

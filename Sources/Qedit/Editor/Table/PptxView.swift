@@ -9,6 +9,7 @@ import AppKit
 struct PptxView: View {
     let url: URL
     @EnvironmentObject private var appState: AppState
+    @ObservedObject private var theme = SyntaxThemeStore.shared
     @StateObject private var doc: PptxDocument
 
     init(url: URL) {
@@ -44,19 +45,24 @@ struct PptxView: View {
 
     private var banner: some View {
         HStack(spacing: 10) {
-            Image(systemName: "rectangle.on.rectangle").foregroundStyle(.secondary)
-            if editing {
-                Text("Editing slide text — change a line on the right and **Save**. Formatting, "
-                     + "images and layout are preserved; complex lines stay read-only.")
-                    .font(.callout).foregroundStyle(.secondary)
-            } else if appState.allowPptxEditing && doc.loaded && !doc.hasEditableText {
-                Text("Presentation — no simple text lines to edit here (this deck’s text is in "
-                     + "tables/charts or mixed formatting). Open in Keynote/PowerPoint to edit.")
-                    .font(.callout).foregroundStyle(.secondary)
-            } else {
-                Text("Presentation — read-only native preview. Turn on “Edit PowerPoint text” in "
-                     + "Settings → Editing, or open in Keynote/PowerPoint.")
-                    .font(.callout).foregroundStyle(.secondary)
+            if appState.showEditorBanners {
+                Image(systemName: "rectangle.on.rectangle").foregroundStyle(.secondary)
+                if editing {
+                    Text("Editing slide text — change a line on the right and **Save**. Formatting, "
+                         + "images and layout are preserved; complex lines stay read-only.")
+                        .font(.callout).foregroundStyle(.secondary)
+                } else if appState.allowPptxEditing && doc.loaded && !doc.hasEditableText {
+                    Text("Presentation — no simple text lines to edit here (this deck’s text is in "
+                         + "tables/charts or mixed formatting). Open in Keynote/PowerPoint to edit.")
+                        .font(.callout).foregroundStyle(.secondary)
+                } else {
+                    Text("Presentation — read-only native preview. Turn on “Edit PowerPoint text” in "
+                         + "Settings → Editing, or open in Keynote/PowerPoint.")
+                        .font(.callout).foregroundStyle(.secondary)
+                }
+                Button { appState.showEditorBanners = false } label: { Image(systemName: "xmark") }
+                    .buttonStyle(.borderless).controlSize(.small)
+                    .help("Hide editor banners (turn back on in Settings → Editing)")
             }
             Spacer()
             if editing {
@@ -68,7 +74,7 @@ struct PptxView: View {
         }
         .padding(.horizontal, 14).padding(.vertical, 8)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background((editing ? Color.green : Color.orange).opacity(0.10))
+        .background(appState.showEditorBanners ? (editing ? Color.green : Color.orange).opacity(0.10) : Color.clear)
         .overlay(alignment: .bottomLeading) {
             if let saveError = doc.saveError {
                 Text(saveError).font(.caption).foregroundStyle(.red)
@@ -88,9 +94,14 @@ struct PptxView: View {
                             Text("Slide \(slide.number)")
                                 .font(.caption).bold().foregroundStyle(.secondary)
                             ForEach(slide.editableIndices, id: \.self) { ri in
+                                let changed = appState.highlightChanges && runChanged(slide.id, ri)
                                 TextField("", text: binding(slideID: slide.id, run: ri), axis: .vertical)
                                     .textFieldStyle(.roundedBorder)
                                     .lineLimit(1...4)
+                                    .background(changed
+                                        ? Color(theme.activeColors.change).opacity(0.30)
+                                        : Color.clear)
+                                    .cornerRadius(5)
                             }
                         }
                     }
@@ -106,6 +117,12 @@ struct PptxView: View {
             get: { doc.text(slideID: slideID, run: ri) },
             set: { doc.setText($0, slideID: slideID, run: ri) }
         )
+    }
+
+    private func runChanged(_ slideID: String, _ ri: Int) -> Bool {
+        guard let slide = doc.slides.first(where: { $0.id == slideID }),
+              slide.runs.indices.contains(ri) else { return false }
+        return slide.runs[ri].text != slide.runs[ri].original
     }
 
     private func save() {
@@ -169,10 +186,9 @@ final class PptxDocument: ObservableObject {
 
     @discardableResult
     func save(makeBackup: Bool) -> Bool {
-        // PPTX editing is opt-in; always keep one safety copy on the first write of a session,
-        // regardless of the global backup setting (the `makeBackup` parameter).
-        _ = makeBackup
-        if !didBackup {
+        // Keep one safety copy on the first write of a session — unless the user turned off
+        // "Back up Word/PowerPoint before the first edit" (and isn't using the global backup either).
+        if (makeBackup || AppState.shared.backupRichBeforeEdit) && !didBackup {
             try? FileBackup.make(for: url)
             didBackup = true
         }
@@ -207,7 +223,7 @@ final class PptxDocument: ObservableObject {
             guard !ms.isEmpty else { continue }
             let texts = ms.map { PptxParts.text(of: $0, in: xml) }
             let editable = PptxParts.editability(forSlideXML: xml) ?? Array(repeating: false, count: texts.count)
-            let runs = zip(texts, editable).map { PptxParts.Run(text: $0.0, editable: $0.1) }
+            let runs = zip(texts, editable).map { PptxParts.Run(text: $0.0, original: $0.0, editable: $0.1) }
             let editableIndices = runs.indices.filter { runs[$0].editable }
             result.append(Slide(id: name, number: n + 1, runs: runs, editableIndices: editableIndices))
         }

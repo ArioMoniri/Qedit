@@ -28,10 +28,8 @@ struct QeditApp: App {
         }
         .defaultSize(width: 1100, height: 720)
 
-        Settings {
-            SettingsView()
-                .environmentObject(appState)
-        }
+        // No separate Settings scene — settings live inside the main window (Sidebar → Settings),
+        // so there's a single, consistent UI. ⌘, navigates there (see AppMenuCommands).
     }
 
     /// Handle file opens ("Open With → Qedit", double-click) and `qedit://open?path=...`
@@ -52,6 +50,16 @@ struct AppMenuCommands: Commands {
         CommandGroup(after: .appInfo) {
             Button("Check for Updates…") { UpdaterController.shared.checkForUpdates() }
         }
+        // Standard ⌘, — opens the main window and selects the in-window Settings tab.
+        CommandGroup(replacing: .appSettings) {
+            Button("Settings…") {
+                openWindow(id: "main")
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                    NotificationCenter.default.post(name: .qeditShowSettings, object: nil)
+                }
+            }
+            .keyboardShortcut(",", modifiers: .command)
+        }
         CommandGroup(replacing: .newItem) {
             Button("Open…") {
                 if let url = FileOpener.runOpenPanel() {
@@ -61,7 +69,6 @@ struct AppMenuCommands: Commands {
             }
             .keyboardShortcut("o", modifiers: .command)
             Button("Browse & Edit Files…") { openWindow(id: "browser") }
-                .keyboardShortcut("b", modifiers: [.command, .shift])
         }
         CommandGroup(replacing: .help) {
             Link("Qedit on GitHub", destination: URL(string: "https://github.com/ArioMoniri/Qedit")!)

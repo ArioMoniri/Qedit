@@ -7,7 +7,9 @@ import AppKit
 struct SpreadsheetView: View {
     let url: URL
     @EnvironmentObject private var appState: AppState
+    @ObservedObject private var theme = SyntaxThemeStore.shared
     @State private var rows: [[String]] = []
+    @State private var original: [[String]] = []   // on-load snapshot, for change highlighting
     @State private var loaded = false
     @State private var dirty = false
     @State private var saveError: String?
@@ -62,6 +64,7 @@ struct SpreadsheetView: View {
         .task {
             let result = await Task.detached { SpreadsheetReader.read(url) }.value
             rows = result ?? []
+            original = rows
             loaded = true
         }
         .onAppear { registerActive() }
@@ -86,8 +89,10 @@ struct SpreadsheetView: View {
     private func cell(_ r: Int, _ c: Int) -> some View {
         let isMatch = !query.isEmpty && rows[r][c].localizedCaseInsensitiveContains(query)
         let isCurrent = isMatch && !matches.isEmpty && matches[matchIdx] == Coord(r: r, c: c)
+        let changed = appState.highlightChanges && cellChanged(r, c)
         let bg: Color = isCurrent ? .orange.opacity(0.5)
             : isMatch ? .yellow.opacity(0.35)
+            : changed ? Color(theme.activeColors.change).opacity(0.34)
             : (r == 0 ? .secondary.opacity(0.12) : (r % 2 == 0 ? .clear : .secondary.opacity(0.05)))
         Group {
             if editable {
@@ -105,6 +110,13 @@ struct SpreadsheetView: View {
         .frame(minWidth: 90, alignment: .leading)
         .background(bg)
         .overlay(Rectangle().stroke(Color.secondary.opacity(0.18), lineWidth: 0.5))
+    }
+
+    /// True when a cell differs from its on-load value (or is a brand-new non-empty cell).
+    private func cellChanged(_ r: Int, _ c: Int) -> Bool {
+        guard editable else { return false }
+        if r < original.count, c < original[r].count { return rows[r][c] != original[r][c] }
+        return !rows[r][c].isEmpty
     }
 
     private func recomputeMatches() {
@@ -131,13 +143,15 @@ struct SpreadsheetView: View {
 
     private var banner: some View {
         HStack(spacing: 10) {
-            Image(systemName: "tablecells").foregroundStyle(.secondary)
-            if editable {
-                Text("Editing cells — **Save** writes values back to the `.xlsx`. ⌘F to find.")
+            if appState.showEditorBanners {
+                Image(systemName: "tablecells").foregroundStyle(.secondary)
+                Text(editable
+                     ? "Editing cells — **Save** writes values back to the `.xlsx`. ⌘F to find."
+                     : "Spreadsheet — read-only. **⌘F** to find. Turn on cell editing in Settings → Editing.")
                     .font(.callout).foregroundStyle(.secondary)
-            } else {
-                Text("Spreadsheet — read-only. **⌘F** to find. Turn on cell editing in Settings → Editing.")
-                    .font(.callout).foregroundStyle(.secondary)
+                Button { appState.showEditorBanners = false } label: { Image(systemName: "xmark") }
+                    .buttonStyle(.borderless).controlSize(.small)
+                    .help("Hide editor banners (turn back on in Settings → Editing)")
             }
             Spacer()
             if editable {
@@ -149,7 +163,7 @@ struct SpreadsheetView: View {
         }
         .padding(.horizontal, 14).padding(.vertical, 8)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(.green.opacity(0.10))
+        .background(appState.showEditorBanners ? Color.green.opacity(0.10) : Color.clear)
         .overlay(alignment: .bottomLeading) {
             if let saveError {
                 Text(saveError).font(.caption).foregroundStyle(.red).padding(.horizontal, 14).padding(.bottom, 2)
@@ -160,7 +174,7 @@ struct SpreadsheetView: View {
     private func save() {
         if appState.makeBackupBeforeFirstWrite { try? FileBackup.make(for: url) }
         if SpreadsheetWriter.write(rows, to: url) {
-            dirty = false; saveError = nil
+            dirty = false; saveError = nil; original = rows   // saved values are the new baseline
         } else {
             saveError = "Couldn’t save — this workbook has a structure Qedit can’t safely edit yet. "
                 + "Open it in Numbers/Excel."

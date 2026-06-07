@@ -56,13 +56,23 @@ struct CodeTextView: NSViewRepresentable {
 
     func updateNSView(_ scrollView: NSScrollView, context: Context) {
         guard let textView = scrollView.documentView as? NSTextView else { return }
+        context.coordinator.parent = self   // keep the coordinator's settings fresh (style/colors/toggle)
         if textView.string != text {
             textView.string = text
             highlight(textView)
+        } else if context.coordinator.highlightKey != highlightKey {
+            // Text unchanged but a highlight setting changed (toggle/style/colors) — re-apply.
+            highlight(textView)
         }
+        context.coordinator.highlightKey = highlightKey
         if textView.isEditable != isEditable {
             textView.isEditable = isEditable
         }
+    }
+
+    /// A signature of everything that affects highlighting, so we re-render when any of it changes.
+    private var highlightKey: String {
+        "\(highlightChanges)|\(changeStyle.rawValue)|\(language ?? "")|\(colors.change.hashValue)|\(originalText.hashValue)"
     }
 
     /// Apply syntax colors + change marks (display-only; never touches the text bytes).
@@ -79,46 +89,53 @@ struct CodeTextView: NSViewRepresentable {
         let needsSyntax = language != nil
         guard needsSyntax || highlightChanges else { return }
         let full = NSRange(location: 0, length: (storage.string as NSString).length)
+        // Always clear OUR previous marks first, so stale highlights never linger.
+        storage.removeAttribute(.backgroundColor, range: full)
+        storage.removeAttribute(.underlineStyle, range: full)
+        storage.removeAttribute(.underlineColor, range: full)
         if needsSyntax {
             SyntaxHighlighter.apply(to: storage, language: language, font: font, colors: colors)
         } else {
-            // Plain text: clear our previous marks, restore default color.
-            storage.removeAttribute(.backgroundColor, range: full)
-            storage.removeAttribute(.underlineStyle, range: full)
             storage.addAttribute(.foregroundColor, value: NSColor.labelColor, range: full)
         }
-        guard highlightChanges,
-              let range = changedRange(original: original as NSString, current: storage.string as NSString)
-        else { return }
-        switch changeStyle {
-        case .background:
-            storage.addAttribute(.backgroundColor, value: colors.change.withAlphaComponent(0.34), range: range)
-        case .underline:
-            storage.addAttribute(.underlineStyle, value: NSUnderlineStyle.single.rawValue, range: range)
-            storage.addAttribute(.underlineColor, value: colors.change, range: range)
-        case .color:
-            storage.addAttribute(.foregroundColor, value: colors.change, range: range)
+        guard highlightChanges else { return }
+        let marks = ChangeDiff.marks(original: original, current: storage.string)
+        Self.applyMarks(marks, style: changeStyle, color: colors.change, length: full.length) { attr, value, range in
+            storage.addAttribute(attr, value: value, range: range)
         }
     }
 
-    /// The single span (in the current text) that differs from `original`, via common
-    /// prefix/suffix — coarse but cheap, and shows "what you changed".
-    static func changedRange(original: NSString, current: NSString) -> NSRange? {
-        let oLen = original.length, cLen = current.length
-        var prefix = 0
-        while prefix < oLen && prefix < cLen
-            && original.character(at: prefix) == current.character(at: prefix) { prefix += 1 }
-        var suffix = 0
-        while suffix < (oLen - prefix) && suffix < (cLen - prefix)
-            && original.character(at: oLen - 1 - suffix) == current.character(at: cLen - 1 - suffix) { suffix += 1 }
-        let start = prefix
-        let end = cLen - suffix
-        guard end > start else { return nil }
-        return NSRange(location: start, length: end - start)
+    /// Apply change marks to any backing store via `add` (used for both NSTextStorage and, in the
+    /// rich editor, an NSLayoutManager's temporary attributes). Inserted/changed spans use the
+    /// chosen style; deletion seams get a dashed underline (nothing remains there to color).
+    static func applyMarks(_ marks: ChangeDiff.Marks, style: ChangeHighlightStyle, color: NSColor,
+                           length: Int, add: (NSAttributedString.Key, Any, NSRange) -> Void) {
+        for r in marks.changed {
+            let clamped = NSRange(location: min(r.location, length),
+                                  length: min(r.length, max(0, length - r.location)))
+            guard clamped.length > 0 else { continue }
+            switch style {
+            case .background:
+                add(.backgroundColor, color.withAlphaComponent(0.40), clamped)
+            case .underline:
+                add(.underlineStyle, NSUnderlineStyle.thick.rawValue, clamped)
+                add(.underlineColor, color, clamped)
+            case .color:
+                add(.foregroundColor, color, clamped)
+            }
+        }
+        for offset in marks.deletions {
+            let loc = offset < length ? offset : length - 1
+            guard loc >= 0, length > 0 else { continue }
+            let r = NSRange(location: loc, length: 1)
+            add(.underlineStyle, NSUnderlineStyle.single.rawValue | NSUnderlineStyle.patternDash.rawValue, r)
+            add(.underlineColor, color, r)
+        }
     }
 
     final class Coordinator: NSObject, NSTextViewDelegate {
         var parent: CodeTextView
+        var highlightKey = ""
         private var rehighlight: DispatchWorkItem?
         init(_ parent: CodeTextView) { self.parent = parent }
 

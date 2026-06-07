@@ -106,10 +106,12 @@ struct EditorView: View {
             binaryNotice
         } else {
             VStack(spacing: 0) {
-                if doc.isReadOnly {
-                    readOnlyBanner
-                } else if doc.richFormatName == "Word document" {
-                    wordEditWarningBanner
+                if appState.showEditorBanners {
+                    if doc.isReadOnly {
+                        readOnlyBanner
+                    } else if doc.richFormatName == "Word document" {
+                        wordEditWarningBanner
+                    }
                 }
                 if doc.isRich {
                     // RTF/RTFD/ODT/Word: native formatted rendering (editable when lossless).
@@ -123,7 +125,11 @@ struct EditorView: View {
                                 doc.scheduleAutoSave()
                             }
                         ),
-                        isEditable: !doc.isReadOnly
+                        isEditable: !doc.isReadOnly,
+                        originalText: doc.originalText,
+                        highlightChanges: appState.highlightChanges,
+                        changeStyle: appState.changeHighlightStyle,
+                        changeColor: theme.activeColors.change
                     )
                 } else {
                     CodeTextView(
@@ -186,19 +192,28 @@ struct EditorView: View {
             Spacer()
             Button("Open in Default App") { NSWorkspace.shared.open(doc.url) }
                 .controlSize(.small)
+            bannerCloseButton
         }
         .padding(.horizontal, 14).padding(.vertical, 8)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(.yellow.opacity(0.12))
     }
 
+    /// Hides editor banners (the setting; re-enable in Settings → Editing).
+    private var bannerCloseButton: some View {
+        Button { appState.showEditorBanners = false } label: { Image(systemName: "xmark") }
+            .buttonStyle(.borderless).controlSize(.small)
+            .help("Hide editor banners (turn back on in Settings → Editing)")
+    }
+
     private var wordEditWarningBanner: some View {
         HStack(spacing: 10) {
             Image(systemName: "exclamationmark.triangle").foregroundStyle(.orange)
             Text("Editing a Word document — **saving may simplify complex formatting** (tables, images). "
-                 + "Keep the `.bak` backup on (Settings → Editing) for important files.")
+                 + "Qedit keeps a `.bak` on first save (toggle in Settings → Editing).")
                 .font(.callout).foregroundStyle(.secondary)
             Spacer()
+            bannerCloseButton
         }
         .padding(.horizontal, 14).padding(.vertical, 8)
         .frame(maxWidth: .infinity, alignment: .leading)
