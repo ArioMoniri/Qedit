@@ -3,6 +3,10 @@
 All notable changes to Qedit. This file feeds both the GitHub release notes and the
 in-app Sparkle updater. 🪄
 
+## v0.7.3
+- 📦 **One-command install for the whole suite.** A single command sets up **Qedit + [ChangeX](https://github.com/ArioMoniri/changex)** and turns on their Quick Look previews — `curl … | bash` on macOS/Linux, `irm … | iex` on Windows. (Windows installs the cross-platform ChangeX + its preview and points you to the QuickLook app; Qedit’s editor is macOS-only.) See the README.
+- 📝 **Refreshed README** — now documents the Browser, in-place editing of Word/Excel/PowerPoint, live change highlighting, the configurable Browser shortcut, the Quick Look fallback, and an honest cross-platform install matrix.
+
 ## v0.7.2
 - 🖍️ **Change highlighting now works in code files too.** Syntax coloring and change-marks were both writing to the same place, so re-coloring code could wipe the change marks. Change marks are now drawn as a separate display-only layer (like in the rich-text editor), so your edits stay highlighted in `.swift`, `.py`, `.js`, `.json` and every other code/config file — alongside syntax colors.
 - 🔌 **Qedit’s window now works with all your Quick Look plugins.** For any file Qedit can’t edit as text (images, archives, or anything a third-party Quick Look plugin handles — QLMarkdown, Syntax Highlight, etc.), the editor/Browser now shows a **live macOS Quick Look preview** that uses every plugin you have installed, instead of a “can’t open” dead end. Open it in its app to edit.

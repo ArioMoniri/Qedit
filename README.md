@@ -19,7 +19,7 @@
 </div>
 
 > ### 🔎 macOS can *preview* almost anything — but it can't *edit* it.
-> **Qedit fixes that.** Open any file — **including PDFs** — find, edit, annotate, then **save it straight back in place**. A `.pdf` stays a `.pdf`. A `.md` stays a `.md`. No conversion, no `.ePDF` tricks, ever.
+> **Qedit fixes that.** Find, edit and save **text, code, Markdown, Word, Excel, PowerPoint and PDF** — each **straight back in its own format**. Click a file in Qedit's **Browser** and edit it right there, like a preview pane you can type into. A `.pdf` stays a `.pdf`. A `.docx` stays a `.docx`. No conversion, ever.
 
 <div align="center">
 <img src=".github/assets/pipeline.svg" alt="Preview → Edit → Save in place" width="760">
@@ -29,14 +29,49 @@
 
 | | Feature |
 |---|---|
-| 👀 | **Rich Quick Look previews** — Markdown, source code, logs, JSON/YAML/XML with syntax highlighting, dark mode & remembered scroll position |
-| 📄 | **A real PDF editor** — find + jump-to-result, highlight, sticky notes, text boxes, ✍️ signatures, page ops (rotate / delete / insert / reorder / extract) |
-| ✏️ | **A text & code editor** — native find bar, original encoding preserved, optional timestamped backup before the first write |
-| ⌨️ | **One keystroke from Finder** — select a file, hit **⌥⌘E** (rebindable), or right-click → *Open in Qedit* |
+| 🗂️ | **Browser window** — a folder list beside a **live, editable** editor. Click a file and edit it *right there* (⌘F, save in place) — no Space, no shortcut. The closest macOS allows to "edit in the preview." |
+| ✍️ | **Edit (almost) any format in place** — text, code, Markdown, **Word/RTF/ODT**, **Excel cells**, **PowerPoint text**, SVG, JSON/YAML/CSV — each saved back in its *own* format, never converted |
+| 📄 | **A real PDF editor** — find + jump-to-result, highlight, sticky notes, text boxes, **replace text** (matches the original font/size/color), ✍️ signatures, page ops, optional flatten-on-save |
+| 🖍️ | **Live change highlighting** — see exactly what you changed: added/edited text is marked, removals flagged — in text, code, Word, Excel and PowerPoint |
+| 👀 | **Rich Quick Look previews** — Markdown, source, logs, JSON/YAML/XML with highlighting, math (KaTeX), emoji, dark mode & remembered scroll — and the window falls back to **any Quick Look plugin you have installed** for everything else |
+| ⌨️ | **Editing one keystroke from Finder** — **⌥⌘E** opens the selection (rebindable), **⌥⌘B** opens the Browser (rebindable), or **follow the Finder selection** live |
 | 🧩 | **Extension manager** — list every Quick Look extension + the types it claims, **enable/disable** them, reset the QL cache, inspect any file's UTI |
 | 🔄 | **Auto-updates** — [Sparkle](https://sparkle-project.org), EdDSA-verified, installed in the background, with an in-app **Updates** page |
 
 <sub>👉 Expand any section below for the details.</sub>
+
+<details>
+<summary><b>🗂️ Browser — a folder list + a live, editable preview pane</b></summary>
+
+<br/>
+
+Open the **Browser** (⌥⌘B, the dashboard card, or the menu bar): a folder list on the left, a **real editor** on the right.
+
+- **Click a file → it opens ready to edit**, right there — find with ⌘F, save in place. No Space, no hotkey, no extra click.
+- Switching files while you have unsaved edits **asks before discarding** them.
+- Reuses every editor (text, code, Word, Excel, PowerPoint, PDF) and falls back to **macOS Quick Look** for anything else.
+- Prefer the Finder? Turn on **Follow Finder selection** and the editable Quick Panel tracks whatever you click in Finder — a live, editable preview pane.
+
+> Apple's own Quick Look pane (Space / Finder's preview) is **read-only and takes no keystrokes** — *no* app can edit inside it. The Browser is Qedit's own editable equivalent.
+
+</details>
+
+<details>
+<summary><b>✍️ Edit every supported format — in its own format</b></summary>
+
+<br/>
+
+| Type | What you can do |
+|---|---|
+| Text · code · Markdown · SVG · JSON · YAML · CSV | Full editing, ⌘F find, syntax colors, change highlighting |
+| **Word** `.docx` `.doc` · **RTF** · **ODT** | Edit as rich text; saves back in place (a `.bak` is kept first — optional) |
+| **Excel** `.xlsx` | Edit cells; a **minimal-diff** writer rewrites *only* changed cells and preserves styles/formulas |
+| **PowerPoint** `.pptx` | Edit title/bullet text in place (opt-in) beside the rendered slides; layout & images preserved |
+| **PDF** | Find, annotate, replace text, page ops, save in place |
+
+Word/Excel are editable by default; PowerPoint text editing is an opt-in toggle. Everything saves back in the **same** format — Qedit never converts. Anything Qedit can't edit gets a read-only Quick Look preview instead.
+
+</details>
 
 <details>
 <summary><b>📄 PDF editor — find, annotate, reorganize, save in place</b></summary>
@@ -74,8 +109,10 @@ All assets are **bundled** (works offline, sandbox-safe), the file text is base6
 <br/>
 
 - **Global hotkey** (default **⌥⌘E**, fully rebindable in Settings): select a file in Finder, press it, and that file opens in the editor.
+- **Browser hotkey** (default **⌥⌘B**, rebindable): opens the folder Browser with the live editable pane from anywhere.
+- **Follow Finder selection** (opt-in): while the Quick Panel is open, clicking through files in Finder re-loads each one into it.
 - **Finder Quick Action / Service**: right-click a file → Quick Actions → **Open in Qedit**.
-- Both route through the `qedit://` URL scheme to the (unsandboxed) host app, so editing real files just works.
+- All route through the `qedit://` URL scheme / Carbon hotkeys to the (unsandboxed) host app, so editing real files just works.
 
 The first hotkey use asks macOS for permission to read the Finder selection — that's the standard Automation prompt.
 
@@ -108,6 +145,8 @@ Qedit ships with [Sparkle](https://sparkle-project.org). It checks a signed `app
 - **Never** changes or renames your file's format. Edits write back in the original format.
 - **Never** hijacks Apple's built-in PDF/image previews — Qedit only previews types macOS renders poorly.
 - **Never** silently overrides system security — a macOS approval may still be required; Qedit guides you, it doesn't pretend.
+- **Can't edit inside Finder's own Quick Look pane.** That region (Space / the preview column) is read-only and delivers no keystrokes to *any* app — so Qedit gives you the **Browser** window and the **follow-Finder Quick Panel** instead, the closest legitimate equivalents.
+- **`.webarchive` stays read-only** (re-saving it would silently drop its images/scripts), and PDF editing is overlay-based, not Acrobat-style glyph reflow.
 
 ## 📦 Install
 
