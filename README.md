@@ -111,16 +111,47 @@ Qedit ships with [Sparkle](https://sparkle-project.org). It checks a signed `app
 
 ## 📦 Install
 
-**Homebrew**
+### ⚡ One command — the whole suite (Qedit + ChangeX + Quick Look)
+
+Installs **Qedit** (find + edit any file) **and** [**ChangeX**](https://github.com/ArioMoniri/changex) (tracked-changes + preview), and turns on their Quick Look previews — in a single step.
+
+**macOS / Linux**
+
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/ArioMoniri/Qedit/main/scripts/install.sh)"
+```
+
+**Windows** (PowerShell)
+
+```powershell
+irm https://raw.githubusercontent.com/ArioMoniri/Qedit/main/scripts/install.ps1 | iex
+```
+
+> The scripts only use Homebrew (Qedit) and `uv`/`pipx`/`pip` (ChangeX), and print every download link — nothing else runs. Read [`scripts/install.sh`](scripts/install.sh) / [`scripts/install.ps1`](scripts/install.ps1) first if you like.
+
+### 🖥 What runs where
+
+Qedit's edit-in-Quick-Look features use **macOS-only** frameworks (QuickLookUI · AppKit), so the **Qedit app is macOS-only**. The cross-platform half of the suite is **ChangeX** (Python + a Tauri viewer), which runs everywhere.
+
+| | macOS | Windows | Linux |
+|---|:---:|:---:|:---:|
+| **Qedit** app + in-place editor | ✅ | — | — |
+| **Qedit** Quick Look preview | ✅ | — | — |
+| **ChangeX** CLI · MCP · `changex view`/`preview` | ✅ | ✅ | ✅ |
+| **ChangeX** Viewer app | ✅ `.dmg` | ✅ `.msi` | ✅ `.AppImage` |
+| **ChangeX** native preview | ✅ Quick Look (Space) | ✅ Explorer pane (Alt+P) | `changex view` |
+| Press-**Space** preview like macOS | built-in | install [**QuickLook for Windows**](https://github.com/QL-Win/QuickLook) | — |
+
+> **On Windows?** You get ChangeX + its Explorer preview pane. For a macOS-Quick-Look-style **Space** preview, grab the free **QuickLook** app: `winget install QL-Win.QuickLook`. (Qedit itself has no Windows build — see above.)
+
+### 🍎 Just Qedit (macOS)
 
 ```bash
 brew tap ariomoniri/qedit https://github.com/ArioMoniri/Qedit
 brew install --cask qedit
 ```
 
-**Direct** — grab the signed, notarized [**`Qedit.dmg`**](https://github.com/ArioMoniri/Qedit/releases/latest) and drag it to Applications.
-
-Then open Qedit once, go to **Setup**, and tap **Enable Qedit Preview**. Press <kbd>Space</kbd> on a `.md`/`.swift`/`.log` to see it. 🎉
+Or grab the signed, notarized [**`Qedit.dmg`**](https://github.com/ArioMoniri/Qedit/releases/latest) and drag it to Applications. Then open Qedit once, go to **Setup**, and tap **Enable Qedit Preview**. Press <kbd>Space</kbd> on a `.md`/`.swift`/`.log` to see it. 🎉
 
 ## 🛠 Build from source
 
