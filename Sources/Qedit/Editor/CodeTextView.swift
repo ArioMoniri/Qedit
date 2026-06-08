@@ -75,33 +75,54 @@ struct CodeTextView: NSViewRepresentable {
         "\(highlightChanges)|\(changeStyle.rawValue)|\(language ?? "")|\(colors.change.hashValue)|\(originalText.hashValue)"
     }
 
-    /// Apply syntax colors + change marks (display-only; never touches the text bytes).
+    /// Apply syntax colors (text storage) + change marks (display-only). Never touches text bytes.
     private func highlight(_ textView: NSTextView) {
-        guard let storage = textView.textStorage else { return }
-        Self.applyHighlight(storage, language: language, highlightChanges: highlightChanges,
-                            changeStyle: changeStyle, original: originalText, colors: colors,
-                            font: textView.font ?? .monospacedSystemFont(ofSize: 12, weight: .regular))
+        Self.applyAll(to: textView, language: language, highlightChanges: highlightChanges,
+                      changeStyle: changeStyle, original: originalText, colors: colors,
+                      font: textView.font ?? .monospacedSystemFont(ofSize: 12, weight: .regular))
     }
 
-    static func applyHighlight(_ storage: NSTextStorage, language: String?, highlightChanges: Bool,
-                              changeStyle: ChangeHighlightStyle, original: String,
-                              colors: SyntaxColors, font: NSFont) {
-        let needsSyntax = language != nil
-        guard needsSyntax || highlightChanges else { return }
-        let full = NSRange(location: 0, length: (storage.string as NSString).length)
-        // Always clear OUR previous marks first, so stale highlights never linger.
-        storage.removeAttribute(.backgroundColor, range: full)
-        storage.removeAttribute(.underlineStyle, range: full)
-        storage.removeAttribute(.underlineColor, range: full)
-        if needsSyntax {
+    static func applyAll(to textView: NSTextView, language: String?, highlightChanges: Bool,
+                         changeStyle: ChangeHighlightStyle, original: String,
+                         colors: SyntaxColors, font: NSFont) {
+        guard let storage = textView.textStorage else { return }
+        // Syntax coloring lives on the text storage (foreground/font).
+        if language != nil {
             SyntaxHighlighter.apply(to: storage, language: language, font: font, colors: colors)
         } else {
+            let full = NSRange(location: 0, length: (storage.string as NSString).length)
+            storage.removeAttribute(.backgroundColor, range: full)
             storage.addAttribute(.foregroundColor, value: NSColor.labelColor, range: full)
         }
-        guard highlightChanges else { return }
-        let marks = ChangeDiff.marks(original: original, current: storage.string)
-        Self.applyMarks(marks, style: changeStyle, color: colors.change, length: full.length) { attr, value, range in
-            storage.addAttribute(attr, value: value, range: range)
+        // Change marks live on the layout manager as TEMPORARY attributes — display-only and fully
+        // independent of the syntax pass, so re-coloring code can never wipe them.
+        applyChangeMarks(to: textView, highlightChanges: highlightChanges,
+                         style: changeStyle, original: original, color: colors.change)
+    }
+
+    static func applyChangeMarks(to textView: NSTextView, highlightChanges: Bool,
+                                 style: ChangeHighlightStyle, original: String, color: NSColor) {
+        let len = (textView.string as NSString).length
+        let full = NSRange(location: 0, length: len)
+        let keys: [NSAttributedString.Key] = [.backgroundColor, .underlineStyle, .underlineColor, .foregroundColor]
+
+        if let lm = textView.layoutManager {
+            // Preferred: TEMPORARY attributes — display-only, independent of the syntax pass.
+            for key in keys { lm.removeTemporaryAttribute(key, forCharacterRange: full) }
+            guard highlightChanges, len > 0 else { return }
+            let marks = ChangeDiff.marks(original: original, current: textView.string)
+            applyMarks(marks, style: style, color: color, length: len) { attr, value, range in
+                lm.addTemporaryAttributes([attr: value], forCharacterRange: range)
+            }
+        } else if let storage = textView.textStorage {
+            // Fallback (no layout manager / TextKit 2): mark on the storage. Always runs AFTER the
+            // syntax pass in applyAll(), so it isn't wiped.
+            for key in keys where key != .foregroundColor { storage.removeAttribute(key, range: full) }
+            guard highlightChanges, len > 0 else { return }
+            let marks = ChangeDiff.marks(original: original, current: textView.string)
+            applyMarks(marks, style: style, color: color, length: len) { attr, value, range in
+                storage.addAttribute(attr, value: value, range: range)
+            }
         }
     }
 
@@ -147,14 +168,13 @@ struct CodeTextView: NSViewRepresentable {
                   textView.hasMarkedText() == false else { return }
             rehighlight?.cancel()
             let work = DispatchWorkItem { [weak textView] in
-                guard let textView, let storage = textView.textStorage,
-                      textView.hasMarkedText() == false else { return }
-                CodeTextView.applyHighlight(storage, language: self.parent.language,
-                                            highlightChanges: self.parent.highlightChanges,
-                                            changeStyle: self.parent.changeStyle,
-                                            original: self.parent.originalText,
-                                            colors: self.parent.colors,
-                                            font: textView.font ?? .monospacedSystemFont(ofSize: 12, weight: .regular))
+                guard let textView, textView.hasMarkedText() == false else { return }
+                CodeTextView.applyAll(to: textView, language: self.parent.language,
+                                      highlightChanges: self.parent.highlightChanges,
+                                      changeStyle: self.parent.changeStyle,
+                                      original: self.parent.originalText,
+                                      colors: self.parent.colors,
+                                      font: textView.font ?? .monospacedSystemFont(ofSize: 12, weight: .regular))
             }
             rehighlight = work
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.25, execute: work)

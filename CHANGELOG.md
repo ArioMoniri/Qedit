@@ -3,6 +3,10 @@
 All notable changes to Qedit. This file feeds both the GitHub release notes and the
 in-app Sparkle updater. 🪄
 
+## v0.7.2
+- 🖍️ **Change highlighting now works in code files too.** Syntax coloring and change-marks were both writing to the same place, so re-coloring code could wipe the change marks. Change marks are now drawn as a separate display-only layer (like in the rich-text editor), so your edits stay highlighted in `.swift`, `.py`, `.js`, `.json` and every other code/config file — alongside syntax colors.
+- 🔌 **Qedit’s window now works with all your Quick Look plugins.** For any file Qedit can’t edit as text (images, archives, or anything a third-party Quick Look plugin handles — QLMarkdown, Syntax Highlight, etc.), the editor/Browser now shows a **live macOS Quick Look preview** that uses every plugin you have installed, instead of a “can’t open” dead end. Open it in its app to edit.
+
 ## v0.7.1
 - 🖍️ **Change highlighting actually works now — and in every editor.** It marks *exactly* what you changed: type “hi asfas” over “hi” and only “ asfas” lights up (a real word-level diff, so several separate edits each highlight instead of one big block), with a dashed mark where text was **removed**. It now runs in **text/code/Markdown, Word/RTF/ODT, Excel cells, CSV and PowerPoint text** — not just plain text. Toggling it (or the style) in Settings now applies to already-open editors immediately.
 - 🪟 **One Settings, one window.** Settings moved *inside* the main Qedit window (sidebar → **Settings**); there’s no longer a separate, different-looking preferences window. **⌘,** and the menu-bar item jump straight to it.

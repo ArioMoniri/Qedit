@@ -220,21 +220,29 @@ struct EditorView: View {
         .background(.orange.opacity(0.12))
     }
 
+    /// Files Qedit can't edit as text fall back to a macOS Quick Look preview — which uses EVERY
+    /// Quick Look plugin you have installed (QLMarkdown, Syntax Highlight, etc.), so Qedit's window
+    /// can show any file type, read-only, instead of a dead end.
     private var binaryNotice: some View {
-        VStack(spacing: 16) {
-            Image(systemName: "doc.zipper")
-                .font(.system(size: 48)).foregroundStyle(.secondary)
-            Text("This file isn’t plain text").font(.headline)
-            Text("Qedit never changes a file’s format, and it only edits text and PDF files. "
-                 + "Open this one in its default app instead.")
-                .font(.callout).foregroundStyle(.secondary)
-                .multilineTextAlignment(.center).frame(maxWidth: 420)
-            Button("Reveal in Finder") {
-                NSWorkspace.shared.activateFileViewerSelecting([doc.url])
+        VStack(spacing: 0) {
+            if appState.showEditorBanners {
+                HStack(spacing: 10) {
+                    Image(systemName: "eye").foregroundStyle(.secondary)
+                    Text("Preview via macOS Quick Look (read-only) — uses every Quick Look plugin you "
+                         + "have installed. Qedit can’t edit this type as text; open it in its app to edit.")
+                        .font(.callout).foregroundStyle(.secondary)
+                    Spacer()
+                    Button("Open in Default App") { NSWorkspace.shared.open(doc.url) }
+                        .controlSize(.small)
+                    bannerCloseButton
+                }
+                .padding(.horizontal, 14).padding(.vertical, 8)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(.blue.opacity(0.08))
             }
+            QLPreview(url: doc.url)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
-        .padding(40)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     /// Syntax-coloring language for code/config files (nil = plain text/markdown/log, no coloring).
