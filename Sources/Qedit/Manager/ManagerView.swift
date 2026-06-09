@@ -23,7 +23,6 @@ struct ManagerView: View {
             VStack(alignment: .leading, spacing: 20) {
                 header
                 if let own = ownExtension, own.status != .enabled { enableQeditBanner(own) }
-                if !model.overlappingExtensions.isEmpty { conflictsCard }
                 troubleshootCard
                 updatesCard
                 diagnosticsCard
@@ -90,72 +89,6 @@ struct ManagerView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(.tint.opacity(0.12), in: RoundedRectangle(cornerRadius: 12))
         .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(.tint.opacity(0.3)))
-    }
-
-    // MARK: - Conflicts
-
-    private var conflictsCard: some View {
-        let competing = !model.competingExtensions.isEmpty
-        return Card(title: competing ? "Another extension wins your Space preview"
-                                     : "Qedit is set to win these previews",
-                    systemImage: competing ? "exclamationmark.2" : "checkmark.seal") {
-            VStack(alignment: .leading, spacing: 12) {
-                Text(competing
-                     ? "macOS shows **one** Quick Look preview per type. The switched-on extensions "
-                       + "below also handle types Qedit does, so Space shows *theirs*. Switch one OFF "
-                       + "to hand that type to Qedit:"
-                     : "These extensions also handle Qedit’s types but are switched off, so Space "
-                       + "shows Qedit. Flip one back on anytime — your choice.")
-                    .font(.callout).foregroundStyle(.secondary)
-
-                ForEach(model.overlappingExtensions) { ext in
-                    HStack(alignment: .firstTextBaseline, spacing: 12) {
-                        VStack(alignment: .leading, spacing: 1) {
-                            Text(ext.displayName ?? ext.identifier)
-                            Text(sharedTypeSummary(ext)).font(.caption2).foregroundStyle(.tertiary)
-                        }
-                        Spacer(minLength: 12)
-                        Toggle("", isOn: Binding(
-                            get: { ext.status == .enabled },
-                            set: { on in Task { await model.setEnabled(on, for: ext) } }
-                        ))
-                        .labelsHidden()
-                        .toggleStyle(.switch)
-                    }
-                    .padding(.vertical, 4)
-                    Divider().opacity(0.4)
-                }
-
-                if competing {
-                    HStack {
-                        Button { Task { await model.disableCompetitors() } } label: {
-                            Label("Switch all off — use Qedit", systemImage: "checkmark.seal")
-                        }
-                        .buttonStyle(.borderedProminent).buttonBorderShape(.capsule)
-                        Spacer()
-                    }
-                }
-                Text("This only changes their Quick Look preview — nothing else about those apps. "
-                     + "After flipping a switch, give Finder a second (or use Refresh below).")
-                    .font(.caption2).foregroundStyle(.secondary)
-            }
-        }
-        .disabled(model.isScanning)
-    }
-
-    private func sharedTypeSummary(_ ext: QLExtensionInfo) -> String {
-        guard let own = ownExtension else { return "" }
-        let shared = Set(ext.supportedUTIs).intersection(Set(own.supportedUTIs))
-        let names = shared.map { uti -> String in
-            if uti.contains("markdown") { return "Markdown" }
-            if uti.contains("source-code") || uti.contains("script") || uti.contains("source") { return "code" }
-            if uti.contains("json") { return "JSON" }
-            if uti.contains("yaml") { return "YAML" }
-            if uti.contains("xml") || uti.contains("plist") { return "XML" }
-            if uti.contains("log") { return "logs" }
-            return uti
-        }
-        return "Also handles: " + Array(Set(names)).sorted().joined(separator: ", ")
     }
 
     // MARK: - Troubleshoot

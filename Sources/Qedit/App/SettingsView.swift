@@ -213,11 +213,13 @@ struct SettingsView: View {
                     .buttonStyle(.bordered).buttonBorderShape(.capsule).controlSize(.small)
             }
 
-            SettingsGroup(title: "Show Qedit when you press Space") {
-                Text("Pressing **Space** in Finder is macOS Quick Look. Qedit shows its preview there "
-                     + "only when it **wins** the file type — if QLMarkdown / Syntax Highlight is on, "
-                     + "*they* win. Switch them off (one tap) so Space shows Qedit. macOS doesn’t let "
-                     + "any app turn Space into the editor, but ⌥⌘E (above) opens the editable panel.")
+            SettingsGroup(title: "Space preview (works alongside your other plugins)") {
+                Text("Pressing **Space** in Finder is macOS Quick Look, which shows one preview per "
+                     + "type. **Qedit coexists with your other Quick Look plugins** (QLMarkdown, Syntax "
+                     + "Highlight, …) — you don’t need to disable anything. To **edit** a file, use the "
+                     + "**Browser** (⌥⌘B) or **⌥⌘E**, or open it in Qedit. If you’d specifically prefer "
+                     + "Qedit’s Space preview for a type, you can toggle plugins in the Extensions "
+                     + "manager — entirely optional.")
                     .font(.caption).foregroundStyle(.secondary)
                 HStack(spacing: 8) {
                     Button {
@@ -226,8 +228,8 @@ struct SettingsView: View {
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
                             NotificationCenter.default.post(name: .qeditShowExtensions, object: nil)
                         }
-                    } label: { Label("Make Qedit win Space (Extensions)", systemImage: "puzzlepiece.extension") }
-                        .buttonStyle(.borderedProminent).buttonBorderShape(.capsule).controlSize(.small)
+                    } label: { Label("Open Extensions Manager", systemImage: "puzzlepiece.extension") }
+                        .buttonStyle(.bordered).buttonBorderShape(.capsule).controlSize(.small)
                     Button {
                         Permissions.openLoginItemsAndExtensions()
                     } label: { Label("macOS Extensions Settings", systemImage: "gearshape") }

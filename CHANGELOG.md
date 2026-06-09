@@ -3,6 +3,9 @@
 All notable changes to Qedit. This file feeds both the GitHub release notes and the
 in-app Sparkle updater. 🪄
 
+## v0.7.4
+- 🤝 **Qedit coexists with your other Quick Look plugins — no more “switch them off”.** Removed the old “Another extension wins your Space preview / Switch all off — use Qedit” panel from the Extensions tab. Since Qedit edits in its **own** window (Browser ⌥⌘B, ⌥⌘E) and falls back to whatever Quick Look plugins you have installed, there’s no need to disable QLMarkdown, Syntax Highlight, etc. You can still toggle any individual extension in the Extensions list, and the Settings copy now reflects coexistence rather than competition.
+
 ## v0.7.3
 - 📦 **One-command install for the whole suite.** A single command sets up **Qedit + [ChangeX](https://github.com/ArioMoniri/changex)** and turns on their Quick Look previews — `curl … | bash` on macOS/Linux, `irm … | iex` on Windows. (Windows installs the cross-platform ChangeX + its preview and points you to the QuickLook app; Qedit’s editor is macOS-only.) See the README.
 - 📝 **Refreshed README** — now documents the Browser, in-place editing of Word/Excel/PowerPoint, live change highlighting, the configurable Browser shortcut, the Quick Look fallback, and an honest cross-platform install matrix.
