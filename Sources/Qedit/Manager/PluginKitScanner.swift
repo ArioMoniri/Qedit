@@ -226,14 +226,29 @@ final class ExtensionManagerModel: ObservableObject {
 
     func setEnabled(_ enabled: Bool, for ext: QLExtensionInfo) async {
         let id = ext.identifier
+        let name = ext.displayName ?? id
         isScanning = true
-        // Flip the flag, then reload Quick Look so it actually takes effect.
+        // Flip the flag, then restart the Quick Look daemons so the change actually takes effect.
         _ = await Task.detached { () -> Bool in
             let ok = PluginKitScanner.setEnabled(enabled, identifier: id)
-            _ = Diagnostics.resetQuickLookCache()
+            _ = Diagnostics.reloadQuickLookAfterToggle()
             return ok
         }.value
         await scan()
+
+        // Verify it actually took — pluginkit can report success while macOS keeps the user's own
+        // System Settings choice, which no app can override.
+        let nowEnabled = extensions.first { $0.identifier == id }?.status == .enabled
+        if enabled && !nowEnabled {
+            lastDiagnostic = "macOS didn’t turn “\(name)” back on — it was likely disabled in System "
+                + "Settings, and only you can re-enable it there: System Settings → General → Login "
+                + "Items & Extensions → Quick Look. (No app can flip that switch for you.)"
+        } else if enabled && nowEnabled {
+            lastDiagnostic = "“\(name)” is on. If its Space preview still doesn’t show, another enabled "
+                + "extension may claim the same type (macOS shows one per type), or give Finder a moment."
+        } else {
+            lastDiagnostic = nil
+        }
     }
 
     func setAllEnabled(_ enabled: Bool) async {
@@ -242,7 +257,7 @@ final class ExtensionManagerModel: ObservableObject {
         isScanning = true
         await Task.detached {
             for id in ids { _ = PluginKitScanner.setEnabled(enabled, identifier: id) }
-            _ = Diagnostics.resetQuickLookCache()
+            _ = Diagnostics.reloadQuickLookAfterToggle()
         }.value
         await scan()
     }

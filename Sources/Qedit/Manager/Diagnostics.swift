@@ -131,11 +131,30 @@ enum Diagnostics {
         guard Shell.exists(qlmanagePath) else { return "qlmanage not found." }
         _ = Shell.run(qlmanagePath, ["-r"])
         _ = Shell.run(qlmanagePath, ["-r", "cache"])
-        if Shell.exists(killallPath) {
-            _ = Shell.run(killallPath, ["Finder"])
-            _ = Shell.run(killallPath, ["QuickLookUIService"])
-        }
+        restartQuickLookDaemons()
+        if Shell.exists(killallPath) { _ = Shell.run(killallPath, ["Finder"]) }
         return "Reloaded Quick Look, cleared its cache, and relaunched Finder. Press Space on a file to test."
+    }
+
+    /// Restart the daemons that actually host/resolve Quick Look **preview extensions**. Enabling
+    /// or disabling an extension via `pluginkit` only records the flag — `quicklookd` keeps serving
+    /// the previous (cached) resolution of which extension wins a type until it's restarted, which
+    /// is why a just-re-enabled extension's preview wouldn't show. launchd relaunches both on demand.
+    static func restartQuickLookDaemons() {
+        guard Shell.exists(killallPath) else { return }
+        _ = Shell.run(killallPath, ["quicklookd"])
+        _ = Shell.run(killallPath, ["QuickLookUIService"])
+    }
+
+    /// Lighter refresh used right after toggling an extension on/off: reload generators + cache and
+    /// restart the Quick Look daemons (so the new enabled state takes effect) — without relaunching
+    /// Finder on every click.
+    static func reloadQuickLookAfterToggle() -> String {
+        guard Shell.exists(qlmanagePath) else { return "qlmanage not found." }
+        _ = Shell.run(qlmanagePath, ["-r"])
+        _ = Shell.run(qlmanagePath, ["-r", "cache"])
+        restartQuickLookDaemons()
+        return "Applied. Press Space on a file to test (Finder may need a moment)."
     }
 
     /// Runs `qlmanage -r` (reload generators) and `qlmanage -r cache` (reset thumbnail cache).
