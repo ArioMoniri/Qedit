@@ -42,7 +42,7 @@ case "$OS" in
       warn "Homebrew is required to install the Qedit app. Install it from https://brew.sh and re-run."
       warn "Continuing with ChangeX only for now…"
     else
-      say "Installing Qedit (find + edit any file, with Quick Look previews)…"
+      say "Installing Qedit (find + edit any file; Quick Look plugin manager)…"
       brew tap ariomoniri/qedit https://github.com/ArioMoniri/Qedit >/dev/null 2>&1 || true
       brew install --cask qedit 2>/dev/null || brew upgrade --cask qedit || true
       ok "Qedit installed."
@@ -56,7 +56,7 @@ case "$OS" in
     fi
 
     if [ -d "/Applications/Qedit.app" ]; then
-      say "Registering Qedit's Quick Look extension (opening it once)…"
+      say "Launching Qedit once so it registers for 'Open With'…"
       open -ga Qedit 2>/dev/null || true
     fi
 
@@ -64,13 +64,14 @@ case "$OS" in
 
 ──────────────────────────────────────────────────────────────────────────────
 ✓ macOS suite installed.
-  • Qedit   → opens once to register; in Setup tap "Enable Qedit Preview".
-              Press Space on a .md / .swift / .log, or open any file to edit it.
+  • Qedit   → open a file in the Browser (⌥⌘B), with ⌥⌘E, or Open With → Qedit.
+              Qedit ships NO preview plugin — your Space previews stay with your
+              own plugins. Manage them in Qedit's "Quick Look Plugins" tab.
   • ChangeX → 'changex view <file>' for the tracked-changes review;
               Space on a .changex (and supported types) once its Quick Look is on.
-  • Not seeing a preview? System Settings → General →
-    Login Items & Extensions → Quick Look → enable Qedit and ChangeX,
-    then run 'qlmanage -r' (or log out/in).
+  • A plugin's Space preview not showing? Open Qedit → Quick Look Plugins,
+    enable it (Qedit restarts Quick Look for you), or System Settings → General →
+    Login Items & Extensions → Quick Look.
 ──────────────────────────────────────────────────────────────────────────────
 NEXT
     ;;

@@ -33,9 +33,9 @@
 | ✍️ | **Edit (almost) any format in place** — text, code, Markdown, **Word/RTF/ODT**, **Excel cells**, **PowerPoint text**, SVG, JSON/YAML/CSV — each saved back in its *own* format, never converted |
 | 📄 | **A real PDF editor** — find + jump-to-result, highlight, sticky notes, text boxes, **replace text** (matches the original font/size/color), ✍️ signatures, page ops, optional flatten-on-save |
 | 🖍️ | **Live change highlighting** — see exactly what you changed: added/edited text is marked, removals flagged — in text, code, Word, Excel and PowerPoint |
-| 👀 | **Rich Quick Look previews** — Markdown, source, logs, JSON/YAML/XML with highlighting, math (KaTeX), emoji, dark mode & remembered scroll — and the window falls back to **any Quick Look plugin you have installed** for everything else |
+| 🔌 | **No preview plugin of its own** — Qedit edits in its own window, so your installed Quick Look plugins (QLMarkdown, Syntax Highlight, …) keep your Space previews; Qedit's window simply falls back to them for any file it can't edit |
 | ⌨️ | **Editing one keystroke from Finder** — **⌥⌘E** opens the selection (rebindable), **⌥⌘B** opens the Browser (rebindable), or **follow the Finder selection** live |
-| 🧩 | **Extension manager** — list every Quick Look extension + the types it claims, **enable/disable** them, reset the QL cache, inspect any file's UTI |
+| 🧩 | **Quick Look plugin manager** — manage *every* Quick Look plugin on your Mac: the types each claims, **enable/disable** any of them, restart Quick Look so a change sticks, and inspect which plugin previews a file |
 | 🔄 | **Auto-updates** — [Sparkle](https://sparkle-project.org), EdDSA-verified, installed in the background, with an in-app **Updates** page |
 
 <sub>👉 Expand any section below for the details.</sub>
@@ -88,23 +88,22 @@ Word/Excel are editable by default; PowerPoint text editing is an opt-in toggle.
 </details>
 
 <details>
-<summary><b>👀 Quick Look previews — for the types macOS shows as flat text</b></summary>
+<summary><b>🧩 Quick Look plugin manager — manage every plugin, fix conflicts</b></summary>
 
 <br/>
 
-Press <kbd>Space</kbd> in Finder and Qedit renders:
+Qedit **doesn't install its own Quick Look preview plugin** — it edits in its own window, so the plugins you already have keep your Space previews. Instead Qedit is a manager for **all** of them (sidebar → **Quick Look Plugins**):
 
-- **Markdown** (`.md`, `.markdown`, `.textbundle`) — full GitHub-flavored rendering.
-- **Source code** — 30+ languages, highlighted with highlight.js.
-- **Logs** (`.log`) — monospace with level coloring (error / warn / info).
-- **Config** — JSON, YAML, XML, plist.
-
-All assets are **bundled** (works offline, sandbox-safe), the file text is base64-embedded so nothing can break the page, light/dark follows the system, and your scroll position is remembered per file. Qedit **never** registers system types like PDF/JPEG/PNG — Apple's own previews stay in charge there.
+- **Lists every installed Quick Look preview plugin** (via `pluginkit`) with its bundle id, enabled state, and the file types it claims.
+- **Enable / disable** any plugin — per-row, or **Enable All / Disable All** — and Qedit **restarts the Quick Look daemons** (`quicklookd`/`QuickLookUIService`) so the change takes effect immediately, no logout needed.
+- **Fixes "the wrong plugin previews my file."** macOS shows one preview per type; the **UTI inspector** (drop any file) shows its type and exactly which plugins claim it, so you can turn off whichever one is winning.
+- **Refresh Finder & Quick Look** / **reset the cache** in one click, with a debug log.
+- Surfaces **`brew outdated --cask`** for plugins you installed via Homebrew — it never updates apps it didn't install.
 
 </details>
 
 <details>
-<summary><b>⌨️ Hotkey &amp; Quick Action — editing is one keystroke from previewing</b></summary>
+<summary><b>⌨️ Hotkey &amp; Quick Action — open the editor in one keystroke</b></summary>
 
 <br/>
 
@@ -115,19 +114,6 @@ All assets are **bundled** (works offline, sandbox-safe), the file text is base6
 - All route through the `qedit://` URL scheme / Carbon hotkeys to the (unsandboxed) host app, so editing real files just works.
 
 The first hotkey use asks macOS for permission to read the Finder selection — that's the standard Automation prompt.
-
-</details>
-
-<details>
-<summary><b>🧩 Extension manager — see, toggle &amp; diagnose Quick Look extensions</b></summary>
-
-<br/>
-
-- **Lists every installed Quick Look preview extension** (via `pluginkit`) with its bundle id, enabled state, and the UTIs it claims.
-- **Enable / disable** any extension — per-row, or **Enable All / Disable All**. (Some first-time activations still need a one-time approval in System Settings; Qedit links you there.)
-- **Reset the Quick Look cache** (`qlmanage -r`).
-- **UTI inspector**: drop any file to see its resolved type, MIME, conformances, and exactly which extension would preview it.
-- Surfaces **`brew outdated --cask`** for extensions you installed via Homebrew — it never updates apps it didn't install.
 
 </details>
 
@@ -143,7 +129,7 @@ Qedit ships with [Sparkle](https://sparkle-project.org). It checks a signed `app
 ## 🚫 What it won't do (on purpose — these are real macOS limits)
 
 - **Never** changes or renames your file's format. Edits write back in the original format.
-- **Never** hijacks Apple's built-in PDF/image previews — Qedit only previews types macOS renders poorly.
+- **Never** installs its own Quick Look preview plugin — your existing plugins (QLMarkdown, Syntax Highlight, …) keep your Space previews; Qedit just **manages** them.
 - **Never** silently overrides system security — a macOS approval may still be required; Qedit guides you, it doesn't pretend.
 - **Can't edit inside Finder's own Quick Look pane.** That region (Space / the preview column) is read-only and delivers no keystrokes to *any* app — so Qedit gives you the **Browser** window and the **follow-Finder Quick Panel** instead, the closest legitimate equivalents.
 - **`.webarchive` stays read-only** (re-saving it would silently drop its images/scripts), and PDF editing is overlay-based, not Acrobat-style glyph reflow.
@@ -152,7 +138,7 @@ Qedit ships with [Sparkle](https://sparkle-project.org). It checks a signed `app
 
 ### ⚡ One command — the whole suite (Qedit + ChangeX + Quick Look)
 
-Installs **Qedit** (find + edit any file) **and** [**ChangeX**](https://github.com/ArioMoniri/changex) (tracked-changes + preview), and turns on their Quick Look previews — in a single step.
+Installs **Qedit** (find + edit any file) **and** [**ChangeX**](https://github.com/ArioMoniri/changex) (tracked-changes + preview), and sets up ChangeX's Quick Look preview — in a single step. (Qedit has no preview plugin of its own; it manages the ones you already have.)
 
 **macOS / Linux**
 
@@ -170,12 +156,12 @@ irm https://raw.githubusercontent.com/ArioMoniri/Qedit/main/scripts/install.ps1 
 
 ### 🖥 What runs where
 
-Qedit's edit-in-Quick-Look features use **macOS-only** frameworks (QuickLookUI · AppKit), so the **Qedit app is macOS-only**. The cross-platform half of the suite is **ChangeX** (Python + a Tauri viewer), which runs everywhere.
+Qedit is a native macOS app (AppKit · PDFKit · QuickLookUI), so the **Qedit app is macOS-only**. The cross-platform half of the suite is **ChangeX** (Python + a Tauri viewer), which runs everywhere.
 
 | | macOS | Windows | Linux |
 |---|:---:|:---:|:---:|
 | **Qedit** app + in-place editor | ✅ | — | — |
-| **Qedit** Quick Look preview | ✅ | — | — |
+| **Qedit** Quick Look plugin manager | ✅ | — | — |
 | **ChangeX** CLI · MCP · `changex view`/`preview` | ✅ | ✅ | ✅ |
 | **ChangeX** Viewer app | ✅ `.dmg` | ✅ `.msi` | ✅ `.AppImage` |
 | **ChangeX** native preview | ✅ Quick Look (Space) | ✅ Explorer pane (Alt+P) | `changex view` |
@@ -190,7 +176,7 @@ brew tap ariomoniri/qedit https://github.com/ArioMoniri/Qedit
 brew install --cask qedit
 ```
 
-Or grab the signed, notarized [**`Qedit.dmg`**](https://github.com/ArioMoniri/Qedit/releases/latest) and drag it to Applications. Then open Qedit once, go to **Setup**, and tap **Enable Qedit Preview**. Press <kbd>Space</kbd> on a `.md`/`.swift`/`.log` to see it. 🎉
+Or grab the signed, notarized [**`Qedit.dmg`**](https://github.com/ArioMoniri/Qedit/releases/latest) and drag it to Applications. Open a file with the **Browser** (⌥⌘B), the hotkey (⌥⌘E), or **Open With → Qedit** — edit and save in place. Manage your Space-preview plugins in the **Quick Look Plugins** tab. 🎉
 
 ## 🛠 Build from source
 
@@ -209,23 +195,21 @@ open Qedit.xcodeproj      # ⌘R to run
 
 ```
 Sources/
-  Qedit/                host app — editor (B), manager (C), updates, onboarding, hotkey
-  QuickLookExtension/   Module A — the Quick Look preview (sandboxed, read-only)
+  Qedit/                host app — editor, Quick Look plugin manager, updates, onboarding, hotkey
   QuickActionExtension/ Finder Quick Action → hands the file to the editor
-  Shared/               code compiled into all three targets
-scripts/                build_release.sh + notarize.sh
+  Shared/               code compiled into both targets
+scripts/                build_release.sh + notarize.sh + install.sh/.ps1
 .github/                release workflow + README assets
 ```
 
-One host `.app`, three targets:
+One host `.app`, two targets:
 
 | Target | Kind | Role |
 |---|---|---|
-| `Qedit` | App (SwiftUI/AppKit) | Editor, manager, updates, onboarding, hotkey |
-| `QeditQuickLook` | QL preview app-extension | **Module A** — rich previews for non-system UTIs |
+| `Qedit` | App (SwiftUI/AppKit) | Editor (panels/windows), Quick Look plugin manager, updates, onboarding, hotkey |
 | `QeditQuickAction` | Action/Service app-extension | Hands the Finder selection to the editor |
 
-The host app is **unsandboxed** (Developer ID) so the manager can shell out to `pluginkit`/`qlmanage`/`brew` and the hotkey can read the Finder selection. Both extensions **are** sandboxed and read-only. Project files are generated by XcodeGen from `project.yml` (the `.xcodeproj` is git-ignored).
+The host app is **unsandboxed** (Developer ID) so the manager can shell out to `pluginkit`/`qlmanage`/`brew` and the hotkey can read the Finder selection. **Qedit ships no Quick Look preview plugin** — it manages the ones you already have. Project files are generated by XcodeGen from `project.yml` (the `.xcodeproj` is git-ignored).
 
 </details>
 
@@ -250,8 +234,8 @@ No. Edits always write back to the original file in its original format. A `.pdf
 </details>
 
 <details>
-<summary><b>Does it replace Apple's spacebar PDF/image preview?</b></summary>
-No — and it can't. macOS reserves those previews for its own handlers, and Qedit deliberately never registers system UTIs. Qedit only previews types macOS renders as flat text.
+<summary><b>Does Qedit have its own spacebar (Quick Look) preview?</b></summary>
+No. Qedit edits in its own window, so it ships **no** Quick Look preview plugin — your existing plugins (QLMarkdown, Syntax Highlight, …) keep your Space previews. Qedit instead gives you a **manager** to enable/disable any Quick Look plugin and see which one previews a given file (sidebar → **Quick Look Plugins**).
 </details>
 
 <details>

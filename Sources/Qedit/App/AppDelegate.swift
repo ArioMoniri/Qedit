@@ -10,10 +10,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             AppState.shared.applyAppearance()     // System / Light / Dark
             _ = UpdaterController.shared          // start Sparkle
             setupStatusItem()
-            // Keep the environment safe: drop any stale Qedit extension registrations left by
-            // other/old copies, then make sure macOS lists Qedit in "Open With".
+            // Make sure macOS lists Qedit in "Open With" (it can drop document types after a
+            // Sparkle update until lsregister runs).
             Task.detached(priority: .background) {
-                Diagnostics.cleanupStaleQeditRegistrations()
                 Diagnostics.registerWithLaunchServices()
             }
             NotificationCenter.default.addObserver(

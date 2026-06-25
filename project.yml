@@ -59,38 +59,13 @@ targets:
         COMBINE_HIDPI_IMAGES: "YES"
         LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/../Frameworks"
     dependencies:
-      - target: QuickLookExtension
-        embed: true
       - target: QuickActionExtension
         embed: true
       - sdk: PDFKit.framework
       - sdk: Carbon.framework
       - package: Sparkle
 
-  # ── Module A: Quick Look preview extension (read step, non-system UTIs only) ──
-  QuickLookExtension:
-    type: app-extension
-    platform: macOS
-    sources:
-      - path: Sources/QuickLookExtension
-        excludes:
-          - "Info.plist"
-          - "Resources/web"
-      - path: Sources/QuickLookExtension/Resources/web
-        type: folder
-        buildPhase: resources
-      - path: Sources/Shared
-    settings:
-      base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.ariomoniri.Qedit.QuickLook
-        PRODUCT_NAME: QeditQuickLook
-        INFOPLIST_FILE: Sources/QuickLookExtension/Info.plist
-        CODE_SIGN_ENTITLEMENTS: Config/QuickLookExtension.entitlements
-    dependencies:
-      - sdk: WebKit.framework
-      - sdk: Quartz.framework
-
-  # ── Module B entry: Finder Quick Action / Service (hands file URL to host app) ──
+  # ── Finder Quick Action / Service (hands a file URL to the host editor) ──
   QuickActionExtension:
     type: app-extension
     platform: macOS

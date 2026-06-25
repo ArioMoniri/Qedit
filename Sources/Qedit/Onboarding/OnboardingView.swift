@@ -24,17 +24,19 @@ struct OnboardingView: View {
                     }
                 }
 
-                // Honest about the Space/Quick Look trade-off.
-                Card(title: "Preview on Space (optional)", systemImage: "eye") {
+                // Space previews are owned by your own Quick Look plugins now.
+                Card(title: "Press Space to preview — handled by your plugins", systemImage: "eye") {
                     VStack(alignment: .leading, spacing: 10) {
-                        Text("macOS shows **one** Quick Look preview per file type. If you also have "
-                             + "QLMarkdown or Syntax Highlight installed, *they* win Space — Qedit’s "
-                             + "preview only shows once you turn those off. That’s your call.")
+                        Text("Qedit **doesn’t install its own Quick Look preview** — it edits in its own "
+                             + "window, so the apps you already have (QLMarkdown, Syntax Highlight, …) "
+                             + "keep your Space previews. Qedit instead gives you a **manager** for all "
+                             + "of them: enable/disable any plugin, see which one previews a type, and "
+                             + "fix conflicts.")
                             .font(.callout).foregroundStyle(.secondary)
                         Button {
                             NotificationCenter.default.post(name: .qeditShowExtensions, object: nil)
                         } label: {
-                            Label("Manage previews in Extensions", systemImage: "puzzlepiece.extension")
+                            Label("Open Quick Look Plugins", systemImage: "puzzlepiece.extension")
                         }
                         .buttonStyle(.bordered).buttonBorderShape(.capsule)
                     }

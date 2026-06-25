@@ -8,12 +8,7 @@ enum AppInfo {
     static let openHost = "open"
 
     static let hostBundleIdentifier = "com.ariomoniri.Qedit"
-    static let quickLookBundleIdentifier = "com.ariomoniri.Qedit.QuickLook"
     static let quickActionBundleIdentifier = "com.ariomoniri.Qedit.QuickAction"
-
-    /// Upper bound on bytes rendered in a Quick Look preview. Larger files are read up to
-    /// this cap and visibly marked as truncated, so previews stay fast and memory-safe.
-    static let maxPreviewBytes = 5 * 1024 * 1024
 
     /// Build a `qedit://open` URL for an absolute file path.
     static func openURL(forPath path: String) -> URL? {
@@ -34,15 +29,9 @@ enum AppInfo {
 
 /// One place to describe what Qedit supports, so every screen says the same thing.
 enum SupportedFormats {
-    /// Types the Quick Look preview renders richly (non-system UTIs).
-    static let preview = "Markdown (.md, .markdown, .textbundle), source code in 30+ languages "
-        + "(Swift, Python, JavaScript/TypeScript, Go, Rust, C/C++, Objective-C, Java, Kotlin, "
-        + "Ruby, PHP, shell, SQL, R, Swift, …), logs (.log), and config (JSON, YAML, XML, TOML, "
-        + "INI, .properties, .plist)."
-
     /// Types the editor can open and save back in place.
     static let edit = "PDF — find, highlight, notes, text boxes, signature, and page ops — plus "
-        + "every text, source-code, Markdown, log and config type Qedit previews. PDFs save via "
+        + "every text, source-code, Markdown, log and config type. PDFs save via "
         + "PDFKit; text saves in its original encoding; nothing ever changes format. Word (.docx, "
         + ".doc), RTF and OpenDocument (.odt) are editable rich text; spreadsheet cells (.xlsx) and "
         + "PowerPoint text (.pptx) edit in place too. Everything saves back in its original format."

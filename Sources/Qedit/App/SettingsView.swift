@@ -1,23 +1,8 @@
 import SwiftUI
 
-/// Holds the Markdown-preview options and writes them to the shared App Group container
-/// (where the Quick Look extension reads them), refreshing Quick Look so changes show.
-@MainActor
-final class RenderPrefsStore: ObservableObject {
-    @Published var prefs: RenderPrefs { didSet { persist() } }
-
-    init() { prefs = RenderPrefs.load() }
-
-    private func persist() {
-        let saved = prefs.save()
-        if saved { Task.detached { _ = Diagnostics.resetQuickLookCache() } }
-    }
-}
-
 struct SettingsView: View {
     @EnvironmentObject private var appState: AppState
     @StateObject private var hotKey = HotKeyStore.shared
-    @StateObject private var render = RenderPrefsStore()
     @ObservedObject private var syntaxTheme = SyntaxThemeStore.shared
 
     var body: some View {
@@ -25,7 +10,6 @@ struct SettingsView: View {
             generalTab.tabItem { Label("General", systemImage: "gearshape") }
             editingTab.tabItem { Label("Editing", systemImage: "square.and.pencil") }
             shortcutTab.tabItem { Label("Shortcut", systemImage: "command") }
-            previewTab.tabItem { Label("Preview", systemImage: "eye") }
         }
         .padding(.top, 6)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -213,13 +197,12 @@ struct SettingsView: View {
                     .buttonStyle(.bordered).buttonBorderShape(.capsule).controlSize(.small)
             }
 
-            SettingsGroup(title: "Space preview (works alongside your other plugins)") {
-                Text("Pressing **Space** in Finder is macOS Quick Look, which shows one preview per "
-                     + "type. **Qedit coexists with your other Quick Look plugins** (QLMarkdown, Syntax "
-                     + "Highlight, …) — you don’t need to disable anything. To **edit** a file, use the "
-                     + "**Browser** (⌥⌘B) or **⌥⌘E**, or open it in Qedit. If you’d specifically prefer "
-                     + "Qedit’s Space preview for a type, you can toggle plugins in the Extensions "
-                     + "manager — entirely optional.")
+            SettingsGroup(title: "Quick Look previews (Space)") {
+                Text("Pressing **Space** in Finder is macOS Quick Look. **Qedit doesn’t install its "
+                     + "own preview plugin** — it edits in its own window — so your plugins "
+                     + "(QLMarkdown, Syntax Highlight, …) keep your Space previews. Use the built-in "
+                     + "**Quick Look Plugins** manager to enable/disable any of them or see which one "
+                     + "previews a type.")
                     .font(.caption).foregroundStyle(.secondary)
                 HStack(spacing: 8) {
                     Button {
@@ -228,7 +211,7 @@ struct SettingsView: View {
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
                             NotificationCenter.default.post(name: .qeditShowExtensions, object: nil)
                         }
-                    } label: { Label("Open Extensions Manager", systemImage: "puzzlepiece.extension") }
+                    } label: { Label("Open Quick Look Plugins", systemImage: "puzzlepiece.extension") }
                         .buttonStyle(.bordered).buttonBorderShape(.capsule).controlSize(.small)
                     Button {
                         Permissions.openLoginItemsAndExtensions()
@@ -286,64 +269,4 @@ struct SettingsView: View {
         }
     }
 
-    // MARK: - Preview
-
-    private var previewMarkdownOnCount: Int {
-        [render.prefs.gfm, render.prefs.hardBreaks, render.prefs.syntaxHighlighting,
-         render.prefs.headingAnchors, render.prefs.math, render.prefs.emoji,
-         render.prefs.smartQuotes].filter { $0 }.count
-    }
-
-    private var previewTab: some View {
-        tab {
-            SettingsGroup(title: "Theme") {
-                Picker("Theme", selection: $render.prefs.theme) {
-                    ForEach(RenderPrefs.Theme.allCases) { Text($0.label).tag($0) }
-                }
-                .pickerStyle(.segmented)
-            }
-
-            SettingsGroup(title: "Markdown rendering",
-                          subtitle: "Applies to Qedit’s Quick Look (Space) preview.",
-                          onCount: previewMarkdownOnCount, total: 7) {
-                SettingRow(icon: "tablecells", tint: .blue, title: "GitHub-flavored Markdown",
-                           detail: "Tables, task lists, ~~strikethrough~~ and autolinks.",
-                           isOn: $render.prefs.gfm)
-                SettingRow(icon: "arrow.turn.down.left", tint: .blue, title: "Hard line breaks",
-                           detail: "Treat single newlines as line breaks.",
-                           isOn: $render.prefs.hardBreaks)
-                SettingRow(icon: "curlybraces", tint: .blue, title: "Syntax highlighting in code",
-                           detail: "Color fenced code blocks.",
-                           isOn: $render.prefs.syntaxHighlighting)
-                SettingRow(icon: "number", tint: .blue, title: "Clickable heading anchors",
-                           detail: "Add anchor links to headings.",
-                           isOn: $render.prefs.headingAnchors)
-                SettingRow(icon: "function", tint: .blue, title: "Math (LaTeX)",
-                           detail: "Render $…$ and $$…$$ as math (KaTeX → MathML, no extra fonts).",
-                           isOn: $render.prefs.math)
-                SettingRow(icon: "face.smiling", tint: .blue, title: "Emoji shortcodes",
-                           detail: "Turn :rocket: into 🚀.",
-                           isOn: $render.prefs.emoji)
-                SettingRow(icon: "quote.opening", tint: .blue, title: "Smart quotes",
-                           detail: "Curly quotes and en/em dashes.",
-                           isOn: $render.prefs.smartQuotes)
-            }
-
-            SettingsGroup(title: "Showing on Space") {
-                Text("macOS shows one preview per type. If QLMarkdown / Syntax Highlight is on, Qedit’s preview only appears once you switch them off — one tap in Extensions.")
-                    .font(.caption).foregroundStyle(.secondary)
-                Button {
-                    NSApp.setActivationPolicy(.regular)
-                    NSApp.activate(ignoringOtherApps: true)
-                    EditorLauncher.shared.openMainWindow?()
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-                        NotificationCenter.default.post(name: .qeditShowExtensions, object: nil)
-                    }
-                } label: {
-                    Label("Open Extensions tab", systemImage: "puzzlepiece.extension")
-                }
-                .buttonStyle(.bordered).buttonBorderShape(.capsule)
-            }
-        }
-    }
 }

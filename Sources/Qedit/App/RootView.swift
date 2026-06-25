@@ -22,7 +22,7 @@ struct WindowAccessor: NSViewRepresentable {
 enum SidebarItem: String, CaseIterable, Identifiable {
     case home = "Home"
     case settings = "Settings"
-    case extensions = "Extensions"
+    case extensions = "Quick Look Plugins"
     case updates = "Updates"
     case setup = "Setup"
 

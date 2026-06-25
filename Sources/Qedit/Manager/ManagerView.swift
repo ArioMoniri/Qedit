@@ -13,27 +13,21 @@ struct ManagerView: View {
     @State private var brewMessage: String?
     @State private var checkingUpdates = false
 
-    /// Qedit's own preview extension, if pluginkit sees it.
-    private var ownExtension: QLExtensionInfo? {
-        model.extensions.first { $0.isOwnedByQedit }
-    }
-
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
                 header
-                if let own = ownExtension, own.status != .enabled { enableQeditBanner(own) }
-                troubleshootCard
-                updatesCard
+                refreshCard
                 diagnosticsCard
                 inspectorCard
                 extensionsCard
+                updatesCard
             }
             .padding(28)
             .frame(maxWidth: 840, alignment: .leading)
             .frame(maxWidth: .infinity, alignment: .center)
         }
-        .navigationTitle("Extensions")
+        .navigationTitle("Quick Look Plugins")
         .task { if model.extensions.isEmpty { await model.scan() } }
     }
 
@@ -42,10 +36,12 @@ struct ManagerView: View {
     private var header: some View {
         HStack(alignment: .top) {
             VStack(alignment: .leading, spacing: 6) {
-                Text("Quick Look Extensions").font(.title2).bold()
-                Text("Installed Quick Look **preview** extensions and the file types they claim. "
-                     + "Toggle one on/off below — if macOS still ignores it, approve it once in "
-                     + "System Settings.")
+                Text("Quick Look Plugin Manager").font(.title2).bold()
+                Text("Manage **every** Quick Look preview plugin on your Mac — QLMarkdown, Syntax "
+                     + "Highlight, and the rest. See the file types each one claims, **enable or "
+                     + "disable** any of them, and fix the case where the wrong plugin previews a type. "
+                     + "Qedit doesn’t install its own preview plugin — it edits in its own window — so "
+                     + "your plugins keep your Space previews.")
                     .foregroundStyle(.secondary)
             }
             Spacer()
@@ -68,73 +64,26 @@ struct ManagerView: View {
         }
     }
 
-    private func enableQeditBanner(_ ext: QLExtensionInfo) -> some View {
-        HStack(spacing: 12) {
-            Image(systemName: "eye.trianglebadge.exclamationmark").font(.title2).foregroundStyle(.tint)
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Qedit Preview isn’t active yet").bold()
-                Text("Turn it on to preview Markdown, code, logs and config with Space in Finder.")
-                    .font(.callout).foregroundStyle(.secondary)
-            }
-            Spacer()
-            Button { Task { await model.enableQeditExtensions() } } label: {
-                Label("Enable", systemImage: "power").padding(.horizontal, 6)
-            }
-            .buttonStyle(.borderedProminent)
-            .buttonBorderShape(.capsule)
-            Button("Settings…") { SystemSettings.openExtensions() }
-                .buttonStyle(.bordered).buttonBorderShape(.capsule)
-        }
-        .padding(16)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(.tint.opacity(0.12), in: RoundedRectangle(cornerRadius: 12))
-        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(.tint.opacity(0.3)))
-    }
-
     // MARK: - Troubleshoot
 
-    private var troubleshootCard: some View {
-        Card(title: "Troubleshoot “Qedit Preview”", systemImage: "wrench.and.screwdriver") {
+    private var refreshCard: some View {
+        Card(title: "Make a change take effect", systemImage: "arrow.clockwise.circle") {
             VStack(alignment: .leading, spacing: 12) {
-                if let status = model.qeditStatus {
-                    Label(statusHeadline(status),
-                          systemImage: status.isHealthy ? "checkmark.seal.fill" : "exclamationmark.triangle.fill")
-                        .font(.callout).bold()
-                        .foregroundStyle(status.isHealthy ? Color.green : Color.orange)
-                    Text(status.report)
-                        .font(.system(.caption, design: .monospaced))
-                        .textSelection(.enabled)
-                        .padding(10).frame(maxWidth: .infinity, alignment: .leading)
-                        .background(.quaternary.opacity(0.4), in: RoundedRectangle(cornerRadius: 8))
-                } else {
-                    HStack { ProgressView().controlSize(.small); Text("Checking…").foregroundStyle(.secondary) }
-                }
+                Text("After you enable or disable a plugin, Quick Look can keep showing the old "
+                     + "result until its daemons restart — Qedit does that automatically when you "
+                     + "toggle a plugin below, but you can force it here if a change doesn’t show.")
+                    .font(.callout).foregroundStyle(.secondary)
                 HStack {
-                    if model.qeditStatus?.hasDuplicates == true {
-                        Button(role: .destructive) { Task { await model.removeDuplicateRegistrations() } } label: {
-                            Label("Remove Duplicate(s)", systemImage: "trash")
-                        }
-                        .buttonStyle(.borderedProminent).buttonBorderShape(.capsule)
-                        Button { revealDuplicates() } label: {
-                            Label("Reveal in Finder", systemImage: "folder")
-                        }
-                        .buttonStyle(.bordered).buttonBorderShape(.capsule)
-                    }
                     Button { Task { await model.refreshFinderAndQuickLook() } } label: {
                         Label("Refresh Finder & Quick Look", systemImage: "arrow.clockwise.circle")
                     }
-                    .buttonStyle(.bordered).buttonBorderShape(.capsule)
-                    Button { Task { await model.reloadDiagnostics() } } label: {
-                        Label("Re-check", systemImage: "stethoscope")
+                    .buttonStyle(.borderedProminent).buttonBorderShape(.capsule)
+                    Button { Task { await model.resetQuickLookCache() } } label: {
+                        Label("Reset Quick Look Cache", systemImage: "trash")
                     }
                     .buttonStyle(.bordered).buttonBorderShape(.capsule)
                 }
                 .disabled(model.isScanning)
-                Text("A preview fails when the SAME extension is registered twice (e.g. a second copy "
-                     + "of Qedit.app in Downloads or a build folder). “Remove Duplicate(s)” clears the "
-                     + "registration — but if that extra copy still exists on disk macOS re-adds it, so "
-                     + "“Reveal in Finder” lets you delete it for good. Then Refresh Finder & Quick Look.")
-                    .font(.caption).foregroundStyle(.secondary)
                 if let msg = model.lastDiagnostic {
                     Text(msg).font(.caption2).foregroundStyle(.secondary)
                 }
@@ -167,23 +116,6 @@ struct ManagerView: View {
                 }
             }
         }
-    }
-
-    private func revealDuplicates() {
-        guard let dupes = model.qeditStatus?.duplicatePaths, !dupes.isEmpty else { return }
-        let urls = dupes.map { path -> URL in
-            var bundle = URL(fileURLWithPath: path)        // …/Qedit.app/Contents/PlugIns/X.appex
-            for _ in 0..<3 { bundle.deleteLastPathComponent() }  // → …/Qedit.app
-            return bundle.pathExtension == "app" ? bundle : URL(fileURLWithPath: path)
-        }
-        NSWorkspace.shared.activateFileViewerSelecting(urls)
-    }
-
-    private func statusHeadline(_ status: QeditPreviewStatus) -> String {
-        if status.registrations.isEmpty { return "Not registered — keep Qedit in /Applications and launch it once" }
-        if status.hasDuplicates { return "Duplicate registrations — previews can’t resolve" }
-        if !status.isEnabledSomewhere { return "Registered, but not enabled" }
-        return "Healthy"
     }
 
     // MARK: - Updates
@@ -409,13 +341,7 @@ private struct ExtensionRow: View {
                     .foregroundStyle(statusColor)
                     .help(ext.status.label)
                 VStack(alignment: .leading, spacing: 1) {
-                    HStack(spacing: 6) {
-                        Text(ext.displayName ?? ext.identifier).bold()
-                        if ext.isOwnedByQedit {
-                            Text("This app").font(.caption2).padding(.horizontal, 5).padding(.vertical, 1)
-                                .background(.tint.opacity(0.2), in: Capsule())
-                        }
-                    }
+                    Text(ext.displayName ?? ext.identifier).bold()
                     Text(ext.identifier).font(.caption2).foregroundStyle(.tertiary)
                 }
                 Spacer()

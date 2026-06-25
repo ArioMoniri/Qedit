@@ -3,6 +3,11 @@
 All notable changes to Qedit. This file feeds both the GitHub release notes and the
 in-app Sparkle updater. 🪄
 
+## v0.7.6
+- 🔌 **Qedit no longer ships its own Quick Look preview plugin.** Since Qedit edits in its own window (Browser ⌥⌘B, ⌥⌘E, editor panels), it doesn't need to compete for the Space-preview slot — so it now installs **no** preview extension at all. Your own plugins (QLMarkdown, Syntax Highlight, …) keep your `.md`/code Space previews, with nothing to disable. Updating to this version **removes** the old Qedit preview plugin from your Mac.
+- 🧩 **The Extensions tab is now a general "Quick Look Plugins" manager.** It manages *every* Quick Look plugin on your Mac — see the types each claims, enable/disable any of them (Qedit restarts Quick Look so the change sticks), and use the UTI inspector to find which plugin previews a file. Renamed in the sidebar and explained throughout the app.
+- 🧹 Removed the now-pointless "Enable Qedit Preview", "Make Qedit win Space", and the Markdown-rendering **Preview** settings tab. README, Setup and Settings all reflect the editor-plus-plugin-manager model.
+
 ## v0.7.5
 - 🔌 **Fixed: re-enabling a Quick Look extension now actually brings its preview back.** Turning a plugin (QLMarkdown, Syntax Highlight, …) back on recorded the change but **Quick Look kept serving the old, disabled state** — so the toggle said “on” yet your Markdown/README previews stayed gone. Qedit now **restarts the Quick Look daemons** (`quicklookd` + `QuickLookUIService`) whenever you toggle an extension, so the change takes effect immediately. If macOS still won’t re-enable one (because it was switched off in System Settings, which no app can override), Qedit now tells you exactly where to flip it.
 

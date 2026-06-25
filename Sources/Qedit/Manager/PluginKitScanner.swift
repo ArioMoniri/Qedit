@@ -30,9 +30,8 @@ struct QLExtensionInfo: Identifiable {
     var parentBundlePath: String?
     var supportedUTIs: [String] = []
 
-    var isOwnedByQedit: Bool { identifier.hasPrefix("com.ariomoniri.Qedit") }
-    /// Sibling apps by the same author that are meant to run ALONGSIDE Qedit (e.g. ChangeX) —
-    /// never flagged as competitors and never swept up by "Disable all".
+    /// Sibling apps by the same author that are meant to run ALONGSIDE the user's setup (e.g.
+    /// ChangeX) — never swept up by "Disable all".
     var isKnownSibling: Bool { identifier.hasPrefix("dev.changex.") }
 }
 
@@ -51,8 +50,7 @@ enum PluginKitScanner {
             }
         }
         return extensions.sorted {
-            if $0.isOwnedByQedit != $1.isOwnedByQedit { return $0.isOwnedByQedit }
-            return ($0.displayName ?? $0.identifier).localizedCaseInsensitiveCompare($1.displayName ?? $1.identifier) == .orderedAscending
+            ($0.displayName ?? $0.identifier).localizedCaseInsensitiveCompare($1.displayName ?? $1.identifier) == .orderedAscending
         }
     }
 
@@ -145,82 +143,27 @@ final class ExtensionManagerModel: ObservableObject {
     @Published var extensions: [QLExtensionInfo] = []
     @Published var isScanning = false
     @Published var lastDiagnostic: String?
-    @Published var qeditStatus: QeditPreviewStatus?
 
     func scan() async {
         isScanning = true
         let found = await Task.detached { PluginKitScanner.scanQuickLookPreviewExtensions() }.value
         extensions = found
-        qeditStatus = await Task.detached { Diagnostics.qeditPreviewStatus() }.value
         isScanning = false
-    }
-
-    func reloadDiagnostics() async {
-        qeditStatus = await Task.detached { Diagnostics.qeditPreviewStatus() }.value
-    }
-
-    /// Other ENABLED extensions that also claim Qedit's file types. macOS uses one extension
-    /// per type, so these may be chosen instead of Qedit (e.g. QLMarkdown, Syntax Highlight).
-    var competingExtensions: [QLExtensionInfo] {
-        overlappingExtensions.filter { $0.status == .enabled }
-    }
-
-    /// Every non-Qedit extension that claims a type Qedit handles — enabled OR disabled — so
-    /// the conflict card can offer a reversible on/off switch for each one.
-    var overlappingExtensions: [QLExtensionInfo] {
-        guard let own = extensions.first(where: { $0.isOwnedByQedit }) else { return [] }
-        let ours = Set(own.supportedUTIs)
-        return extensions.filter { ext in
-            !ext.isOwnedByQedit && !ext.isKnownSibling
-                && !Set(ext.supportedUTIs).isDisjoint(with: ours)
-        }
-    }
-
-    /// Disable every competing extension so macOS falls back to Qedit's preview.
-    func disableCompetitors() async {
-        let ids = competingExtensions.map(\.identifier)
-        guard !ids.isEmpty else { return }
-        isScanning = true
-        await Task.detached {
-            for id in ids { _ = PluginKitScanner.setEnabled(false, identifier: id) }
-            _ = Diagnostics.refreshFinderAndQuickLook()
-        }.value
-        await scan()
     }
 
     func resetQuickLookCache() async {
         isScanning = true
         let result = await Task.detached { Diagnostics.resetQuickLookCache() }.value
         lastDiagnostic = result
-        await reloadDiagnostics()
         isScanning = false
     }
 
-    /// Reload Quick Look + relaunch Finder so a just-changed extension state takes effect.
+    /// Reload Quick Look + restart its daemons + relaunch Finder so a just-changed extension
+    /// state takes effect immediately.
     func refreshFinderAndQuickLook() async {
         isScanning = true
         let result = await Task.detached { Diagnostics.refreshFinderAndQuickLook() }.value
         lastDiagnostic = result
-        await scan()
-    }
-
-    /// Remove duplicate registrations of Qedit's extension (keeps the running app's copy).
-    func removeDuplicateRegistrations() async {
-        guard let dupes = qeditStatus?.duplicatePaths, !dupes.isEmpty else { return }
-        isScanning = true
-        let result = await Task.detached { () -> String in
-            for path in dupes { _ = PluginKitScanner.removeRegistration(appexPath: path) }
-            return Diagnostics.refreshFinderAndQuickLook()
-        }.value
-        lastDiagnostic = "Removed \(dupes.count) duplicate registration(s). " + result
-        await scan()
-    }
-
-    /// Enable Qedit's own preview + Quick Action and refresh everything.
-    func enableQeditExtensions() async {
-        isScanning = true
-        let message = await Task.detached { Diagnostics.enableAllQeditExtensions() }.value
-        lastDiagnostic = message
         await scan()
     }
 

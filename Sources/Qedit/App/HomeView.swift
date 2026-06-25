@@ -26,8 +26,9 @@ struct HomeView: View {
         VStack(alignment: .leading, spacing: 6) {
             Text("Find & edit any file — without changing its format")
                 .font(.title2).bold()
-            Text("Rich Quick Look previews for the files macOS renders flat, plus an on-demand "
-                 + "editor that writes back in place. A .pdf stays a .pdf; a .md stays a .md.")
+            Text("Open any file in an editor panel or window, change it, and save straight back in "
+                 + "place. A .pdf stays a .pdf; a .docx stays a .docx. Plus a manager for all your "
+                 + "Quick Look preview plugins.")
                 .foregroundStyle(.secondary)
         }
     }
@@ -35,13 +36,14 @@ struct HomeView: View {
     private var pipelineCard: some View {
         Card(title: "How it works", systemImage: "arrow.triangle.2.circlepath") {
             HStack(alignment: .top, spacing: 18) {
-                Step(number: "1", title: "Preview (read)",
-                     detail: "Press Space in Finder. Qedit’s Quick Look extension renders Markdown, "
-                           + "code, logs and config with highlighting. System types keep Apple’s preview.")
+                Step(number: "1", title: "Open",
+                     detail: "Open a file in Qedit — the Browser (⌥⌘B), the hotkey (⌥⌘E) on the Finder "
+                           + "selection, or right-click → Open With → Qedit. It opens in a panel or "
+                           + "window — nothing on disk changes yet.")
                 Divider()
-                Step(number: "2", title: "Edit (write)",
-                     detail: "Use the Quick Action or the global hotkey to open the same file in the "
-                           + "editor. Find, change, save in place — original format preserved.")
+                Step(number: "2", title: "Edit & save in place",
+                     detail: "Find with ⌘F, edit, and save straight back in the original format — text, "
+                           + "code, Markdown, Word, Excel, PowerPoint, PDF. No conversion.")
             }
         }
     }

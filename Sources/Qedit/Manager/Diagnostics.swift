@@ -10,120 +10,19 @@ struct UTIInfo {
     let claimingExtensions: [QLExtensionInfo]
 }
 
-/// Health of Qedit's own Quick Look preview extension.
-struct QeditPreviewStatus {
-    var registrations: [QLExtensionInfo]
-    var runningExtensionPath: String?
-    var duplicatePaths: [String]
-    var isEnabledSomewhere: Bool
-    var report: String
-
-    var hasDuplicates: Bool { !duplicatePaths.isEmpty }
-    var isHealthy: Bool { isEnabledSomewhere && !hasDuplicates && registrations.count == 1 }
-}
-
-/// Quick Look diagnostics: cache reset, the "which extension claims this file" tool, and
-/// self-troubleshooting for Qedit's own preview extension.
+/// Quick Look diagnostics for the plugin manager: cache/daemon refresh and the
+/// "which extension claims this file" UTI inspector.
 enum Diagnostics {
     static let qlmanagePath = "/usr/bin/qlmanage"
     static let killallPath = "/usr/bin/killall"
-    static let pbsPath = "/System/Library/CoreServices/pbs"
     static let lsregisterPath =
         "/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister"
-    static let qeditQuickLookID = "com.ariomoniri.Qedit.QuickLook"
-    static let qeditQuickActionID = "com.ariomoniri.Qedit.QuickAction"
 
     /// Re-register Qedit with LaunchServices so it appears in "Open With" (macOS often
     /// doesn't re-index document types after a Sparkle update until this runs).
     static func registerWithLaunchServices() {
         guard Shell.exists(lsregisterPath) else { return }
         _ = Shell.run(lsregisterPath, ["-f", Bundle.main.bundleURL.path])
-    }
-
-    /// The `.app` bundle that contains a given `.appex` path.
-    static func containingApp(ofAppex appexPath: String) -> String {
-        var url = URL(fileURLWithPath: appexPath)
-        for _ in 0..<3 { url.deleteLastPathComponent() }   // X.appex → PlugIns → Contents → App
-        return url.standardizedFileURL.path
-    }
-
-    /// Remove registrations of Qedit's extensions that belong to OTHER copies of Qedit
-    /// (old dev builds, a second copy in Downloads, etc.) — keeps the environment clean so
-    /// duplicate registrations never silently break the preview. Returns how many it removed.
-    @discardableResult
-    static func cleanupStaleQeditRegistrations() -> Int {
-        let runningApp = Bundle.main.bundleURL.standardizedFileURL.path
-        var removed = 0
-        for id in [qeditQuickLookID, qeditQuickActionID] {
-            for reg in PluginKitScanner.registrations(of: id) {
-                guard let path = reg.path, containingApp(ofAppex: path) != runningApp else { continue }
-                DebugLog.shared.log("Safety: removing stale Qedit registration → \(path)")
-                if PluginKitScanner.removeRegistration(appexPath: path) { removed += 1 }
-            }
-        }
-        if removed > 0 { _ = refreshFinderAndQuickLook() }
-        return removed
-    }
-
-    /// Enable BOTH Qedit extensions (preview + Quick Action), register for Open With,
-    /// refresh the Services cache, and reload Quick Look + Finder so everything takes effect.
-    static func enableAllQeditExtensions() -> String {
-        DebugLog.shared.log("— Enable Qedit: starting —")
-        registerWithLaunchServices()
-        _ = PluginKitScanner.setEnabled(true, identifier: qeditQuickLookID)
-        _ = PluginKitScanner.setEnabled(true, identifier: qeditQuickActionID)
-        if Shell.exists(pbsPath) {
-            _ = Shell.run(pbsPath, ["-flush"])
-            _ = Shell.run(pbsPath, ["-update"])
-        }
-        let result = refreshFinderAndQuickLook()
-        DebugLog.shared.log("— Enable Qedit: done —")
-        return result
-    }
-
-    /// Path of *this* running app's bundled QL extension (the registration we want to keep).
-    static func runningExtensionPath() -> String? {
-        Bundle.main.builtInPlugInsURL?
-            .appendingPathComponent("QeditQuickLook.appex").standardizedFileURL.path
-    }
-
-    private static func canonical(_ path: String?) -> String? {
-        path.map { URL(fileURLWithPath: $0).standardizedFileURL.path }
-    }
-
-    /// Inspect every registration of Qedit's preview extension and explain what's wrong.
-    static func qeditPreviewStatus() -> QeditPreviewStatus {
-        let regs = PluginKitScanner.registrations(of: qeditQuickLookID)
-        let running = canonical(runningExtensionPath())
-        let duplicates = regs.compactMap { canonical($0.path) }
-            .filter { running == nil || $0 != running }
-        let enabled = regs.contains { $0.status == .enabled }
-
-        var lines: [String] = []
-        lines.append("Extension: \(qeditQuickLookID)")
-        lines.append("Registrations: \(regs.count)")
-        for reg in regs {
-            let isThis = canonical(reg.path) == running
-            lines.append("  • [\(reg.status.label)] v\(reg.version)\(isThis ? "  ← this app" : "")")
-            lines.append("    \(reg.path ?? "unknown path")")
-            lines.append("    declared types: \(reg.supportedUTIs.count)")
-        }
-        lines.append("")
-        if regs.isEmpty {
-            lines.append("❌ macOS hasn’t registered the extension. Make sure Qedit is in /Applications and launch it once.")
-        } else if duplicates.count > 0 {
-            lines.append("⚠️ \(duplicates.count) duplicate registration(s) of the SAME extension exist (e.g. a build folder + /Applications). macOS can’t choose between them, so previews silently do nothing. Remove the stale one(s), then refresh Finder.")
-        } else if !enabled {
-            lines.append("⚠️ The extension is registered but not enabled. Click Enable, then refresh Finder.")
-        } else {
-            lines.append("✅ Looks healthy: one enabled registration. If a preview still doesn’t show, refresh Finder & Quick Look.")
-        }
-
-        return QeditPreviewStatus(registrations: regs,
-                                  runningExtensionPath: running,
-                                  duplicatePaths: duplicates,
-                                  isEnabledSomewhere: enabled,
-                                  report: lines.joined(separator: "\n"))
     }
 
     /// Reload Quick Look generators + cache and relaunch Finder so changes take effect now.
